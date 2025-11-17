@@ -53,27 +53,27 @@ class PlayerCharacter extends Entity {
       case 'soldier':
         this.maxHealth = 100;
         this.baseSpeed = 4;
-        this.specialAbilityCooldown = 15000; // 15 seconds
+        this.specialAbilityCooldown = 12000; // Reduced from 15s to 12s
         this.specialAbilityName = 'Airstrike';
         break;
       case 'scout':
         this.maxHealth = 80;
         this.baseSpeed = 6;
         this.rollCooldown = -200; // Faster roll
-        this.specialAbilityCooldown = 10000; // 10 seconds
+        this.specialAbilityCooldown = 8000; // Reduced from 10s to 8s
         this.specialAbilityName = 'Sprint Boost';
         break;
       case 'heavy':
         this.maxHealth = 150;
         this.baseSpeed = 3;
-        this.specialAbilityCooldown = 20000; // 20 seconds
+        this.specialAbilityCooldown = 16000; // Reduced from 20s to 16s
         this.specialAbilityName = 'Shield';
         break;
       case 'medic':
         this.maxHealth = 90;
         this.baseSpeed = 4.5;
         this.healRate = 1; // Passive healing
-        this.specialAbilityCooldown = 12000; // 12 seconds
+        this.specialAbilityCooldown = 10000; // Reduced from 12s to 10s
         this.specialAbilityName = 'Med Pack';
         break;
     }
@@ -145,11 +145,11 @@ class PlayerCharacter extends Entity {
     
     switch (this.characterType) {
       case 'soldier':
-        // Airstrike: Damage all enemies on screen (reduced damage for balance)
+        // Airstrike: Damage all enemies on screen (increased damage and range)
         if (gameEngine) {
           gameEngine.enemies.forEach(enemy => {
             if (enemy.active) {
-              enemy.takeDamage(30); // Reduced from 50 to 30
+              enemy.takeDamage(50); // Increased from 30 to 50
               gameEngine.particleSystem.createExplosion(
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2,
@@ -163,31 +163,31 @@ class PlayerCharacter extends Entity {
         return 'airstrike';
         
       case 'scout':
-        // Sprint Boost: Increased speed for 5 seconds (balanced)
+        // Sprint Boost: Increased speed for 6 seconds (increased from 5s and more speed)
         const originalSpeed = this.speed;
-        this.speed = originalSpeed * 1.5; // Reduced from 2x to 1.5x
+        this.speed = originalSpeed * 2; // Increased from 1.5x to 2x
         setTimeout(() => {
           if (this.active) {
             this.speed = originalSpeed;
             this.specialAbilityActive = false;
           }
-        }, 5000);
+        }, 6000); // Increased from 5000 to 6000
         return 'sprint';
         
       case 'heavy':
-        // Shield: Invulnerability for 2.5 seconds (reduced from 3)
+        // Shield: Invulnerability for 3.5 seconds (increased from 2.5s)
         this.invulnerable = true;
         setTimeout(() => {
           if (this.active) {
             this.invulnerable = false;
             this.specialAbilityActive = false;
           }
-        }, 2500); // Reduced from 3000 to 2500
+        }, 3500); // Increased from 2500 to 3500
         return 'shield';
         
       case 'medic':
-        // Med Pack: Restore 40 HP (reduced from 50)
-        this.heal(40);
+        // Med Pack: Restore 60 HP (increased from 40)
+        this.heal(60);
         setTimeout(() => { this.specialAbilityActive = false; }, 500);
         return 'medpack';
     }
