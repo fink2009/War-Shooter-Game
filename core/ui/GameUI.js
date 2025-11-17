@@ -346,9 +346,26 @@ class GameUI {
     } else if (menuState === 'paused') {
       ctx.fillStyle = '#00ff00';
       ctx.textAlign = 'center';
-      ctx.fillText('PAUSED', this.width / 2, 200);
-      ctx.fillText('Press ESC to Resume', this.width / 2, 250);
-      ctx.fillText('Press M for Main Menu', this.width / 2, 290);
+      ctx.font = 'bold 36px monospace';
+      ctx.fillText('PAUSED', this.width / 2, 150);
+      
+      // Show current stats
+      if (window.game) {
+        ctx.fillStyle = '#ffff00';
+        ctx.font = '18px monospace';
+        ctx.fillText(`Score: ${window.game.score}`, this.width / 2, 200);
+        ctx.fillText(`Kills: ${window.game.kills}`, this.width / 2, 230);
+        ctx.fillText(`Wave: ${window.game.wave}`, this.width / 2, 260);
+        if (window.game.combo > 0) {
+          ctx.fillText(`Current Combo: ${window.game.combo}x`, this.width / 2, 290);
+        }
+      }
+      
+      ctx.fillStyle = '#00ff00';
+      ctx.font = '20px monospace';
+      ctx.fillText('Press ESC to Resume', this.width / 2, 350);
+      ctx.fillText('Press M for Main Menu', this.width / 2, 385);
+      ctx.fillText('Press R to Restart', this.width / 2, 420);
     } else if (menuState === 'gameover') {
       ctx.fillStyle = '#ff0000';
       ctx.textAlign = 'center';

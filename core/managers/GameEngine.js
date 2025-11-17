@@ -198,6 +198,16 @@ class GameEngine {
       this.enemies.push(enemy);
       this.collisionSystem.add(enemy);
     }
+    
+    // Spawn boss every 5 waves
+    if (this.wave % 5 === 0 && this.wave > 0) {
+      const bossX = this.player.x + 800;
+      const boss = new EnemyUnit(bossX, this.groundLevel - 70, 'boss');
+      boss.applyDifficulty(difficultyMultiplier);
+      this.enemies.push(boss);
+      this.collisionSystem.add(boss);
+      this.enemiesRemaining++;
+    }
   }
 
   spawnCampaignEnemies() {
@@ -409,6 +419,8 @@ class GameEngine {
       } else if (this.inputManager.wasKeyPressed('m') || this.inputManager.wasKeyPressed('M')) {
         this.state = 'menu';
         this.menuState = 'main';
+      } else if (this.inputManager.wasKeyPressed('r') || this.inputManager.wasKeyPressed('R')) {
+        this.startGame(this.mode, this.selectedCharacter);
       }
     } else if (this.state === 'gameover' || this.state === 'victory') {
       if (this.inputManager.wasKeyPressed('r') || this.inputManager.wasKeyPressed('R')) {
@@ -558,13 +570,19 @@ class GameEngine {
               );
               
               // Always spawn pickup when enemy is killed
-              // Common drops (80% chance)
+              // Common drops (70% chance)
               let pickupTypes = ['health', 'ammo', 'healing', 'damage_boost'];
               
-              // Add rare weapon drops (20% chance for elite enemies)
+              // Rare weapon drops for elite enemies (20% chance)
               if ((enemy.enemyType === 'heavy' || enemy.enemyType === 'sniper') && Math.random() < 0.2) {
-                const weaponDrops = ['weapon_rifle', 'weapon_shotgun', 'weapon_machinegun'];
+                const weaponDrops = ['weapon_rifle', 'weapon_shotgun', 'weapon_machinegun', 'weapon_sniper'];
                 pickupTypes = weaponDrops;
+              }
+              
+              // Epic weapon drops for bosses (guaranteed)
+              if (enemy.enemyType === 'boss') {
+                const epicWeapons = ['weapon_grenade', 'weapon_laser', 'weapon_machinegun'];
+                pickupTypes = epicWeapons;
               }
               
               const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
