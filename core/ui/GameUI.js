@@ -143,18 +143,29 @@ class GameUI {
       ctx.fillText('Press H for Help', this.width / 2 + 40, this.height - 10);
     }
     
-    // Active power-ups indicator
+    // Active power-ups indicator with timers
     let powerupY = this.height - 35;
-    if (player.invulnerable) {
+    const currentTime = performance.now();
+    
+    if (player.invulnerable && player.invulnerableEndTime) {
+      const timeLeft = Math.ceil((player.invulnerableEndTime - currentTime) / 1000);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px monospace';
-      ctx.fillText('⚡ INVULNERABLE', this.width / 2 + 80, powerupY);
+      ctx.fillText(`⚡ INVULNERABLE (${timeLeft}s)`, this.width / 2 + 80, powerupY);
       powerupY -= 20;
     }
-    if (player.hasDamageBoost) {
+    if (player.hasDamageBoost && player.damageBoostEndTime) {
+      const timeLeft = Math.ceil((player.damageBoostEndTime - currentTime) / 1000);
       ctx.fillStyle = '#ff0000';
       ctx.font = 'bold 14px monospace';
-      ctx.fillText('💥 DAMAGE BOOST', this.width / 2 + 80, powerupY);
+      ctx.fillText(`💥 DAMAGE BOOST (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.speedBoostActive && player.speedBoostEndTime) {
+      const timeLeft = Math.ceil((player.speedBoostEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#00ffff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`⚡ SPEED BOOST (${timeLeft}s)`, this.width / 2 + 80, powerupY);
       powerupY -= 20;
     }
     
