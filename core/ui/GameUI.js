@@ -9,6 +9,10 @@ class GameUI {
   drawHUD(ctx, player, gameState) {
     ctx.save();
     
+    // Apply HUD opacity setting
+    const hudOpacity = window.game ? window.game.hudOpacity : 0.9;
+    ctx.globalAlpha = hudOpacity;
+    
     // HUD Background (military style)
     ctx.fillStyle = 'rgba(26, 32, 38, 0.9)';
     ctx.fillRect(0, 0, this.width, 50);
@@ -19,6 +23,8 @@ class GameUI {
     ctx.lineWidth = 2;
     ctx.strokeRect(2, 2, this.width - 4, 46);
     ctx.strokeRect(2, this.height - 48, this.width - 4, 46);
+    
+    ctx.globalAlpha = 1; // Reset for text and other elements
     
     // Health
     ctx.fillStyle = '#00ff00';
@@ -110,6 +116,39 @@ class GameUI {
       powerupY -= 20;
     }
     
+    // FPS counter
+    if (window.game && window.game.showFPS) {
+      ctx.fillStyle = '#ffff00';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText(`FPS: ${window.game.fps}`, 10, this.height - 60);
+    }
+    
+    // Crosshair (drawn without camera transform)
+    if (window.game && window.game.crosshairStyle !== 'none') {
+      const mousePos = window.game.inputManager.getMousePosition();
+      const x = mousePos.x;
+      const y = mousePos.y;
+      
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 2;
+      
+      if (window.game.crosshairStyle === 'cross') {
+        ctx.beginPath();
+        ctx.moveTo(x - 10, y);
+        ctx.lineTo(x + 10, y);
+        ctx.moveTo(x, y - 10);
+        ctx.lineTo(x, y + 10);
+        ctx.stroke();
+      } else if (window.game.crosshairStyle === 'dot') {
+        ctx.fillStyle = '#00ff00';
+        ctx.fillRect(x - 2, y - 2, 4, 4);
+      } else if (window.game.crosshairStyle === 'circle') {
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    
     ctx.restore();
   }
 
@@ -161,30 +200,99 @@ class GameUI {
       ctx.fillText('Press ESC to go back', this.width / 2, this.height - 50);
     } else if (menuState === 'settings') {
       ctx.fillStyle = '#00ff00';
-      ctx.fillText('SETTINGS', this.width / 2, 150);
+      ctx.fillText('SETTINGS', this.width / 2, 80);
       
-      ctx.fillStyle = '#00ff00';
+      // Page indicator
+      const page = window.game ? window.game.settingsPage : 0;
+      ctx.fillStyle = '#888';
+      ctx.font = '16px monospace';
+      ctx.fillText(`Page ${page + 1}/3 - Use ← → to navigate`, this.width / 2, 110);
+      
       ctx.font = '20px monospace';
-      ctx.fillText('DIFFICULTY:', this.width / 2, 220);
       
-      // Difficulty options with current selection highlighted
-      const difficulties = [
-        { key: '1', name: 'EASY', value: 'easy' },
-        { key: '2', name: 'MEDIUM', value: 'medium' },
-        { key: '3', name: 'EXTREME', value: 'extreme' }
-      ];
-      
-      difficulties.forEach((diff, i) => {
-        const isSelected = window.game && window.game.difficulty === diff.value;
-        ctx.fillStyle = isSelected ? '#ffff00' : '#00ff00';
-        ctx.fillText(`${diff.key} - ${diff.name}${isSelected ? ' [SELECTED]' : ''}`, 
-                    this.width / 2, 260 + i * 35);
-      });
-      
-      ctx.fillStyle = '#00ff00';
-      ctx.fillText('AUDIO:', this.width / 2, 400);
-      const audioStatus = window.game && window.game.audioEnabled ? 'ON' : 'OFF';
-      ctx.fillText(`4 - Toggle Audio [${audioStatus}]`, this.width / 2, 440);
+      if (page === 0) {
+        // Page 0: Difficulty & Audio
+        ctx.fillStyle = '#ffff00';
+        ctx.fillText('DIFFICULTY & AUDIO', this.width / 2, 150);
+        
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '18px monospace';
+        ctx.fillText('DIFFICULTY:', this.width / 2, 190);
+        
+        const difficulties = [
+          { key: '1', name: 'EASY', value: 'easy' },
+          { key: '2', name: 'MEDIUM', value: 'medium' },
+          { key: '3', name: 'EXTREME', value: 'extreme' }
+        ];
+        
+        difficulties.forEach((diff, i) => {
+          const isSelected = window.game && window.game.difficulty === diff.value;
+          ctx.fillStyle = isSelected ? '#ffff00' : '#00ff00';
+          ctx.font = '16px monospace';
+          ctx.fillText(`${diff.key} - ${diff.name}${isSelected ? ' ✓' : ''}`, 
+                      this.width / 2, 220 + i * 30);
+        });
+        
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '18px monospace';
+        ctx.fillText('AUDIO:', this.width / 2, 330);
+        const audioStatus = window.game && window.game.audioEnabled ? 'ON' : 'OFF';
+        ctx.font = '16px monospace';
+        ctx.fillText(`4 - Toggle Audio [${audioStatus}]`, this.width / 2, 360);
+        
+        const masterVol = window.game ? Math.round(window.game.masterVolume * 100) : 100;
+        ctx.fillText(`5/6 - Master Volume: ${masterVol}%`, this.width / 2, 390);
+        
+        const sfxVol = window.game ? Math.round(window.game.sfxVolume * 100) : 80;
+        ctx.fillText(`7/8 - SFX Volume: ${sfxVol}%`, this.width / 2, 420);
+        
+        const musicVol = window.game ? Math.round(window.game.musicVolume * 100) : 70;
+        ctx.fillText(`9/0 - Music Volume: ${musicVol}%`, this.width / 2, 450);
+      }
+      else if (page === 1) {
+        // Page 1: Graphics & Display
+        ctx.fillStyle = '#ffff00';
+        ctx.fillText('GRAPHICS & DISPLAY', this.width / 2, 150);
+        
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '16px monospace';
+        
+        const screenShake = window.game && window.game.screenShake ? 'ON' : 'OFF';
+        ctx.fillText(`1 - Screen Shake [${screenShake}]`, this.width / 2, 200);
+        
+        const particleQuality = window.game ? window.game.particleQuality.toUpperCase() : 'HIGH';
+        ctx.fillText(`2 - Particle Quality [${particleQuality}]`, this.width / 2, 230);
+        
+        const showFPS = window.game && window.game.showFPS ? 'ON' : 'OFF';
+        ctx.fillText(`3 - Show FPS [${showFPS}]`, this.width / 2, 260);
+        
+        const camSmooth = window.game ? (window.game.cameraSmoothness * 100).toFixed(0) : '10';
+        ctx.fillText(`4/5 - Camera Smoothness: ${camSmooth}`, this.width / 2, 290);
+        
+        const crosshair = window.game ? window.game.crosshairStyle.toUpperCase() : 'CROSS';
+        ctx.fillText(`6 - Crosshair Style [${crosshair}]`, this.width / 2, 320);
+        
+        const hudOpacity = window.game ? Math.round(window.game.hudOpacity * 100) : 90;
+        ctx.fillText(`7/8 - HUD Opacity: ${hudOpacity}%`, this.width / 2, 350);
+      }
+      else if (page === 2) {
+        // Page 2: Gameplay & Accessibility
+        ctx.fillStyle = '#ffff00';
+        ctx.fillText('GAMEPLAY & ACCESSIBILITY', this.width / 2, 150);
+        
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '16px monospace';
+        
+        const autoReload = window.game && window.game.autoReload ? 'ON' : 'OFF';
+        ctx.fillText(`1 - Auto Reload [${autoReload}]`, this.width / 2, 200);
+        
+        const colorBlind = window.game ? window.game.colorBlindMode.toUpperCase() : 'NONE';
+        ctx.fillText(`2 - Color Blind Mode [${colorBlind}]`, this.width / 2, 230);
+        
+        ctx.fillStyle = '#888';
+        ctx.font = '14px monospace';
+        ctx.fillText('More options coming soon...', this.width / 2, 300);
+      }
       
       ctx.fillStyle = '#888';
       ctx.font = '16px monospace';

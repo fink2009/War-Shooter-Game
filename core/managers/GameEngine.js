@@ -48,12 +48,26 @@ class GameEngine {
     // Timing
     this.lastTime = 0;
     this.currentTime = 0;
+    this.fps = 60;
+    this.fpsFrames = [];
+    this.fpsUpdateTime = 0;
     
     // Settings
     this.difficulty = 'medium'; // easy, medium, extreme
     this.audioEnabled = true;
+    this.masterVolume = 1.0;
+    this.sfxVolume = 0.8;
     this.musicVolume = 0.7;
     this.selectedCharacter = 'soldier';
+    this.screenShake = true;
+    this.particleQuality = 'high'; // low, medium, high
+    this.showFPS = false;
+    this.cameraSmoothness = 0.1; // 0.05 = smooth, 0.3 = snappy
+    this.crosshairStyle = 'cross'; // cross, dot, circle, none
+    this.hudOpacity = 0.9;
+    this.colorBlindMode = 'none'; // none, protanopia, deuteranopia, tritanopia
+    this.autoReload = true;
+    this.settingsPage = 0; // For multi-page settings menu
     
     this.init();
   }
@@ -227,15 +241,73 @@ class GameEngine {
         this.menuState = 'main';
       }
     } else if (this.menuState === 'settings') {
-      if (this.inputManager.wasKeyPressed('1')) {
-        this.difficulty = 'easy';
-      } else if (this.inputManager.wasKeyPressed('2')) {
-        this.difficulty = 'medium';
-      } else if (this.inputManager.wasKeyPressed('3')) {
-        this.difficulty = 'extreme';
-      } else if (this.inputManager.wasKeyPressed('4')) {
-        this.audioEnabled = !this.audioEnabled;
-      } else if (this.inputManager.wasKeyPressed('Escape')) {
+      // Page navigation
+      if (this.inputManager.wasKeyPressed('ArrowLeft')) {
+        this.settingsPage = Math.max(0, this.settingsPage - 1);
+      } else if (this.inputManager.wasKeyPressed('ArrowRight')) {
+        this.settingsPage = Math.min(2, this.settingsPage + 1);
+      }
+      
+      // Page 0: Difficulty & Audio
+      if (this.settingsPage === 0) {
+        if (this.inputManager.wasKeyPressed('1')) {
+          this.difficulty = 'easy';
+        } else if (this.inputManager.wasKeyPressed('2')) {
+          this.difficulty = 'medium';
+        } else if (this.inputManager.wasKeyPressed('3')) {
+          this.difficulty = 'extreme';
+        } else if (this.inputManager.wasKeyPressed('4')) {
+          this.audioEnabled = !this.audioEnabled;
+        } else if (this.inputManager.wasKeyPressed('5')) {
+          this.masterVolume = Math.max(0, this.masterVolume - 0.1);
+        } else if (this.inputManager.wasKeyPressed('6')) {
+          this.masterVolume = Math.min(1, this.masterVolume + 0.1);
+        } else if (this.inputManager.wasKeyPressed('7')) {
+          this.sfxVolume = Math.max(0, this.sfxVolume - 0.1);
+        } else if (this.inputManager.wasKeyPressed('8')) {
+          this.sfxVolume = Math.min(1, this.sfxVolume + 0.1);
+        } else if (this.inputManager.wasKeyPressed('9')) {
+          this.musicVolume = Math.max(0, this.musicVolume - 0.1);
+        } else if (this.inputManager.wasKeyPressed('0')) {
+          this.musicVolume = Math.min(1, this.musicVolume + 0.1);
+        }
+      }
+      // Page 1: Graphics & Display
+      else if (this.settingsPage === 1) {
+        if (this.inputManager.wasKeyPressed('1')) {
+          this.screenShake = !this.screenShake;
+        } else if (this.inputManager.wasKeyPressed('2')) {
+          const qualities = ['low', 'medium', 'high'];
+          const idx = qualities.indexOf(this.particleQuality);
+          this.particleQuality = qualities[(idx + 1) % qualities.length];
+        } else if (this.inputManager.wasKeyPressed('3')) {
+          this.showFPS = !this.showFPS;
+        } else if (this.inputManager.wasKeyPressed('4')) {
+          this.cameraSmoothness = Math.max(0.05, this.cameraSmoothness - 0.05);
+        } else if (this.inputManager.wasKeyPressed('5')) {
+          this.cameraSmoothness = Math.min(0.3, this.cameraSmoothness + 0.05);
+        } else if (this.inputManager.wasKeyPressed('6')) {
+          const styles = ['cross', 'dot', 'circle', 'none'];
+          const idx = styles.indexOf(this.crosshairStyle);
+          this.crosshairStyle = styles[(idx + 1) % styles.length];
+        } else if (this.inputManager.wasKeyPressed('7')) {
+          this.hudOpacity = Math.max(0.3, this.hudOpacity - 0.1);
+        } else if (this.inputManager.wasKeyPressed('8')) {
+          this.hudOpacity = Math.min(1, this.hudOpacity + 0.1);
+        }
+      }
+      // Page 2: Gameplay & Accessibility
+      else if (this.settingsPage === 2) {
+        if (this.inputManager.wasKeyPressed('1')) {
+          this.autoReload = !this.autoReload;
+        } else if (this.inputManager.wasKeyPressed('2')) {
+          const modes = ['none', 'protanopia', 'deuteranopia', 'tritanopia'];
+          const idx = modes.indexOf(this.colorBlindMode);
+          this.colorBlindMode = modes[(idx + 1) % modes.length];
+        }
+      }
+      
+      if (this.inputManager.wasKeyPressed('Escape')) {
         this.menuState = 'main';
       }
     } else if (this.menuState === 'controls') {
@@ -278,6 +350,12 @@ class GameEngine {
         
         // Reload
         if (this.inputManager.isKeyPressed('r') || this.inputManager.isKeyPressed('R')) {
+          this.player.reload(this.currentTime);
+        }
+        
+        // Auto-reload when out of ammo
+        if (this.autoReload && this.player.getCurrentWeapon().currentAmmo === 0 && 
+            !this.player.getCurrentWeapon().isReloading) {
           this.player.reload(this.currentTime);
         }
         
@@ -598,6 +676,16 @@ class GameEngine {
       const deltaTime = timestamp - this.lastTime;
       this.lastTime = timestamp;
       this.currentTime = timestamp;
+      
+      // Calculate FPS
+      if (deltaTime > 0) {
+        this.fpsFrames.push(1000 / deltaTime);
+        if (this.fpsFrames.length > 60) this.fpsFrames.shift();
+        if (timestamp - this.fpsUpdateTime > 500) {
+          this.fps = Math.round(this.fpsFrames.reduce((a, b) => a + b, 0) / this.fpsFrames.length);
+          this.fpsUpdateTime = timestamp;
+        }
+      }
       
       // Handle input
       this.handleInput();
