@@ -28,7 +28,18 @@ class Projectile extends Entity {
   }
 
   render(ctx) {
-    ctx.fillStyle = this.color;
+    // Retro military projectile style
+    ctx.fillStyle = '#ffff00';
     ctx.fillRect(this.x, this.y, this.width, this.height);
+    
+    // Add tracer effect
+    ctx.fillStyle = '#ffaa00';
+    ctx.fillRect(this.x - 2, this.y, 2, this.height);
+    
+    // Add muzzle flash glow
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#ffff00';
+    ctx.fillRect(this.x - 4, this.y - 2, this.width + 4, this.height + 4);
+    ctx.globalAlpha = 1;
   }
 }

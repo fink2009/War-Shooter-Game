@@ -9,6 +9,11 @@ class GameEngine {
     this.mode = 'campaign'; // campaign, survival, multiplayer
     this.menuState = 'main';
     
+    // Settings
+    this.difficulty = 'medium'; // easy, medium, extreme
+    this.audioEnabled = true;
+    this.musicVolume = 0.7;
+    
     // Systems
     this.inputManager = new InputManager();
     this.assetManager = new AssetManager();
@@ -42,6 +47,9 @@ class GameEngine {
     this.currentTime = 0;
     
     // Settings
+    this.difficulty = 'medium'; // easy, medium, extreme
+    this.audioEnabled = true;
+    this.musicVolume = 0.7;
     this.selectedCharacter = 'soldier';
     
     this.init();
@@ -81,8 +89,18 @@ class GameEngine {
     this.wave = 1;
     this.waveTimer = 0;
     
-    // Create player
+    // Create player with difficulty modifiers
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
+    
+    // Apply difficulty modifiers to player
+    if (this.difficulty === 'easy') {
+      this.player.maxHealth = Math.floor(this.player.maxHealth * 1.5);
+      this.player.health = this.player.maxHealth;
+    } else if (this.difficulty === 'extreme') {
+      this.player.maxHealth = Math.floor(this.player.maxHealth * 0.7);
+      this.player.health = this.player.maxHealth;
+    }
+    
     this.camera.follow(this.player);
     
     // Clear arrays
@@ -104,7 +122,18 @@ class GameEngine {
   }
 
   spawnWave() {
-    const enemyCount = 5 + this.wave * 2;
+    let enemyCount = 5 + this.wave * 2;
+    let difficultyMultiplier = 1.0;
+    
+    // Apply difficulty modifiers
+    if (this.difficulty === 'easy') {
+      enemyCount = Math.floor(enemyCount * 0.6);
+      difficultyMultiplier = 0.7;
+    } else if (this.difficulty === 'extreme') {
+      enemyCount = Math.floor(enemyCount * 1.5);
+      difficultyMultiplier = 1.5;
+    }
+    
     this.enemiesRemaining = enemyCount;
     
     for (let i = 0; i < enemyCount; i++) {
@@ -113,18 +142,32 @@ class GameEngine {
       const type = types[Math.floor(Math.random() * types.length)];
       
       const enemy = new EnemyUnit(x, this.groundLevel - 48, type);
+      enemy.applyDifficulty(difficultyMultiplier);
       this.enemies.push(enemy);
       this.collisionSystem.add(enemy);
     }
   }
 
   spawnCampaignEnemies() {
+    let enemyCount = 10;
+    let difficultyMultiplier = 1.0;
+    
+    // Apply difficulty modifiers
+    if (this.difficulty === 'easy') {
+      enemyCount = 6;
+      difficultyMultiplier = 0.7;
+    } else if (this.difficulty === 'extreme') {
+      enemyCount = 15;
+      difficultyMultiplier = 1.5;
+    }
+    
     // Spawn enemies across the level
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < enemyCount; i++) {
       const x = 500 + i * 200 + Math.random() * 100;
       const type = i % 3 === 0 ? 'heavy' : 'infantry';
       
       const enemy = new EnemyUnit(x, this.groundLevel - 48, type);
+      enemy.applyDifficulty(difficultyMultiplier);
       this.enemies.push(enemy);
       this.collisionSystem.add(enemy);
     }
@@ -155,6 +198,24 @@ class GameEngine {
         this.startGame(this.mode, 'heavy');
       } else if (this.inputManager.wasKeyPressed('4')) {
         this.startGame(this.mode, 'medic');
+      } else if (this.inputManager.wasKeyPressed('Escape')) {
+        this.menuState = 'main';
+      }
+    } else if (this.menuState === 'settings') {
+      if (this.inputManager.wasKeyPressed('1')) {
+        this.difficulty = 'easy';
+      } else if (this.inputManager.wasKeyPressed('2')) {
+        this.difficulty = 'medium';
+      } else if (this.inputManager.wasKeyPressed('3')) {
+        this.difficulty = 'extreme';
+      } else if (this.inputManager.wasKeyPressed('4')) {
+        this.audioEnabled = !this.audioEnabled;
+      } else if (this.inputManager.wasKeyPressed('Escape')) {
+        this.menuState = 'main';
+      }
+    } else if (this.menuState === 'controls') {
+      if (this.inputManager.wasKeyPressed('Escape')) {
+        this.menuState = 'main';
       }
     } else if (this.state === 'menu') {
       if (this.inputManager.wasKeyPressed('1')) {
@@ -163,6 +224,10 @@ class GameEngine {
       } else if (this.inputManager.wasKeyPressed('2')) {
         this.menuState = 'character';
         this.mode = 'survival';
+      } else if (this.inputManager.wasKeyPressed('3')) {
+        this.menuState = 'settings';
+      } else if (this.inputManager.wasKeyPressed('4')) {
+        this.menuState = 'controls';
       }
     } else if (this.state === 'playing') {
       // Player controls
@@ -365,8 +430,8 @@ class GameEngine {
   }
 
   render() {
-    // Clear canvas
-    this.ctx.fillStyle = '#87ceeb'; // Sky blue
+    // Clear canvas with military theme
+    this.ctx.fillStyle = '#2d3748'; // Dark military gray-blue
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     if (this.state === 'loading') {
@@ -374,7 +439,7 @@ class GameEngine {
       return;
     }
     
-    if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.menuState === 'character') {
+    if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls') {
       // Draw game in background if paused
       if (this.state === 'paused') {
         this.renderGame();
@@ -402,13 +467,48 @@ class GameEngine {
     // Apply camera transform
     this.camera.apply(this.ctx);
     
-    // Draw ground
-    this.ctx.fillStyle = '#8b7355';
+    // Draw sky with gradient (retro military theme)
+    const skyGradient = this.ctx.createLinearGradient(0, 0, 0, this.groundLevel);
+    skyGradient.addColorStop(0, '#4a5568'); // Dark gray-blue
+    skyGradient.addColorStop(1, '#6b7280'); // Lighter gray
+    this.ctx.fillStyle = skyGradient;
+    this.ctx.fillRect(0, 0, this.worldWidth, this.groundLevel);
+    
+    // Draw distant mountains/buildings (parallax background)
+    this.ctx.fillStyle = '#2d3748';
+    for (let i = 0; i < this.worldWidth; i += 300) {
+      const height = 100 + Math.sin(i * 0.01) * 50;
+      this.ctx.fillRect(i, this.groundLevel - height, 250, height);
+    }
+    
+    // Draw ground (military bunker style)
+    this.ctx.fillStyle = '#4a4a3a';
     this.ctx.fillRect(0, this.groundLevel, this.worldWidth, this.worldHeight - this.groundLevel);
     
-    // Draw grass on top of ground
-    this.ctx.fillStyle = '#228b22';
-    this.ctx.fillRect(0, this.groundLevel - 5, this.worldWidth, 5);
+    // Draw grass/debris on top of ground (retro style)
+    this.ctx.fillStyle = '#5a5a4a';
+    for (let i = 0; i < this.worldWidth; i += 20) {
+      const height = 3 + Math.floor(Math.random() * 3);
+      this.ctx.fillRect(i, this.groundLevel - height, 15, height);
+    }
+    
+    // Draw obstacles/cover (military crates)
+    this.ctx.fillStyle = '#654321';
+    for (let i = 0; i < this.worldWidth; i += 400) {
+      const x = i + 100;
+      const crateSize = 30;
+      this.ctx.fillRect(x, this.groundLevel - crateSize, crateSize, crateSize);
+      // Crate detail
+      this.ctx.strokeStyle = '#4a3219';
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(x, this.groundLevel - crateSize, crateSize, crateSize);
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, this.groundLevel - crateSize / 2);
+      this.ctx.lineTo(x + crateSize, this.groundLevel - crateSize / 2);
+      this.ctx.moveTo(x + crateSize / 2, this.groundLevel - crateSize);
+      this.ctx.lineTo(x + crateSize / 2, this.groundLevel);
+      this.ctx.stroke();
+    }
     
     // Draw pickups
     this.pickups.forEach(p => p.render(this.ctx));

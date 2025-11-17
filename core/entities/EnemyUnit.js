@@ -81,6 +81,13 @@ class EnemyUnit extends Entity {
     this.health = this.maxHealth;
   }
 
+  applyDifficulty(multiplier) {
+    this.maxHealth = Math.floor(this.maxHealth * multiplier);
+    this.health = this.maxHealth;
+    this.speed *= multiplier;
+    this.damage = Math.floor(this.damage * multiplier);
+  }
+
   takeDamage(amount) {
     this.health -= amount;
     if (this.health <= 0) {
@@ -272,29 +279,70 @@ class EnemyUnit extends Entity {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(this.x, this.y + this.height, this.width, 5);
     
-    // Draw enemy
-    ctx.fillStyle = this.color;
+    // Enemy military colors based on type (different from player)
+    let bodyColor, armorColor;
+    switch (this.enemyType) {
+      case 'infantry':
+        bodyColor = '#8b4513'; // Brown
+        armorColor = '#6b3510';
+        break;
+      case 'heavy':
+        bodyColor = '#4a4a4a'; // Dark gray
+        armorColor = '#3a3a3a';
+        break;
+      case 'sniper':
+        bodyColor = '#2d4a2d'; // Dark green
+        armorColor = '#1d3a1d';
+        break;
+      case 'scout':
+        bodyColor = '#9b5513'; // Light brown
+        armorColor = '#7b4510';
+        break;
+      default:
+        bodyColor = '#8b4513';
+        armorColor = '#6b3510';
+    }
+    
+    // Draw enemy body (retro style)
+    ctx.fillStyle = bodyColor;
     ctx.fillRect(this.x, this.y, this.width, this.height);
     
-    // Draw weapon
-    ctx.fillStyle = '#222';
+    // Draw helmet/head
+    ctx.fillStyle = armorColor;
+    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, 15);
+    
+    // Draw armor plates
+    ctx.fillStyle = armorColor;
+    ctx.fillRect(this.x + 3, this.y + 22, this.width - 6, 8);
+    
+    // Draw weapon (more prominent)
+    ctx.fillStyle = '#1a1a1a';
     const weaponX = this.x + this.width / 2 + (this.facing * 10);
     const weaponY = this.y + this.height / 2;
-    ctx.fillRect(weaponX, weaponY - 2, 10 * this.facing, 4);
+    ctx.fillRect(weaponX, weaponY - 3, 12 * this.facing, 6);
     
-    // Draw health bar
+    // Weapon detail
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(weaponX + (8 * this.facing), weaponY - 1, 4 * this.facing, 2);
+    
+    // Draw health bar (enemy style)
     const barWidth = this.width;
     const barHeight = 3;
     const healthPercent = this.health / this.maxHealth;
     
     ctx.fillStyle = '#660000';
     ctx.fillRect(this.x, this.y - 8, barWidth, barHeight);
-    ctx.fillStyle = '#ff0000';
+    ctx.fillStyle = '#ff3333';
     ctx.fillRect(this.x, this.y - 8, barWidth * healthPercent, barHeight);
     
-    // Draw AI state indicator (debug)
-    ctx.fillStyle = '#fff';
+    // Health bar border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x, this.y - 8, barWidth, barHeight);
+    
+    // Draw AI state indicator (debug) - retro style
+    ctx.fillStyle = '#ffff00';
     ctx.font = '8px monospace';
-    ctx.fillText(this.aiState.substring(0, 3), this.x, this.y - 12);
+    ctx.fillText(this.aiState.substring(0, 3).toUpperCase(), this.x, this.y - 12);
   }
 }
