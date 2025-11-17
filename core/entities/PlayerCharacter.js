@@ -211,6 +211,14 @@ class PlayerCharacter extends Entity {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(this.x, this.y + this.height, this.width, 5);
     
+    // Draw damage boost aura
+    if (this.hasDamageBoost) {
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(this.x - 3, this.y - 3, this.width + 6, this.height + 6);
+      ctx.globalAlpha = 1;
+    }
+    
     // Draw player
     if (this.invulnerable) {
       ctx.globalAlpha = 0.5;

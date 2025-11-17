@@ -73,6 +73,13 @@ class GameUI {
     ctx.fillStyle = '#ffff00';
     ctx.fillText(`KILLS: ${gameState.kills}`, this.width - 150, 40);
     
+    // Combo indicator
+    if (gameState.combo > 1) {
+      ctx.fillStyle = '#ff6600';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText(`${gameState.combo}X COMBO!`, this.width / 2 - 60, 50);
+    }
+    
     // Wave info (for survival mode)
     if (gameState.mode === 'survival') {
       ctx.fillStyle = '#00ff00';
@@ -86,6 +93,21 @@ class GameUI {
       ctx.fillStyle = '#888';
       ctx.font = '12px monospace';
       ctx.fillText(`[${window.game.difficulty.toUpperCase()}]`, this.width / 2 - 30, this.height - 10);
+    }
+    
+    // Active power-ups indicator
+    let powerupY = this.height - 35;
+    if (player.invulnerable) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText('⚡ INVULNERABLE', this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasDamageBoost) {
+      ctx.fillStyle = '#ff0000';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText('💥 DAMAGE BOOST', this.width / 2 + 80, powerupY);
+      powerupY -= 20;
     }
     
     ctx.restore();

@@ -41,6 +41,9 @@ class GameEngine {
     this.enemiesRemaining = 0;
     this.waveTimer = 0;
     this.waveDuration = 30000; // 30 seconds per wave
+    this.combo = 0;
+    this.comboTimer = 0;
+    this.comboTimeout = 3000; // 3 seconds to maintain combo
     
     // Timing
     this.lastTime = 0;
@@ -89,6 +92,8 @@ class GameEngine {
     this.kills = 0;
     this.wave = 1;
     this.waveTimer = 0;
+    this.combo = 0;
+    this.comboTimer = 0;
     
     // Create player with difficulty modifiers
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
@@ -101,6 +106,14 @@ class GameEngine {
       this.player.maxHealth = Math.floor(this.player.maxHealth * 0.7);
       this.player.health = this.player.maxHealth;
     }
+    
+    // Add spawn protection to prevent instant death
+    this.player.invulnerable = true;
+    setTimeout(() => {
+      if (this.player && this.player.active) {
+        this.player.invulnerable = false;
+      }
+    }, 2000); // 2 seconds of spawn protection
     
     this.camera.follow(this.player);
     
@@ -344,6 +357,11 @@ class GameEngine {
     // Update particles
     this.particleSystem.update(deltaTime);
     
+    // Update combo timer
+    if (this.combo > 0 && this.currentTime - this.comboTimer > this.comboTimeout) {
+      this.combo = 0;
+    }
+    
     // Update camera
     this.camera.update();
     
@@ -395,7 +413,13 @@ class GameEngine {
             
             if (killed) {
               this.kills++;
-              this.score += 100;
+              
+              // Combo system
+              this.combo++;
+              this.comboTimer = this.currentTime;
+              const comboBonus = Math.min(this.combo, 10) * 10; // Max 100 bonus points at 10x combo
+              this.score += 100 + comboBonus;
+              
               this.particleSystem.createExplosion(
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2
@@ -457,7 +481,8 @@ class GameEngine {
         kills: this.kills,
         wave: this.wave,
         enemiesRemaining: this.enemiesRemaining,
-        mode: this.mode
+        mode: this.mode,
+        combo: this.combo
       });
     }
   }
