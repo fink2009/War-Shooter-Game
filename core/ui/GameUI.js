@@ -305,11 +305,13 @@ class GameUI {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, this.width, this.height);
     
-    // Title
-    ctx.fillStyle = '#00ff00';
-    ctx.font = 'bold 48px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('WAR SHOOTER', this.width / 2, 100);
+    // Title - only show on main menu, character select, paused, gameover, and victory screens
+    if (['main', 'character', 'paused', 'gameover', 'victory'].includes(menuState)) {
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 48px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('WAR SHOOTER', this.width / 2, 100);
+    }
     
     ctx.font = '24px monospace';
     
