@@ -44,6 +44,12 @@ class GameEngine {
     this.combo = 0;
     this.comboTimer = 0;
     this.comboTimeout = 3000; // 3 seconds to maintain combo
+    this.maxCombo = 0;
+    this.totalDamageTaken = 0;
+    this.totalDamageDealt = 0;
+    this.shotsFired = 0;
+    this.shotsHit = 0;
+    this.playTime = 0;
     
     // Timing
     this.lastTime = 0;
@@ -108,6 +114,13 @@ class GameEngine {
     this.waveTimer = 0;
     this.combo = 0;
     this.comboTimer = 0;
+    this.maxCombo = 0;
+    this.totalDamageTaken = 0;
+    this.totalDamageDealt = 0;
+    this.shotsFired = 0;
+    this.shotsHit = 0;
+    this.playTime = 0;
+    this.gameStartTime = performance.now();
     
     // Create player with difficulty modifiers
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
@@ -336,12 +349,15 @@ class GameEngine {
           const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime);
           
           if (result) {
+            // Track shots fired
             if (Array.isArray(result)) {
+              this.shotsFired += result.length;
               result.forEach(p => {
                 this.projectiles.push(p);
                 this.collisionSystem.add(p);
               });
             } else {
+              this.shotsFired++;
               this.projectiles.push(result);
               this.collisionSystem.add(result);
             }
@@ -504,11 +520,16 @@ class GameEngine {
             const killed = enemy.takeDamage(proj.damage);
             proj.destroy();
             
+            // Track hits and damage
+            this.shotsHit++;
+            this.totalDamageDealt += proj.damage;
+            
             if (killed) {
               this.kills++;
               
               // Combo system
               this.combo++;
+              if (this.combo > this.maxCombo) this.maxCombo = this.combo;
               this.comboTimer = this.currentTime;
               const comboBonus = Math.min(this.combo, 10) * 10; // Max 100 bonus points at 10x combo
               const totalPoints = 100 + comboBonus;
@@ -518,6 +539,9 @@ class GameEngine {
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2
               );
+              
+              // Screen shake on enemy kill
+              this.camera.shake(3, 150);
               
               // Show score popup
               let popupText = `+${totalPoints}`;
@@ -555,7 +579,10 @@ class GameEngine {
       // Enemy projectiles hitting player
       else {
         if (this.player.active && proj.collidesWith(this.player)) {
-          this.player.takeDamage(proj.damage);
+          const damaged = this.player.takeDamage(proj.damage);
+          if (damaged) {
+            this.totalDamageTaken += proj.damage;
+          }
           proj.destroy();
           this.particleSystem.createExplosion(
             this.player.x + this.player.width / 2,
@@ -563,6 +590,8 @@ class GameEngine {
             10,
             '#ff0000'
           );
+          // Screen shake when player takes damage
+          this.camera.shake(5, 200);
         }
       }
     });

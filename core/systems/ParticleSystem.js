@@ -39,6 +39,11 @@ class ParticleSystem {
   }
 
   createExplosion(x, y, count = 20, color = '#ff6600') {
+    // Adjust particle count based on quality setting
+    const quality = window.game ? window.game.particleQuality : 'high';
+    if (quality === 'low') count = Math.floor(count * 0.3);
+    else if (quality === 'medium') count = Math.floor(count * 0.6);
+    
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = Math.random() * 5 + 2;
@@ -51,6 +56,11 @@ class ParticleSystem {
   }
 
   createSmoke(x, y, count = 10) {
+    // Adjust particle count based on quality setting
+    const quality = window.game ? window.game.particleQuality : 'high';
+    if (quality === 'low') count = Math.floor(count * 0.3);
+    else if (quality === 'medium') count = Math.floor(count * 0.6);
+    
     for (let i = 0; i < count; i++) {
       const dx = (Math.random() - 0.5) * 2;
       const dy = -Math.random() * 2 - 1;

@@ -352,19 +352,61 @@ class GameUI {
     } else if (menuState === 'gameover') {
       ctx.fillStyle = '#ff0000';
       ctx.textAlign = 'center';
-      ctx.fillText('GAME OVER', this.width / 2, 200);
+      ctx.font = 'bold 36px monospace';
+      ctx.fillText('GAME OVER', this.width / 2, 120);
+      
+      // Display stats
+      ctx.fillStyle = '#ffff00';
+      ctx.font = '20px monospace';
+      ctx.fillText(`Final Score: ${this.lastScore || 0}`, this.width / 2, 170);
+      
+      if (window.game) {
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '16px monospace';
+        const playTime = ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
+        ctx.fillText(`Play Time: ${playTime}s`, this.width / 2, 210);
+        ctx.fillText(`Kills: ${window.game.kills}`, this.width / 2, 235);
+        ctx.fillText(`Max Combo: ${window.game.maxCombo}x`, this.width / 2, 260);
+        const accuracy = window.game.shotsFired > 0 ? 
+          ((window.game.shotsHit / window.game.shotsFired) * 100).toFixed(1) : 0;
+        ctx.fillText(`Accuracy: ${accuracy}%`, this.width / 2, 285);
+        ctx.fillText(`Damage Dealt: ${window.game.totalDamageDealt}`, this.width / 2, 310);
+        ctx.fillText(`Damage Taken: ${window.game.totalDamageTaken}`, this.width / 2, 335);
+      }
+      
       ctx.fillStyle = '#fff';
-      ctx.fillText(`Final Score: ${this.lastScore || 0}`, this.width / 2, 250);
-      ctx.fillText('Press R to Restart', this.width / 2, 290);
-      ctx.fillText('Press M for Main Menu', this.width / 2, 330);
+      ctx.font = '18px monospace';
+      ctx.fillText('Press R to Restart', this.width / 2, 390);
+      ctx.fillText('Press M for Main Menu', this.width / 2, 420);
     } else if (menuState === 'victory') {
       ctx.fillStyle = '#00ff00';
       ctx.textAlign = 'center';
-      ctx.fillText('VICTORY!', this.width / 2, 200);
+      ctx.font = 'bold 36px monospace';
+      ctx.fillText('VICTORY!', this.width / 2, 120);
+      
+      // Display stats
+      ctx.fillStyle = '#ffff00';
+      ctx.font = '20px monospace';
+      ctx.fillText(`Final Score: ${this.lastScore || 0}`, this.width / 2, 170);
+      
+      if (window.game) {
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '16px monospace';
+        const playTime = ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
+        ctx.fillText(`Play Time: ${playTime}s`, this.width / 2, 210);
+        ctx.fillText(`Kills: ${window.game.kills}`, this.width / 2, 235);
+        ctx.fillText(`Max Combo: ${window.game.maxCombo}x`, this.width / 2, 260);
+        const accuracy = window.game.shotsFired > 0 ? 
+          ((window.game.shotsHit / window.game.shotsFired) * 100).toFixed(1) : 0;
+        ctx.fillText(`Accuracy: ${accuracy}%`, this.width / 2, 285);
+        ctx.fillText(`Damage Dealt: ${window.game.totalDamageDealt}`, this.width / 2, 310);
+        ctx.fillText(`Damage Taken: ${window.game.totalDamageTaken}`, this.width / 2, 335);
+      }
+      
       ctx.fillStyle = '#fff';
-      ctx.fillText(`Final Score: ${this.lastScore || 0}`, this.width / 2, 250);
-      ctx.fillText('Press R to Restart', this.width / 2, 290);
-      ctx.fillText('Press M for Main Menu', this.width / 2, 330);
+      ctx.font = '18px monospace';
+      ctx.fillText('Press R to Restart', this.width / 2, 390);
+      ctx.fillText('Press M for Main Menu', this.width / 2, 420);
     }
     
     ctx.textAlign = 'left';
