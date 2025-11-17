@@ -127,12 +127,23 @@ class GameUI {
       ctx.fillText(`${gameState.combo}X COMBO!`, this.width / 2 - 60, 50);
     }
     
-    // Wave info (for survival mode)
+    // Wave/Level info
     if (gameState.mode === 'survival') {
       ctx.fillStyle = '#00ff00';
       ctx.fillText(`WAVE: ${gameState.wave}`, this.width / 2 - 50, 20);
       ctx.fillStyle = '#ffff00';
       ctx.fillText(`ENEMIES: ${gameState.enemiesRemaining}`, this.width / 2 - 50, 40);
+    } else if (gameState.mode === 'campaign' && window.game) {
+      ctx.fillStyle = '#00ff00';
+      ctx.fillText(`LEVEL: ${window.game.currentLevel}/${window.game.maxLevel}`, this.width / 2 - 50, 20);
+      if (window.game.currentLevelName) {
+        ctx.fillStyle = '#ffff00';
+        ctx.font = '14px monospace';
+        ctx.fillText(window.game.currentLevelName, this.width / 2 - 50, 40);
+        ctx.font = '16px monospace';
+      }
+      ctx.fillStyle = '#ffff00';
+      ctx.fillText(`ENEMIES: ${gameState.enemiesRemaining}`, this.width / 2 - 50, 55);
     }
     
     // Difficulty indicator and help hint
@@ -631,6 +642,28 @@ class GameUI {
       ctx.font = '18px monospace';
       ctx.fillText('Press R to Restart', this.width / 2, 390);
       ctx.fillText('Press M for Main Menu', this.width / 2, 420);
+    } else if (menuState === 'levelcomplete') {
+      ctx.fillStyle = '#00ff00';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 36px monospace';
+      ctx.fillText('LEVEL COMPLETE!', this.width / 2, 150);
+      
+      if (window.game) {
+        ctx.fillStyle = '#ffff00';
+        ctx.font = '24px monospace';
+        ctx.fillText(`Level ${window.game.currentLevel} - ${window.game.currentLevelName || 'Complete'}`, this.width / 2, 200);
+        
+        const levelBonus = window.game.currentLevel * 1000;
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '20px monospace';
+        ctx.fillText(`Bonus: +${levelBonus}`, this.width / 2, 250);
+        ctx.fillText(`Total Score: ${window.game.score}`, this.width / 2, 280);
+        
+        ctx.fillStyle = '#888';
+        ctx.font = '18px monospace';
+        ctx.fillText('Preparing next level...', this.width / 2, 350);
+        ctx.fillText('Get ready!', this.width / 2, 380);
+      }
     }
     
     ctx.textAlign = 'left';
