@@ -79,6 +79,40 @@ class GameUI {
     ctx.fillStyle = '#ffff00';
     ctx.fillText(`KILLS: ${gameState.kills}`, this.width - 150, 40);
     
+    // Special Ability indicator
+    if (player.specialAbilityName) {
+      const cooldownRemaining = Math.max(0, player.specialAbilityCooldown - (window.game.currentTime - player.lastSpecialUse));
+      const cooldownPercent = 1 - (cooldownRemaining / player.specialAbilityCooldown);
+      
+      ctx.fillStyle = '#00ff00';
+      ctx.font = '14px monospace';
+      ctx.fillText(`ABILITY [E]: ${player.specialAbilityName}`, 220, this.height - 35);
+      
+      // Cooldown bar
+      const abilityBarWidth = 150;
+      const abilityBarHeight = 8;
+      ctx.fillStyle = '#330000';
+      ctx.fillRect(220, this.height - 25, abilityBarWidth, abilityBarHeight);
+      
+      if (cooldownRemaining <= 0) {
+        ctx.fillStyle = '#00ff00';
+        ctx.fillRect(220, this.height - 25, abilityBarWidth, abilityBarHeight);
+        ctx.fillStyle = '#00ff00';
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText('READY!', 380, this.height - 18);
+      } else {
+        ctx.fillStyle = '#ffff00';
+        ctx.fillRect(220, this.height - 25, abilityBarWidth * cooldownPercent, abilityBarHeight);
+        ctx.fillStyle = '#888';
+        ctx.font = '12px monospace';
+        ctx.fillText(`${(cooldownRemaining / 1000).toFixed(1)}s`, 380, this.height - 18);
+      }
+      
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(220, this.height - 25, abilityBarWidth, abilityBarHeight);
+    }
+    
     // Combo indicator
     if (gameState.combo > 1) {
       ctx.fillStyle = '#ff6600';
@@ -121,6 +155,61 @@ class GameUI {
       ctx.fillStyle = '#ffff00';
       ctx.font = 'bold 16px monospace';
       ctx.fillText(`FPS: ${window.game.fps}`, 10, this.height - 60);
+    }
+    
+    // Minimap
+    if (window.game && gameState.mode) {
+      const minimapWidth = 150;
+      const minimapHeight = 80;
+      const minimapX = this.width - minimapWidth - 10;
+      const minimapY = 60;
+      
+      // Minimap background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(minimapX, minimapY, minimapWidth, minimapHeight);
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(minimapX, minimapY, minimapWidth, minimapHeight);
+      
+      // Scale factor for world to minimap
+      const worldWidth = window.game.worldWidth || 3000;
+      const scaleX = minimapWidth / worldWidth;
+      const scaleY = minimapHeight / (window.game.worldHeight || 600);
+      
+      // Draw player
+      const playerMapX = minimapX + (player.x * scaleX);
+      const playerMapY = minimapY + (player.y * scaleY);
+      ctx.fillStyle = '#00ff00';
+      ctx.fillRect(playerMapX - 2, playerMapY - 2, 4, 4);
+      
+      // Draw enemies
+      if (window.game.enemies) {
+        window.game.enemies.forEach(enemy => {
+          if (enemy.active) {
+            const enemyMapX = minimapX + (enemy.x * scaleX);
+            const enemyMapY = minimapY + (enemy.y * scaleY);
+            ctx.fillStyle = enemy.enemyType === 'boss' ? '#ff0000' : '#ff6666';
+            ctx.fillRect(enemyMapX - 1, enemyMapY - 1, 2, 2);
+          }
+        });
+      }
+      
+      // Draw pickups
+      if (window.game.pickups) {
+        window.game.pickups.forEach(pickup => {
+          if (pickup.active) {
+            const pickupMapX = minimapX + (pickup.x * scaleX);
+            const pickupMapY = minimapY + (pickup.y * scaleY);
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(pickupMapX - 1, pickupMapY - 1, 2, 2);
+          }
+        });
+      }
+      
+      // Minimap label
+      ctx.fillStyle = '#00ff00';
+      ctx.font = '10px monospace';
+      ctx.fillText('MAP', minimapX + 5, minimapY + 12);
     }
     
     // Crosshair (drawn without camera transform)
@@ -315,6 +404,7 @@ class GameUI {
         '  Mouse - Aim',
         '  Left Click - Shoot',
         '  R - Reload',
+        '  E/Q - Special Ability',
         '  1/2/3/4 - Switch Weapons',
         '',
         'GAME:',

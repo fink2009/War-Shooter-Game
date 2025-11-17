@@ -396,6 +396,18 @@ class GameEngine {
           this.player.roll(this.currentTime);
         }
         
+        // Special Ability (E key or Q key)
+        if (this.inputManager.wasKeyPressed('e') || this.inputManager.wasKeyPressed('E') ||
+            this.inputManager.wasKeyPressed('q') || this.inputManager.wasKeyPressed('Q')) {
+          const result = this.player.useSpecialAbility(this.currentTime, this);
+          if (result) {
+            // Visual/audio feedback for ability use
+            if (result === 'airstrike') {
+              this.camera.shake(10, 500);
+            }
+          }
+        }
+        
         // Weapon switching
         if (this.inputManager.isKeyPressed('1')) {
           this.player.switchWeapon(0);
