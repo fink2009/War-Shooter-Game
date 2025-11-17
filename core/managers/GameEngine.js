@@ -19,6 +19,7 @@ class GameEngine {
     this.assetManager = new AssetManager();
     this.collisionSystem = new CollisionSystem();
     this.particleSystem = new ParticleSystem();
+    this.achievementSystem = new AchievementSystem();
     this.ui = new GameUI(canvas);
     
     // World settings
@@ -50,6 +51,9 @@ class GameEngine {
     this.shotsFired = 0;
     this.shotsHit = 0;
     this.playTime = 0;
+    this.bossesKilled = 0;
+    this.weaponsCollected = 0;
+    this.damageTakenThisWave = 0;
     
     // Timing
     this.lastTime = 0;
@@ -120,6 +124,9 @@ class GameEngine {
     this.shotsFired = 0;
     this.shotsHit = 0;
     this.playTime = 0;
+    this.bossesKilled = 0;
+    this.weaponsCollected = 0;
+    this.damageTakenThisWave = 0;
     this.gameStartTime = performance.now();
     
     // Create player with difficulty modifiers
@@ -491,6 +498,9 @@ class GameEngine {
       this.combo = 0;
     }
     
+    // Check achievements
+    this.achievementSystem.update(this);
+    
     // Update camera
     this.camera.update();
     
@@ -511,6 +521,9 @@ class GameEngine {
         const waveBonus = this.wave * 500;
         this.score += waveBonus;
         
+        // Reset wave damage tracking
+        this.damageTakenThisWave = 0;
+        
         this.wave++;
         this.spawnWave();
         this.spawnPickups();
@@ -528,6 +541,10 @@ class GameEngine {
     // Player vs Pickups
     this.pickups.forEach(pickup => {
       if (pickup.active && this.player.collidesWith(pickup)) {
+        // Track weapon pickups
+        if (pickup.pickupType && pickup.pickupType.startsWith('weapon_')) {
+          this.weaponsCollected++;
+        }
         pickup.apply(this.player);
         this.score += 50;
       }
@@ -558,6 +575,11 @@ class GameEngine {
               const comboBonus = Math.min(this.combo, 10) * 10; // Max 100 bonus points at 10x combo
               const totalPoints = 100 + comboBonus;
               this.score += totalPoints;
+              
+              // Track boss kills
+              if (enemy.enemyType === 'boss') {
+                this.bossesKilled++;
+              }
               
               this.particleSystem.createExplosion(
                 enemy.x + enemy.width / 2,
@@ -612,6 +634,7 @@ class GameEngine {
           const damaged = this.player.takeDamage(proj.damage);
           if (damaged) {
             this.totalDamageTaken += proj.damage;
+            this.damageTakenThisWave += proj.damage;
           }
           proj.destroy();
           this.particleSystem.createExplosion(
@@ -659,6 +682,9 @@ class GameEngine {
         mode: this.mode,
         combo: this.combo
       });
+      
+      // Draw achievement notifications (without camera transform)
+      this.achievementSystem.render(this.ctx, 10, 60);
     }
   }
 
