@@ -344,7 +344,6 @@ class GameEngine {
     this.currentLevelName = levelConfig.name;
     this.isBossLevel = levelConfig.isBossLevel || false;
   }
-  }
 
   spawnPickups() {
     const pickupTypes = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun'];
