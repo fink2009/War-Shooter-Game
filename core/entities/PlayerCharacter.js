@@ -216,25 +216,77 @@ class PlayerCharacter extends Entity {
       ctx.globalAlpha = 0.5;
     }
     
-    ctx.fillStyle = this.color;
+    // Military character colors based on type
+    let bodyColor, helmetColor;
+    switch (this.characterType) {
+      case 'soldier':
+        bodyColor = '#4a6741'; // Olive green
+        helmetColor = '#3a5731';
+        break;
+      case 'scout':
+        bodyColor = '#6b7c5a'; // Light olive
+        helmetColor = '#5b6c4a';
+        break;
+      case 'heavy':
+        bodyColor = '#3a3a3a'; // Dark gray
+        helmetColor = '#2a2a2a';
+        break;
+      case 'medic':
+        bodyColor = '#5a6b7c'; // Blue-gray
+        helmetColor = '#4a5b6c';
+        break;
+      default:
+        bodyColor = '#4a6741';
+        helmetColor = '#3a5731';
+    }
+    
+    // Draw body (retro style - simple rectangles)
+    ctx.fillStyle = bodyColor;
     ctx.fillRect(this.x, this.y, this.width, this.height);
     
-    // Draw weapon indicator
-    ctx.fillStyle = '#333';
+    // Draw helmet/head
+    ctx.fillStyle = helmetColor;
+    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, 15);
+    
+    // Draw legs (simple rectangles)
+    ctx.fillStyle = bodyColor;
+    const legWidth = 8;
+    ctx.fillRect(this.x + 5, this.y + this.height - 15, legWidth, 15);
+    ctx.fillRect(this.x + this.width - 5 - legWidth, this.y + this.height - 15, legWidth, 15);
+    
+    // Draw weapon indicator (more prominent)
+    ctx.fillStyle = '#1a1a1a';
     const weaponX = this.x + this.width / 2 + (this.facing * 15);
     const weaponY = this.y + this.height / 2;
-    ctx.fillRect(weaponX, weaponY - 2, 12 * this.facing, 4);
+    ctx.fillRect(weaponX, weaponY - 3, 15 * this.facing, 6);
+    
+    // Weapon barrel detail
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(weaponX + (10 * this.facing), weaponY - 1, 5 * this.facing, 2);
     
     ctx.globalAlpha = 1;
     
-    // Draw health bar
+    // Draw health bar (military style)
     const barWidth = this.width;
     const barHeight = 4;
     const healthPercent = this.health / this.maxHealth;
     
-    ctx.fillStyle = '#ff0000';
+    ctx.fillStyle = '#660000';
     ctx.fillRect(this.x, this.y - 10, barWidth, barHeight);
-    ctx.fillStyle = '#00ff00';
+    
+    // Health bar color based on health percentage
+    if (healthPercent > 0.6) {
+      ctx.fillStyle = '#00ff00';
+    } else if (healthPercent > 0.3) {
+      ctx.fillStyle = '#ffff00';
+    } else {
+      ctx.fillStyle = '#ff0000';
+    }
     ctx.fillRect(this.x, this.y - 10, barWidth * healthPercent, barHeight);
+    
+    // Health bar border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x, this.y - 10, barWidth, barHeight);
   }
 }
