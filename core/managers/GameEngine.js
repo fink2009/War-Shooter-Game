@@ -21,6 +21,7 @@ class GameEngine {
     this.particleSystem = new ParticleSystem();
     this.achievementSystem = new AchievementSystem();
     this.audioManager = new AudioManager();
+    this.highScoreSystem = new HighScoreSystem();
     this.ui = new GameUI(canvas);
     
     // World settings
@@ -346,6 +347,10 @@ class GameEngine {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.menuState = 'main';
       }
+    } else if (this.menuState === 'highscores') {
+      if (this.inputManager.wasKeyPressed('Escape')) {
+        this.menuState = 'main';
+      }
     } else if (this.state === 'menu') {
       if (this.inputManager.wasKeyPressed('1')) {
         this.menuState = 'character';
@@ -357,6 +362,8 @@ class GameEngine {
         this.menuState = 'settings';
       } else if (this.inputManager.wasKeyPressed('4')) {
         this.menuState = 'controls';
+      } else if (this.inputManager.wasKeyPressed('5')) {
+        this.menuState = 'highscores';
       }
     } else if (this.state === 'playing') {
       // Player controls
@@ -469,7 +476,18 @@ class GameEngine {
     if (this.player && this.player.active) {
       this.player.update(deltaTime, this.inputManager, this.groundLevel, this.currentTime, this.worldWidth);
     } else if (this.player && !this.player.active) {
-      // Player died
+      // Player died - save high score
+      const accuracy = this.shotsFired > 0 ? 
+        ((this.shotsHit / this.shotsFired) * 100).toFixed(1) : 0;
+      
+      if (this.highScoreSystem.isHighScore(this.score)) {
+        this.highScoreSystem.addScore(this.score, this.selectedCharacter, this.difficulty, this.mode, {
+          kills: this.kills,
+          wave: this.wave,
+          accuracy: accuracy
+        });
+      }
+      
       this.state = 'gameover';
       this.menuState = 'gameover';
       this.ui.setLastScore(this.score);

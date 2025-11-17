@@ -26,6 +26,14 @@ class GameUI {
     
     ctx.globalAlpha = 1; // Reset for text and other elements
     
+    // Low health warning overlay
+    const healthPercent = player.health / player.maxHealth;
+    if (healthPercent < 0.25) {
+      const pulse = Math.sin(Date.now() / 200) * 0.15 + 0.15;
+      ctx.fillStyle = `rgba(255, 0, 0, ${pulse})`;
+      ctx.fillRect(0, 0, this.width, this.height);
+    }
+    
     // Health
     ctx.fillStyle = '#00ff00';
     ctx.font = 'bold 16px monospace';
@@ -33,7 +41,6 @@ class GameUI {
     
     const healthBarWidth = 200;
     const healthBarHeight = 20;
-    const healthPercent = player.health / player.maxHealth;
     
     ctx.fillStyle = '#660000';
     ctx.fillRect(10, 25, healthBarWidth, healthBarHeight);
@@ -311,13 +318,47 @@ class GameUI {
         'Press 1 - CAMPAIGN',
         'Press 2 - SURVIVAL',
         'Press 3 - SETTINGS',
-        'Press 4 - CONTROLS'
+        'Press 4 - CONTROLS',
+        'Press 5 - HIGH SCORES'
       ];
       
       ctx.fillStyle = '#00ff00';
       options.forEach((option, i) => {
-        ctx.fillText(option, this.width / 2, 200 + i * 50);
+        ctx.fillText(option, this.width / 2, 200 + i * 45);
       });
+    } else if (menuState === 'highscores') {
+      ctx.fillStyle = '#00ff00';
+      ctx.fillText('HIGH SCORES', this.width / 2, 100);
+      
+      if (window.game && window.game.highScoreSystem) {
+        const scores = window.game.highScoreSystem.getTopScores(10);
+        
+        if (scores.length === 0) {
+          ctx.fillStyle = '#888';
+          ctx.font = '18px monospace';
+          ctx.fillText('No high scores yet!', this.width / 2, 200);
+          ctx.fillText('Play a game to set a score', this.width / 2, 230);
+        } else {
+          ctx.font = '14px monospace';
+          ctx.fillStyle = '#ffff00';
+          ctx.fillText('RANK  SCORE    MODE     DIFFICULTY  CHARACTER', this.width / 2, 140);
+          
+          scores.forEach((entry, i) => {
+            ctx.fillStyle = i < 3 ? '#ffaa00' : '#00ff00';
+            const rank = (i + 1).toString().padStart(2, ' ');
+            const score = entry.score.toString().padStart(7, ' ');
+            const mode = entry.mode.substring(0, 8).padEnd(8, ' ');
+            const diff = entry.difficulty.substring(0, 10).padEnd(10, ' ');
+            const char = entry.character.substring(0, 9);
+            
+            ctx.fillText(`${rank}.  ${score}  ${mode}  ${diff}  ${char}`, this.width / 2, 170 + i * 25);
+          });
+        }
+      }
+      
+      ctx.fillStyle = '#888';
+      ctx.font = '16px monospace';
+      ctx.fillText('Press ESC to go back', this.width / 2, this.height - 50);
     } else if (menuState === 'character') {
       ctx.fillStyle = '#00ff00';
       ctx.fillText('SELECT CHARACTER', this.width / 2, 150);
