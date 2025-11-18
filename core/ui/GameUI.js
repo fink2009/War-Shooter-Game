@@ -739,4 +739,156 @@ class GameUI {
   setLastScore(score) {
     this.lastScore = score;
   }
+  
+  drawWeaponSwapPopup(ctx, weaponSwapData, player) {
+    ctx.save();
+    
+    // Semi-transparent background overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, this.width, this.height);
+    
+    // Popup background
+    const popupWidth = 600;
+    const popupHeight = 300;
+    const popupX = (this.width - popupWidth) / 2;
+    const popupY = (this.height - popupHeight) / 2;
+    
+    // 16-bit style popup box
+    ctx.fillStyle = '#1a2a3a';
+    ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
+    
+    // Border
+    ctx.strokeStyle = '#4a6a8a';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
+    
+    // Inner border
+    ctx.strokeStyle = '#2a4a6a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(popupX + 5, popupY + 5, popupWidth - 10, popupHeight - 10);
+    
+    // Title
+    ctx.fillStyle = '#ffaa00';
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('WEAPON FOUND!', this.width / 2, popupY + 40);
+    
+    // Weapon info
+    const weapon = weaponSwapData.weapon;
+    ctx.fillStyle = '#00ff00';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText(weapon.name.toUpperCase(), this.width / 2, popupY + 80);
+    
+    ctx.fillStyle = '#ffff00';
+    ctx.font = '16px monospace';
+    ctx.fillText(`Damage: ${weapon.damage}  |  Fire Rate: ${weapon.fireRate}ms  |  Ammo: ${weapon.ammoCapacity}`, 
+                 this.width / 2, popupY + 110);
+    
+    // Message
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '18px monospace';
+    ctx.fillText('You have max weapons! Swap one?', this.width / 2, popupY + 150);
+    
+    // Options
+    ctx.fillStyle = '#00ff00';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText('[Y] YES - Choose weapon to replace', this.width / 2, popupY + 200);
+    ctx.fillText('[N] NO - Leave on ground', this.width / 2, popupY + 230);
+    
+    ctx.fillStyle = '#888888';
+    ctx.font = '14px monospace';
+    ctx.fillText('[ESC] Cancel', this.width / 2, popupY + 260);
+    
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
+  
+  drawWeaponSwapSelect(ctx, weaponSwapData, player) {
+    ctx.save();
+    
+    // Semi-transparent background overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, this.width, this.height);
+    
+    // Popup background
+    const popupWidth = 700;
+    const popupHeight = 400;
+    const popupX = (this.width - popupWidth) / 2;
+    const popupY = (this.height - popupHeight) / 2;
+    
+    // 16-bit style popup box
+    ctx.fillStyle = '#1a2a3a';
+    ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
+    
+    // Border
+    ctx.strokeStyle = '#4a6a8a';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
+    
+    // Inner border
+    ctx.strokeStyle = '#2a4a6a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(popupX + 5, popupY + 5, popupWidth - 10, popupHeight - 10);
+    
+    // Title
+    ctx.fillStyle = '#ffaa00';
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SELECT WEAPON TO REPLACE', this.width / 2, popupY + 40);
+    
+    // New weapon info
+    const newWeapon = weaponSwapData.weapon;
+    ctx.fillStyle = '#00ff00';
+    ctx.font = 'bold 18px monospace';
+    ctx.fillText(`NEW: ${newWeapon.name.toUpperCase()}`, this.width / 2, popupY + 80);
+    ctx.fillStyle = '#ffff00';
+    ctx.font = '14px monospace';
+    ctx.fillText(`DMG: ${newWeapon.damage} | RATE: ${newWeapon.fireRate}ms | AMMO: ${newWeapon.ammoCapacity}`, 
+                 this.width / 2, popupY + 105);
+    
+    // Current weapons
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText('YOUR CURRENT WEAPONS:', this.width / 2, popupY + 140);
+    
+    // List current weapons
+    const startY = popupY + 170;
+    const spacing = 50;
+    
+    player.weapons.forEach((weapon, index) => {
+      const yPos = startY + index * spacing;
+      const isCurrentWeapon = index === player.currentWeaponIndex;
+      
+      // Highlight current weapon
+      if (isCurrentWeapon) {
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+        ctx.fillRect(popupX + 20, yPos - 20, popupWidth - 40, 40);
+      }
+      
+      // Weapon slot number
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 18px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`[${index + 1}]`, popupX + 40, yPos);
+      
+      // Weapon name
+      ctx.fillStyle = isCurrentWeapon ? '#ffff00' : '#ffffff';
+      ctx.fillText(weapon.name.toUpperCase(), popupX + 100, yPos);
+      
+      // Weapon stats
+      ctx.fillStyle = '#aaaaaa';
+      ctx.font = '14px monospace';
+      ctx.fillText(`DMG: ${weapon.damage} | RATE: ${weapon.fireRate}ms | AMMO: ${weapon.ammoCapacity}`, 
+                   popupX + 300, yPos);
+    });
+    
+    // Instructions
+    ctx.fillStyle = '#888888';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Press [1-4] to replace that weapon | [ESC] to cancel', this.width / 2, popupY + 370);
+    
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
 }

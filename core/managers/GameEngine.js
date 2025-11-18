@@ -59,6 +59,9 @@ class GameEngine {
     this.weaponsCollected = 0;
     this.damageTakenThisWave = 0;
     
+    // Weapon swap system
+    this.weaponSwapPopup = null; // {weapon: Weapon, pickup: Pickup}
+    
     // Timing
     this.lastTime = 0;
     this.currentTime = 0;
@@ -586,6 +589,31 @@ class GameEngine {
         this.state = 'paused';
         this.menuState = 'paused';
       }
+    } else if (this.state === 'weaponswap') {
+      // Weapon swap popup handling
+      if (this.inputManager.wasKeyPressed('y') || this.inputManager.wasKeyPressed('Y') || this.inputManager.wasKeyPressed('1')) {
+        // YES - Choose which weapon to swap
+        this.state = 'weaponswapselect';
+      } else if (this.inputManager.wasKeyPressed('n') || this.inputManager.wasKeyPressed('N') || this.inputManager.wasKeyPressed('2') || this.inputManager.wasKeyPressed('Escape')) {
+        // NO - Leave weapon on ground
+        this.weaponSwapPopup = null;
+        this.state = 'playing';
+      }
+    } else if (this.state === 'weaponswapselect') {
+      // Choose which weapon slot to replace
+      if (this.inputManager.wasKeyPressed('1')) {
+        this.swapWeapon(0);
+      } else if (this.inputManager.wasKeyPressed('2')) {
+        this.swapWeapon(1);
+      } else if (this.inputManager.wasKeyPressed('3')) {
+        this.swapWeapon(2);
+      } else if (this.inputManager.wasKeyPressed('4')) {
+        this.swapWeapon(3);
+      } else if (this.inputManager.wasKeyPressed('Escape')) {
+        // Cancel swap
+        this.weaponSwapPopup = null;
+        this.state = 'playing';
+      }
     } else if (this.state === 'paused') {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.state = 'playing';
@@ -739,16 +767,93 @@ class GameEngine {
     }
   }
 
+  swapWeapon(slotIndex) {
+    if (this.weaponSwapPopup && this.player && slotIndex >= 0 && slotIndex < this.player.weapons.length) {
+      // Replace weapon in selected slot
+      this.player.weapons[slotIndex] = this.weaponSwapPopup.weapon;
+      
+      // Destroy the pickup
+      this.weaponSwapPopup.pickup.destroy();
+      
+      // Track weapon collection
+      this.weaponsCollected++;
+      this.score += 50;
+      
+      // Clear popup
+      this.weaponSwapPopup = null;
+      this.state = 'playing';
+    }
+  }
+
   handleCollisions() {
+    // Player vs Cover - make covers solid
+    if (this.player && this.player.active) {
+      this.covers.forEach(cover => {
+        if (cover.active && this.player.collidesWith(cover)) {
+          // Calculate overlap and push player out
+          const playerBounds = this.player.getBounds();
+          const coverBounds = cover.getBounds();
+          
+          // Calculate overlaps on each side
+          const overlapLeft = playerBounds.right - coverBounds.left;
+          const overlapRight = coverBounds.right - playerBounds.left;
+          const overlapTop = playerBounds.bottom - coverBounds.top;
+          const overlapBottom = coverBounds.bottom - playerBounds.top;
+          
+          // Find minimum overlap (the side with least penetration)
+          const minOverlapX = Math.min(overlapLeft, overlapRight);
+          const minOverlapY = Math.min(overlapTop, overlapBottom);
+          
+          // Push player out on the axis with least overlap
+          if (minOverlapX < minOverlapY) {
+            // Push horizontally
+            if (overlapLeft < overlapRight) {
+              this.player.x = coverBounds.left - this.player.width;
+            } else {
+              this.player.x = coverBounds.right;
+            }
+            this.player.dx = 0;
+          } else {
+            // Push vertically
+            if (overlapTop < overlapBottom) {
+              this.player.y = coverBounds.top - this.player.height;
+              this.player.dy = 0;
+              this.player.onGround = true;
+            } else {
+              this.player.y = coverBounds.bottom;
+              this.player.dy = 0;
+            }
+          }
+        }
+      });
+    }
+    
     // Player vs Pickups
     this.pickups.forEach(pickup => {
-      if (pickup.active && this.player.collidesWith(pickup)) {
-        // Track weapon pickups
+      if (pickup.active && this.player && this.player.active && this.player.collidesWith(pickup)) {
+        // Handle weapon pickups with swap popup
         if (pickup.pickupType && pickup.pickupType.startsWith('weapon_')) {
-          this.weaponsCollected++;
+          // Check if player already has 4 weapons (max capacity)
+          if (this.player.weapons.length >= 4) {
+            // Show weapon swap popup
+            this.weaponSwapPopup = {
+              weapon: pickup.weapon,
+              pickup: pickup,
+              pickupType: pickup.pickupType
+            };
+            this.state = 'weaponswap';
+            return; // Don't apply pickup yet
+          } else {
+            // Auto-add if not at max capacity
+            this.weaponsCollected++;
+            pickup.apply(this.player);
+            this.score += 50;
+          }
+        } else {
+          // Non-weapon pickups apply immediately
+          pickup.apply(this.player);
+          this.score += 50;
         }
-        pickup.apply(this.player);
-        this.score += 50;
       }
     });
     
@@ -910,6 +1015,29 @@ class GameEngine {
       }
       
       this.ui.drawMenu(this.ctx, this.menuState || this.state);
+      return;
+    }
+    
+    if (this.state === 'weaponswap' || this.state === 'weaponswapselect') {
+      // Draw game in background
+      this.renderGame();
+      
+      // Draw HUD
+      this.ui.drawHUD(this.ctx, this.player, {
+        score: this.score,
+        kills: this.kills,
+        wave: this.wave,
+        enemiesRemaining: this.enemiesRemaining,
+        mode: this.mode,
+        combo: this.combo
+      });
+      
+      // Draw weapon swap popup
+      if (this.state === 'weaponswap') {
+        this.ui.drawWeaponSwapPopup(this.ctx, this.weaponSwapPopup, this.player);
+      } else if (this.state === 'weaponswapselect') {
+        this.ui.drawWeaponSwapSelect(this.ctx, this.weaponSwapPopup, this.player);
+      }
       return;
     }
     
