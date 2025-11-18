@@ -266,17 +266,34 @@ class EnemyUnit extends Entity {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  update(deltaTime, player, groundLevel, currentTime) {
+  update(deltaTime, player, groundLevel, currentTime, worldWidth = 3000) {
     const dt = deltaTime / 16;
     
     // Update weapon
     this.weapon.update(currentTime);
+    
+    // Ensure patrol bounds respect world boundaries
+    if (this.patrolMin < 0) this.patrolMin = 0;
+    if (this.patrolMax > worldWidth) this.patrolMax = worldWidth;
     
     // AI decision making
     this.updateAI(player, currentTime, deltaTime);
     
     // Apply movement
     this.x += this.dx * dt;
+    
+    // Keep enemy within world bounds
+    if (this.x < 0) {
+      this.x = 0;
+      this.dx = 0;
+      this.patrolDirection = 1;
+      this.facing = 1;
+    } else if (this.x + this.width > worldWidth) {
+      this.x = worldWidth - this.width;
+      this.dx = 0;
+      this.patrolDirection = -1;
+      this.facing = -1;
+    }
     
     // Apply gravity
     this.dy += this.gravity * dt;
