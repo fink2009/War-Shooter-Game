@@ -380,7 +380,102 @@ class GameUI {
       ctx.fillText('Press H to close', this.width / 2, this.height - 30);
     }
     
+    // Boss health bar at top of screen
+    if (window.game && window.game.enemies) {
+      const boss = window.game.enemies.find(e => e.isBoss && e.active);
+      if (boss) {
+        this.drawBossHealthBar(ctx, boss);
+      }
+    }
+    
     ctx.restore();
+  }
+  
+  drawBossHealthBar(ctx, boss) {
+    // Large boss health bar at the top of the screen
+    const barWidth = 800;
+    const barHeight = 35;
+    const barX = (this.width - barWidth) / 2;
+    const barY = 60;
+    
+    // Background panel
+    ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
+    ctx.fillRect(barX - 10, barY - 10, barWidth + 20, barHeight + 20);
+    
+    // Border
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(barX - 10, barY - 10, barWidth + 20, barHeight + 20);
+    
+    // Boss name
+    ctx.fillStyle = '#ffaa00';
+    ctx.font = 'bold 20px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(boss.bossName || 'BOSS', this.width / 2, barY - 15);
+    
+    // Health bar background
+    ctx.fillStyle = '#330000';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    
+    // Health bar fill
+    const healthPercent = Math.max(0, boss.health / boss.maxHealth);
+    const gradient = ctx.createLinearGradient(barX, 0, barX + barWidth * healthPercent, 0);
+    
+    if (healthPercent > 0.5) {
+      gradient.addColorStop(0, '#ff6600');
+      gradient.addColorStop(1, '#ff0000');
+    } else if (healthPercent > 0.25) {
+      gradient.addColorStop(0, '#ff0000');
+      gradient.addColorStop(1, '#cc0000');
+    } else {
+      gradient.addColorStop(0, '#cc0000');
+      gradient.addColorStop(1, '#880000');
+    }
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+    
+    // Health bar segments (visual dividers)
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    for (let i = 1; i < 10; i++) {
+      const segmentX = barX + (barWidth / 10) * i;
+      ctx.beginPath();
+      ctx.moveTo(segmentX, barY);
+      ctx.lineTo(segmentX, barY + barHeight);
+      ctx.stroke();
+    }
+    
+    // Health bar border
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+    
+    // Health text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = 4;
+    const healthText = `${Math.ceil(boss.health)} / ${boss.maxHealth}`;
+    ctx.fillText(healthText, this.width / 2, barY + barHeight / 2 + 7);
+    ctx.shadowBlur = 0;
+    
+    // Shield indicator
+    if (boss.shieldActive) {
+      ctx.fillStyle = '#00ffff';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('⚡ SHIELD ACTIVE ⚡', this.width / 2, barY + barHeight + 18);
+    }
+    
+    // Enraged indicator
+    if (boss.enraged) {
+      ctx.fillStyle = '#ff00ff';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('🔥 ENRAGED 🔥', this.width / 2, barY + barHeight + 18);
+    }
+    
+    ctx.textAlign = 'left';
   }
 
   drawMenu(ctx, menuState) {
