@@ -171,7 +171,7 @@ class GameEngine {
       if (this.player && this.player.active) {
         this.player.invulnerable = false;
       }
-    }, 2000); // 2 seconds of spawn protection
+    }, 1500); // 1.5 seconds of spawn protection
     
     this.camera.follow(this.player);
     
@@ -645,44 +645,47 @@ class GameEngine {
     // Define unique terrain for each level (Gunstar Heroes / Contra style)
     // Improved for better flow, cohesion, and strategic gameplay
     const terrainConfigs = [
-      // Level 1: Basic Training - Gentle introduction with connected platforms
+      // Level 1: Basic Training - Very gentle introduction with clear progression
       {
         platforms: [
-          // Starting area - low platform for easy access
-          { x: 450, y: this.groundLevel - 80, width: 200, height: 20, type: 'passthrough' },
-          // Mid-level platform with good spacing
-          { x: 800, y: this.groundLevel - 120, width: 220, height: 20, type: 'passthrough' },
-          // Higher platform for vertical gameplay introduction
-          { x: 1150, y: this.groundLevel - 100, width: 200, height: 20, type: 'passthrough' },
-          // End platform
-          { x: 1500, y: this.groundLevel - 90, width: 180, height: 20, type: 'passthrough' },
+          // Starting area - low, wide platform for easy landing
+          { x: 400, y: this.groundLevel - 70, width: 250, height: 20, type: 'passthrough' },
+          // Step 2: Slightly higher, encouraging first jump
+          { x: 750, y: this.groundLevel - 100, width: 240, height: 20, type: 'passthrough' },
+          // Step 3: Introducing vertical movement
+          { x: 1100, y: this.groundLevel - 90, width: 230, height: 20, type: 'passthrough' },
+          // End platform - easy to reach
+          { x: 1450, y: this.groundLevel - 80, width: 250, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          // Gentle introductory slope at the start
-          { x: 200, y: this.groundLevel - 60, width: 200, height: 60, direction: 'up' },
+          // Very gentle introductory slope - teaches slope mechanics
+          { x: 200, y: this.groundLevel - 50, width: 180, height: 50, direction: 'up' },
+          // Connecting slope to show how slopes work
+          { x: 650, y: this.groundLevel - 70, width: 100, height: 30, direction: 'up' },
         ]
       },
       
-      // Level 2: First Contact - Flowing terrain with natural progression
+      // Level 2: First Contact - Clear progression with intuitive platform placement
       {
         platforms: [
-          // Lower tier - connected series
-          { x: 350, y: this.groundLevel - 100, width: 220, height: 20, type: 'passthrough' },
-          { x: 700, y: this.groundLevel - 140, width: 200, height: 20, type: 'passthrough' },
-          // Upper tier - accessible from lower tier
-          { x: 1000, y: this.groundLevel - 180, width: 240, height: 20, type: 'passthrough' },
-          { x: 1350, y: this.groundLevel - 160, width: 220, height: 20, type: 'passthrough' },
-          // High platform for sniping position
-          { x: 1700, y: this.groundLevel - 200, width: 200, height: 20, type: 'passthrough' },
+          // Lower tier - clear stepping stones
+          { x: 350, y: this.groundLevel - 90, width: 230, height: 20, type: 'passthrough' },
+          { x: 680, y: this.groundLevel - 110, width: 220, height: 20, type: 'passthrough' },
+          // Mid tier - natural progression upward
+          { x: 1000, y: this.groundLevel - 150, width: 240, height: 20, type: 'passthrough' },
+          { x: 1340, y: this.groundLevel - 140, width: 230, height: 20, type: 'passthrough' },
+          // Upper platform - clear goal
+          { x: 1670, y: this.groundLevel - 180, width: 250, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          // Entry slope
-          { x: 150, y: this.groundLevel - 70, width: 180, height: 70, direction: 'up' },
-          // Connecting slopes between platform tiers
-          { x: 570, y: this.groundLevel - 100, width: 130, height: 40, direction: 'up' },
-          { x: 900, y: this.groundLevel - 140, width: 100, height: 40, direction: 'up' },
-          // Exit slope
-          { x: 1900, y: this.groundLevel - 120, width: 150, height: 120, direction: 'down' },
+          // Entry slope - gentle introduction
+          { x: 150, y: this.groundLevel - 60, width: 180, height: 60, direction: 'up' },
+          // Clear connecting slopes showing the path forward
+          { x: 580, y: this.groundLevel - 90, width: 100, height: 20, direction: 'up' },
+          { x: 900, y: this.groundLevel - 110, width: 100, height: 40, direction: 'up' },
+          { x: 1240, y: this.groundLevel - 150, width: 100, height: 10, direction: 'down' },
+          // Exit slope - back to ground for next section
+          { x: 1920, y: this.groundLevel - 100, width: 120, height: 100, direction: 'down' },
         ]
       },
       
@@ -1325,6 +1328,16 @@ class GameEngine {
         this.spawnWave();
         this.spawnPickups();
         this.spawnCovers(); // Respawn covers for new wave
+        
+        // Add spawn protection when starting new wave
+        if (this.player && this.player.active) {
+          this.player.invulnerable = true;
+          setTimeout(() => {
+            if (this.player && this.player.active) {
+              this.player.invulnerable = false;
+            }
+          }, 1500); // 1.5 seconds of spawn protection
+        }
       }
     } else if (this.mode === 'campaign') {
       if (this.enemiesRemaining === 0) {
@@ -1357,6 +1370,14 @@ class GameEngine {
               
               // Heal player between levels
               this.player.heal(30);
+              
+              // Add spawn protection when starting new level
+              this.player.invulnerable = true;
+              setTimeout(() => {
+                if (this.player && this.player.active) {
+                  this.player.invulnerable = false;
+                }
+              }, 1500); // 1.5 seconds of spawn protection
             }
           }, 3000);
         } else {
