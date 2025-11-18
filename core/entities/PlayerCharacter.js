@@ -97,15 +97,25 @@ class PlayerCharacter extends Entity {
     }
   }
 
-  shoot(targetX, targetY, currentTime) {
+  shoot(targetX, targetY, currentTime, isMeleeAttack = false) {
     const weapon = this.getCurrentWeapon();
+    
+    // Only allow melee attack if weapon is melee and isMeleeAttack is true
+    // Or only allow ranged attack if weapon is not melee and isMeleeAttack is false
+    if (weapon.isMelee && !isMeleeAttack) {
+      return null; // Can't shoot melee weapon with ranged attack button
+    }
+    if (!weapon.isMelee && isMeleeAttack) {
+      return null; // Can't melee attack with ranged weapon
+    }
+    
     const gunX = this.x + this.width / 2 + (this.facing * 15);
     const gunY = this.y + this.height / 2;
     
     const result = weapon.fire(gunX, gunY, targetX, targetY, currentTime);
     
     // Multi-shot power-up: fire additional projectiles at slight angles
-    if (this.hasMultiShot && result) {
+    if (this.hasMultiShot && result && !isMeleeAttack) {
       const projectiles = Array.isArray(result) ? result : [result];
       const additionalProjectiles = [];
       
@@ -165,7 +175,7 @@ class PlayerCharacter extends Entity {
       this.isRolling = true;
       this.rollTime = currentTime;
       this.invulnerable = true;
-      this.dx = this.facing * 10;
+      this.dx = this.facing * 15; // Increased from 10 to 15 for better sliding
     }
   }
   
@@ -179,21 +189,28 @@ class PlayerCharacter extends Entity {
     
     switch (this.characterType) {
       case 'soldier':
-        // Airstrike: Damage all enemies on screen
+        // Airstrike: Drop bombs on enemies
         if (gameEngine) {
-          gameEngine.enemies.forEach(enemy => {
+          // Create bombs that drop from the top of the screen onto each enemy
+          gameEngine.enemies.forEach((enemy, index) => {
             if (enemy.active) {
-              enemy.takeDamage(40); // Reduced from 50 to 40 for balance
-              gameEngine.particleSystem.createExplosion(
-                enemy.x + enemy.width / 2,
-                enemy.y + enemy.height / 2,
-                15,
-                '#ff8800'
-              );
+              const bombX = enemy.x + enemy.width / 2;
+              const bombY = -50; // Start above screen
+              const targetY = enemy.y + enemy.height / 2;
+              
+              // Stagger bomb drops for visual effect
+              gameEngine.particleSystem.createBombDrop(bombX, bombY, targetY, index * 100);
+              
+              // Deal damage after bomb lands (with delay)
+              setTimeout(() => {
+                if (enemy.active) {
+                  enemy.takeDamage(40);
+                }
+              }, index * 100 + 800); // Delay matches bomb drop time
             }
           });
         }
-        setTimeout(() => { this.specialAbilityActive = false; }, 1000);
+        setTimeout(() => { this.specialAbilityActive = false; }, 2000);
         return 'airstrike';
         
       case 'scout':

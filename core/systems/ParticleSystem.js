@@ -13,6 +13,23 @@ class Particle {
   }
 
   update(deltaTime) {
+    // Special handling for bombs
+    if (this.isBomb) {
+      this.dy += this.gravity * deltaTime / 16;
+      this.y += this.dy * deltaTime / 16;
+      this.rotation += this.rotationSpeed * deltaTime / 16;
+      
+      // Check if bomb hit target
+      if (this.y >= this.targetY) {
+        this.active = false;
+        // Trigger explosion when bomb hits
+        if (window.game && window.game.particleSystem) {
+          window.game.particleSystem.createLargeExplosion(this.x, this.targetY);
+        }
+      }
+      return;
+    }
+    
     this.x += this.dx * deltaTime / 16;
     this.y += this.dy * deltaTime / 16;
     this.dy += 0.2; // gravity
@@ -24,6 +41,41 @@ class Particle {
   }
 
   render(ctx) {
+    // Special rendering for bombs
+    if (this.isBomb) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rotation);
+      
+      // Draw bomb body
+      ctx.fillStyle = '#333333';
+      ctx.fillRect(-8, -10, 16, 20);
+      
+      // Draw bomb fins
+      ctx.fillStyle = '#555555';
+      ctx.fillRect(-12, -10, 4, 8);
+      ctx.fillRect(8, -10, 4, 8);
+      ctx.fillRect(-12, 2, 4, 8);
+      ctx.fillRect(8, 2, 4, 8);
+      
+      // Draw bomb tip (nose)
+      ctx.fillStyle = '#222222';
+      ctx.beginPath();
+      ctx.moveTo(-8, 10);
+      ctx.lineTo(0, 18);
+      ctx.lineTo(8, 10);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Draw warning stripes
+      ctx.fillStyle = '#ffff00';
+      ctx.fillRect(-8, -6, 16, 3);
+      ctx.fillRect(-8, 3, 16, 3);
+      
+      ctx.restore();
+      return;
+    }
+    
     const alpha = this.lifetime / this.maxLifetime;
     ctx.globalAlpha = alpha;
     ctx.fillStyle = this.color;
@@ -83,6 +135,62 @@ class ParticleSystem {
       dy: -1,
       active: true
     });
+  }
+  
+  createBombDrop(x, y, targetY, delay = 0) {
+    // Create a bomb that drops from top of screen
+    setTimeout(() => {
+      const bomb = {
+        x: x,
+        y: y,
+        targetY: targetY,
+        dy: 0,
+        gravity: 0.5,
+        active: true,
+        isBomb: true,
+        rotation: 0,
+        rotationSpeed: 0.2
+      };
+      this.particles.push(bomb);
+    }, delay);
+  }
+  
+  createLargeExplosion(x, y) {
+    // Create a large explosion for airstrike bombs
+    const explosionSize = window.game ? window.game.explosionSize : 1.0;
+    const baseCount = 40;
+    const count = Math.floor(baseCount * explosionSize);
+    
+    // Central bright flash
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count;
+      const speed = Math.random() * 8 + 5;
+      const dx = Math.cos(angle) * speed;
+      const dy = Math.sin(angle) * speed;
+      const lifetime = Math.random() * 600 + 600;
+      
+      // Multi-colored explosion (orange, red, yellow)
+      const colors = ['#ff4400', '#ff8800', '#ffaa00', '#ffff00', '#ff0000'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      
+      const particle = new Particle(x, y, dx, dy, color, lifetime);
+      particle.size = Math.random() * 5 + 3;
+      this.particles.push(particle);
+    }
+    
+    // Add smoke
+    this.createSmoke(x, y, 20);
+    
+    // Add shockwave effect
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8;
+      const speed = 12;
+      const dx = Math.cos(angle) * speed;
+      const dy = Math.sin(angle) * speed;
+      const particle = new Particle(x, y, dx, dy, '#ffffff', 300);
+      particle.size = 6;
+      this.particles.push(particle);
+    }
   }
 
   update(deltaTime) {

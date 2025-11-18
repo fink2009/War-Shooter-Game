@@ -457,7 +457,9 @@ class GameEngine {
   }
 
   spawnPickups() {
-    const pickupTypes = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun', 'weapon_knife', 'weapon_sword', 'weapon_axe'];
+    // Separate melee and ranged weapon pickups for weighted spawning
+    const commonPickups = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun'];
+    const meleeWeapons = ['weapon_knife', 'weapon_sword', 'weapon_axe', 'weapon_hammer', 'weapon_spear'];
     
     for (let i = 0; i < 5; i++) {
       const x = 300 + i * 400 + Math.random() * 100;
@@ -473,7 +475,14 @@ class GameEngine {
         }
       }
       
-      const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+      // 70% chance for common pickups, 30% chance for melee weapons
+      let type;
+      if (Math.random() < 0.7) {
+        type = commonPickups[Math.floor(Math.random() * commonPickups.length)];
+      } else {
+        type = meleeWeapons[Math.floor(Math.random() * meleeWeapons.length)];
+      }
+      
       const pickup = new Pickup(x, y, type);
       this.pickups.push(pickup);
       this.collisionSystem.add(pickup);
@@ -1056,15 +1065,40 @@ class GameEngine {
     } else if (this.state === 'playing') {
       // Player controls
       if (this.player && this.player.active) {
-        // Shooting
+        // Shooting (ranged weapons - left click)
         if (this.inputManager.isMouseButtonPressed(0)) {
           const mousePos = this.inputManager.getMousePosition();
           const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
-          const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime);
+          const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime, false);
           
           if (result) {
             // Play shoot sound
             this.audioManager.playSound('shoot', 0.5);
+            
+            // Track shots fired
+            if (Array.isArray(result)) {
+              this.shotsFired += result.length;
+              result.forEach(p => {
+                this.projectiles.push(p);
+                this.collisionSystem.add(p);
+              });
+            } else {
+              this.shotsFired++;
+              this.projectiles.push(result);
+              this.collisionSystem.add(result);
+            }
+          }
+        }
+        
+        // Melee Attack (melee weapons - right click or F key)
+        if (this.inputManager.isMouseButtonPressed(2) || this.inputManager.isKeyPressed('f') || this.inputManager.isKeyPressed('F')) {
+          const mousePos = this.inputManager.getMousePosition();
+          const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
+          const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime, true);
+          
+          if (result) {
+            // Play melee sound
+            this.audioManager.playSound('melee', 0.6);
             
             // Track shots fired
             if (Array.isArray(result)) {
@@ -1098,8 +1132,8 @@ class GameEngine {
           this.player.onGround = false;
         }
         
-        // Roll
-        if (this.inputManager.isKeyPressed('Shift')) {
+        // Slide/Roll (changed from Shift to C key for better accessibility)
+        if (this.inputManager.isKeyPressed('c') || this.inputManager.isKeyPressed('C') || this.inputManager.isKeyPressed('Control')) {
           this.player.roll(this.currentTime);
         }
         
@@ -1450,11 +1484,15 @@ class GameEngine {
           
           const slopeY = slope.getYAtX(playerCenterX);
           
-          if (slopeY !== null && playerBottom >= slopeY - 5 && playerBottom <= slopeY + 10) {
-            // Player is on the slope
-            this.player.y = slopeY - this.player.height;
-            this.player.dy = 0;
-            this.player.onGround = true;
+          // Improved slope collision detection to fix jump bug
+          if (slopeY !== null && playerBottom >= slopeY - 5 && playerBottom <= slopeY + 15) {
+            // Player is on or near the slope
+            // Only snap to slope if player is falling or moving downward
+            if (this.player.dy >= 0) {
+              this.player.y = slopeY - this.player.height;
+              this.player.dy = 0;
+              this.player.onGround = true;
+            }
           }
         }
       });
