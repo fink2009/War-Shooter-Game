@@ -379,14 +379,14 @@ class GameEngine {
         if (enemyGroup.type === 'boss') {
           const bossId = enemyGroup.bossId !== undefined ? enemyGroup.bossId : 0;
           
-          // Base boss enhancements - ALL bosses are much stronger
-          enemy.maxHealth *= 8; // 8x base health for all bosses
+          // Base boss enhancements - ALL bosses are FEARSOME
+          enemy.maxHealth *= 12; // 12x base health (increased from 8x)
           enemy.health = enemy.maxHealth;
-          enemy.damage *= 2.5; // 2.5x more damage
-          enemy.speed *= 1.5; // 1.5x faster
-          enemy.shootCooldown *= 0.4; // Shoots 2.5x faster
-          enemy.aggroRange = 1000; // Massive aggro range
-          enemy.attackRange = 800; // Long attack range
+          enemy.damage *= 4; // 4x more damage (increased from 2.5x)
+          enemy.speed *= 2.2; // 2.2x faster (increased from 1.5x)
+          enemy.shootCooldown *= 0.3; // Shoots 3.3x faster (increased from 2.5x)
+          enemy.aggroRange = 9999; // Infinite aggro - always targets player
+          enemy.attackRange = 1000; // Very long attack range
           enemy.isBoss = true;
           enemy.bossId = bossId;
           enemy.bossName = this.getBossName(bossId);
@@ -395,35 +395,38 @@ class GameEngine {
           switch (bossId) {
             case 0: // The Warlord - First boss (Level 3)
               enemy.bossName = 'The Warlord';
-              enemy.maxHealth *= 1.0; // Standard boss health
+              enemy.maxHealth *= 1.2; // 20% more health
               enemy.specialMechanic = 'rage'; // Gets faster and stronger below 50% HP
               break;
             case 1: // The Devastator - Second boss (Level 6)
               enemy.bossName = 'The Devastator';
-              enemy.maxHealth *= 1.5; // 50% more health
+              enemy.maxHealth *= 1.8; // 80% more health (increased from 1.5x)
+              enemy.damage *= 1.2; // 20% more damage
               enemy.specialMechanic = 'summon'; // Can summon minions
-              enemy.summonCooldown = 15000; // Summon every 15 seconds
+              enemy.summonCooldown = 12000; // Summon every 12 seconds (faster)
               enemy.lastSummonTime = 0;
               break;
             case 2: // The Annihilator - Third boss (Level 9)
               enemy.bossName = 'The Annihilator';
-              enemy.maxHealth *= 2.0; // 2x health
+              enemy.maxHealth *= 2.5; // 2.5x health (increased from 2x)
+              enemy.damage *= 1.4; // 40% more damage
+              enemy.speed *= 1.2; // 20% faster
               enemy.specialMechanic = 'shield'; // Periodic shield phases
-              enemy.shieldCooldown = 20000;
+              enemy.shieldCooldown = 18000; // Faster shield cycling
               enemy.lastShieldTime = 0;
               enemy.shieldActive = false;
               break;
-            case 3: // The Overlord - Final boss (Level 10)
+            case 3: // The Overlord - FINAL BOSS (Level 10) - EXTREME POWER
               enemy.bossName = 'The Overlord';
-              enemy.maxHealth *= 3.0; // 3x health - FINAL BOSS
-              enemy.damage *= 1.5; // Even more damage
-              enemy.speed *= 1.3; // Even faster
-              enemy.shootCooldown *= 0.7; // Shoots even faster
+              enemy.maxHealth *= 5.0; // 5x health - MASSIVE (increased from 3x)
+              enemy.damage *= 2.5; // 2.5x damage - DEVASTATING (increased from 1.5x)
+              enemy.speed *= 1.8; // 1.8x speed - RELENTLESS (increased from 1.3x)
+              enemy.shootCooldown *= 0.5; // Shoots twice as fast as other bosses
               enemy.specialMechanic = 'all'; // All mechanics combined
               enemy.isFinalBoss = true;
-              enemy.summonCooldown = 12000;
+              enemy.summonCooldown = 10000; // Summons every 10 seconds
               enemy.lastSummonTime = 0;
-              enemy.shieldCooldown = 18000;
+              enemy.shieldCooldown = 15000; // Shield every 15 seconds
               enemy.lastShieldTime = 0;
               enemy.shieldActive = false;
               break;

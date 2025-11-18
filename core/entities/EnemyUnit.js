@@ -82,15 +82,17 @@ class EnemyUnit extends Entity {
         this.height = 44;
         break;
       case 'boss':
-        this.maxHealth = 500;
-        this.speed = 1;
+        this.maxHealth = 800; // Increased from 500
+        this.speed = 2.5; // Increased from 1 - much faster
+        this.damage = 30; // Increased from default 10
         this.weapon = new MachineGun();
-        this.attackRange = 500;
+        this.attackRange = 700; // Increased from 500
         this.color = '#990000';
         this.width = 50;
         this.height = 70;
-        this.aggroRange = 600;
-        this.shootCooldown = 500; // Faster shooting
+        this.aggroRange = 9999; // Effectively infinite - always targets player
+        this.shootCooldown = 350; // Faster shooting (from 500)
+        this.isBoss = true; // Mark as boss for special AI behavior
         break;
     }
     this.health = this.maxHealth;
@@ -135,6 +137,16 @@ class EnemyUnit extends Entity {
     
     // State machine
     this.stateTimer += deltaTime;
+    
+    // Bosses have hyper-aggressive AI - always chase and attack
+    if (this.isBoss) {
+      if (distToPlayer < this.attackRange) {
+        this.changeState(AIState.ATTACK, currentTime);
+      } else {
+        this.changeState(AIState.CHASE, currentTime);
+      }
+      return; // Skip normal AI logic for bosses
+    }
     
     switch (this.aiState) {
       case AIState.PATROL:
@@ -210,19 +222,40 @@ class EnemyUnit extends Entity {
   }
 
   chase(player) {
+    // Bosses chase with full aggressive speed
+    const chaseSpeed = this.isBoss ? this.speed : this.speed;
+    
     if (this.x < player.x) {
-      this.dx = this.speed;
+      this.dx = chaseSpeed;
       this.facing = 1;
     } else {
-      this.dx = -this.speed;
+      this.dx = -chaseSpeed;
       this.facing = -1;
     }
   }
 
   attack(player, currentTime) {
-    // Stop moving and shoot
-    this.dx = 0;
-    this.facing = player.x > this.x ? 1 : -1;
+    // Bosses continue moving while attacking - relentless pursuit
+    if (this.isBoss) {
+      const distToPlayer = Math.abs(player.x - this.x);
+      // Keep chasing if not in optimal range
+      if (distToPlayer > this.attackRange * 0.5) {
+        if (this.x < player.x) {
+          this.dx = this.speed * 0.7; // Move at 70% speed while attacking
+          this.facing = 1;
+        } else {
+          this.dx = -this.speed * 0.7;
+          this.facing = -1;
+        }
+      } else {
+        this.dx = 0;
+        this.facing = player.x > this.x ? 1 : -1;
+      }
+    } else {
+      // Normal enemies stop moving and shoot
+      this.dx = 0;
+      this.facing = player.x > this.x ? 1 : -1;
+    }
     
     if (currentTime - this.lastShotTime > this.shootCooldown) {
       this.lastShotTime = currentTime;
@@ -321,13 +354,13 @@ class EnemyUnit extends Entity {
   updateBossMechanics(currentTime, player, deltaTime) {
     const healthPercent = this.health / this.maxHealth;
     
-    // Rage mechanic (The Warlord & The Overlord)
+    // Rage mechanic (The Warlord & The Overlord) - MORE POWERFUL
     if (this.specialMechanic === 'rage' || this.specialMechanic === 'all') {
       if (healthPercent < 0.5 && !this.enraged) {
         this.enraged = true;
-        this.speed *= 1.5;
-        this.shootCooldown *= 0.6;
-        this.damage = Math.floor(this.damage * 1.5);
+        this.speed *= 2.0; // 2x speed boost (increased from 1.5x)
+        this.shootCooldown *= 0.4; // Shoots 2.5x faster (increased from 0.6x)
+        this.damage = Math.floor(this.damage * 2.0); // 2x damage (increased from 1.5x)
       }
     }
     
