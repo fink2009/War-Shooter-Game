@@ -111,10 +111,14 @@ class GameEngine {
       
       this.state = 'menu';
       
-      // Play menu music (will wait for user interaction to actually start)
-      setTimeout(() => {
+      // Set up event listener to start menu music on first user interaction
+      const startMenuMusic = () => {
         this.audioManager.playMusic('menu');
-      }, 100);
+        document.removeEventListener('click', startMenuMusic);
+        document.removeEventListener('keydown', startMenuMusic);
+      };
+      document.addEventListener('click', startMenuMusic);
+      document.addEventListener('keydown', startMenuMusic);
       
       this.start();
     } catch (error) {
