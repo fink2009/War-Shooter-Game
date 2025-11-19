@@ -109,15 +109,19 @@ class Pickup extends Entity {
         break;
       case 'damage_boost':
         // Store original damage values for all weapons
-        const originalDamages = player.weapons.map(w => w.damage);
-        player.weapons.forEach(w => {
+        const allWeapons = [...player.rangedWeapons];
+        if (player.meleeWeapon) {
+          allWeapons.push(player.meleeWeapon);
+        }
+        const originalDamages = allWeapons.map(w => w.damage);
+        allWeapons.forEach(w => {
           w.damage = Math.floor(w.damage * this.damageMultiplier);
         });
         player.hasDamageBoost = true;
         player.damageBoostEndTime = performance.now() + this.duration;
         setTimeout(() => {
           if (player.active) {
-            player.weapons.forEach((w, i) => {
+            allWeapons.forEach((w, i) => {
               w.damage = originalDamages[i];
             });
             player.hasDamageBoost = false;
@@ -163,15 +167,19 @@ class Pickup extends Entity {
         break;
       case 'powerup_rapid_fire':
         // Store original fire rates for all weapons
-        const originalFireRates = player.weapons.map(w => w.fireRate);
-        player.weapons.forEach(w => {
+        const allWeaponsForFire = [...player.rangedWeapons];
+        if (player.meleeWeapon) {
+          allWeaponsForFire.push(player.meleeWeapon);
+        }
+        const originalFireRates = allWeaponsForFire.map(w => w.fireRate);
+        allWeaponsForFire.forEach(w => {
           w.fireRate = Math.floor(w.fireRate * this.fireRateMultiplier);
         });
         player.hasRapidFire = true;
         player.rapidFireEndTime = performance.now() + this.duration;
         setTimeout(() => {
           if (player.active) {
-            player.weapons.forEach((w, i) => {
+            allWeaponsForFire.forEach((w, i) => {
               w.fireRate = originalFireRates[i];
             });
             player.hasRapidFire = false;
