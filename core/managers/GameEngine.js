@@ -181,7 +181,7 @@ class GameEngine {
       if (this.player && this.player.active) {
         this.player.invulnerable = false;
       }
-    }, 2000); // 2 seconds of spawn protection
+    }, 1500); // 1.5 seconds of spawn protection
     
     this.camera.follow(this.player);
     
@@ -389,14 +389,14 @@ class GameEngine {
         if (enemyGroup.type === 'boss') {
           const bossId = enemyGroup.bossId !== undefined ? enemyGroup.bossId : 0;
           
-          // Base boss enhancements - ALL bosses are much stronger
-          enemy.maxHealth *= 8; // 8x base health for all bosses
+          // Base boss enhancements - ALL bosses are FEARSOME
+          enemy.maxHealth *= 12; // 12x base health (increased from 8x)
           enemy.health = enemy.maxHealth;
-          enemy.damage *= 2.5; // 2.5x more damage
-          enemy.speed *= 1.5; // 1.5x faster
-          enemy.shootCooldown *= 0.4; // Shoots 2.5x faster
-          enemy.aggroRange = 1000; // Massive aggro range
-          enemy.attackRange = 800; // Long attack range
+          enemy.damage *= 4; // 4x more damage (increased from 2.5x)
+          enemy.speed *= 2.2; // 2.2x faster (increased from 1.5x)
+          enemy.shootCooldown *= 0.3; // Shoots 3.3x faster (increased from 2.5x)
+          enemy.aggroRange = 9999; // Infinite aggro - always targets player
+          enemy.attackRange = 1000; // Very long attack range
           enemy.isBoss = true;
           enemy.bossId = bossId;
           enemy.bossName = this.getBossName(bossId);
@@ -405,35 +405,38 @@ class GameEngine {
           switch (bossId) {
             case 0: // The Warlord - First boss (Level 3)
               enemy.bossName = 'The Warlord';
-              enemy.maxHealth *= 1.0; // Standard boss health
+              enemy.maxHealth *= 1.2; // 20% more health
               enemy.specialMechanic = 'rage'; // Gets faster and stronger below 50% HP
               break;
             case 1: // The Devastator - Second boss (Level 6)
               enemy.bossName = 'The Devastator';
-              enemy.maxHealth *= 1.5; // 50% more health
+              enemy.maxHealth *= 1.8; // 80% more health (increased from 1.5x)
+              enemy.damage *= 1.2; // 20% more damage
               enemy.specialMechanic = 'summon'; // Can summon minions
-              enemy.summonCooldown = 15000; // Summon every 15 seconds
+              enemy.summonCooldown = 12000; // Summon every 12 seconds (faster)
               enemy.lastSummonTime = 0;
               break;
             case 2: // The Annihilator - Third boss (Level 9)
               enemy.bossName = 'The Annihilator';
-              enemy.maxHealth *= 2.0; // 2x health
+              enemy.maxHealth *= 2.5; // 2.5x health (increased from 2x)
+              enemy.damage *= 1.4; // 40% more damage
+              enemy.speed *= 1.2; // 20% faster
               enemy.specialMechanic = 'shield'; // Periodic shield phases
-              enemy.shieldCooldown = 20000;
+              enemy.shieldCooldown = 18000; // Faster shield cycling
               enemy.lastShieldTime = 0;
               enemy.shieldActive = false;
               break;
-            case 3: // The Overlord - Final boss (Level 10)
+            case 3: // The Overlord - FINAL BOSS (Level 10) - EXTREME POWER
               enemy.bossName = 'The Overlord';
-              enemy.maxHealth *= 3.0; // 3x health - FINAL BOSS
-              enemy.damage *= 1.5; // Even more damage
-              enemy.speed *= 1.3; // Even faster
-              enemy.shootCooldown *= 0.7; // Shoots even faster
+              enemy.maxHealth *= 5.0; // 5x health - MASSIVE (increased from 3x)
+              enemy.damage *= 2.5; // 2.5x damage - DEVASTATING (increased from 1.5x)
+              enemy.speed *= 1.8; // 1.8x speed - RELENTLESS (increased from 1.3x)
+              enemy.shootCooldown *= 0.5; // Shoots twice as fast as other bosses
               enemy.specialMechanic = 'all'; // All mechanics combined
               enemy.isFinalBoss = true;
-              enemy.summonCooldown = 12000;
+              enemy.summonCooldown = 10000; // Summons every 10 seconds
               enemy.lastSummonTime = 0;
-              enemy.shieldCooldown = 18000;
+              enemy.shieldCooldown = 15000; // Shield every 15 seconds
               enemy.lastShieldTime = 0;
               enemy.shieldActive = false;
               break;
@@ -467,7 +470,9 @@ class GameEngine {
   }
 
   spawnPickups() {
-    const pickupTypes = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun', 'weapon_knife', 'weapon_sword', 'weapon_axe'];
+    // Separate melee and ranged weapon pickups for weighted spawning
+    const commonPickups = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun'];
+    const meleeWeapons = ['weapon_knife', 'weapon_sword', 'weapon_axe', 'weapon_hammer', 'weapon_spear'];
     
     for (let i = 0; i < 5; i++) {
       const x = 300 + i * 400 + Math.random() * 100;
@@ -483,7 +488,14 @@ class GameEngine {
         }
       }
       
-      const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+      // 70% chance for common pickups, 30% chance for melee weapons
+      let type;
+      if (Math.random() < 0.7) {
+        type = commonPickups[Math.floor(Math.random() * commonPickups.length)];
+      } else {
+        type = meleeWeapons[Math.floor(Math.random() * meleeWeapons.length)];
+      }
+      
       const pickup = new Pickup(x, y, type);
       this.pickups.push(pickup);
       this.collisionSystem.add(pickup);
@@ -646,44 +658,47 @@ class GameEngine {
     // Define unique terrain for each level (Gunstar Heroes / Contra style)
     // Improved for better flow, cohesion, and strategic gameplay
     const terrainConfigs = [
-      // Level 1: Basic Training - Gentle introduction with connected platforms
+      // Level 1: Basic Training - Very gentle introduction with clear progression
       {
         platforms: [
-          // Starting area - low platform for easy access
-          { x: 450, y: this.groundLevel - 80, width: 200, height: 20, type: 'passthrough' },
-          // Mid-level platform with good spacing
-          { x: 800, y: this.groundLevel - 120, width: 220, height: 20, type: 'passthrough' },
-          // Higher platform for vertical gameplay introduction
-          { x: 1150, y: this.groundLevel - 100, width: 200, height: 20, type: 'passthrough' },
-          // End platform
-          { x: 1500, y: this.groundLevel - 90, width: 180, height: 20, type: 'passthrough' },
+          // Starting area - low, wide platform for easy landing
+          { x: 400, y: this.groundLevel - 70, width: 250, height: 20, type: 'passthrough' },
+          // Step 2: Slightly higher, encouraging first jump
+          { x: 750, y: this.groundLevel - 100, width: 240, height: 20, type: 'passthrough' },
+          // Step 3: Introducing vertical movement
+          { x: 1100, y: this.groundLevel - 90, width: 230, height: 20, type: 'passthrough' },
+          // End platform - easy to reach
+          { x: 1450, y: this.groundLevel - 80, width: 250, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          // Gentle introductory slope at the start
-          { x: 200, y: this.groundLevel - 60, width: 200, height: 60, direction: 'up' },
+          // Very gentle introductory slope - teaches slope mechanics
+          { x: 200, y: this.groundLevel - 50, width: 180, height: 50, direction: 'up' },
+          // Connecting slope to show how slopes work
+          { x: 650, y: this.groundLevel - 70, width: 100, height: 30, direction: 'up' },
         ]
       },
       
-      // Level 2: First Contact - Flowing terrain with natural progression
+      // Level 2: First Contact - Clear progression with intuitive platform placement
       {
         platforms: [
-          // Lower tier - connected series
-          { x: 350, y: this.groundLevel - 100, width: 220, height: 20, type: 'passthrough' },
-          { x: 700, y: this.groundLevel - 140, width: 200, height: 20, type: 'passthrough' },
-          // Upper tier - accessible from lower tier
-          { x: 1000, y: this.groundLevel - 180, width: 240, height: 20, type: 'passthrough' },
-          { x: 1350, y: this.groundLevel - 160, width: 220, height: 20, type: 'passthrough' },
-          // High platform for sniping position
-          { x: 1700, y: this.groundLevel - 200, width: 200, height: 20, type: 'passthrough' },
+          // Lower tier - clear stepping stones
+          { x: 350, y: this.groundLevel - 90, width: 230, height: 20, type: 'passthrough' },
+          { x: 680, y: this.groundLevel - 110, width: 220, height: 20, type: 'passthrough' },
+          // Mid tier - natural progression upward
+          { x: 1000, y: this.groundLevel - 150, width: 240, height: 20, type: 'passthrough' },
+          { x: 1340, y: this.groundLevel - 140, width: 230, height: 20, type: 'passthrough' },
+          // Upper platform - clear goal
+          { x: 1670, y: this.groundLevel - 180, width: 250, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          // Entry slope
-          { x: 150, y: this.groundLevel - 70, width: 180, height: 70, direction: 'up' },
-          // Connecting slopes between platform tiers
-          { x: 570, y: this.groundLevel - 100, width: 130, height: 40, direction: 'up' },
-          { x: 900, y: this.groundLevel - 140, width: 100, height: 40, direction: 'up' },
-          // Exit slope
-          { x: 1900, y: this.groundLevel - 120, width: 150, height: 120, direction: 'down' },
+          // Entry slope - gentle introduction
+          { x: 150, y: this.groundLevel - 60, width: 180, height: 60, direction: 'up' },
+          // Clear connecting slopes showing the path forward
+          { x: 580, y: this.groundLevel - 90, width: 100, height: 20, direction: 'up' },
+          { x: 900, y: this.groundLevel - 110, width: 100, height: 40, direction: 'up' },
+          { x: 1240, y: this.groundLevel - 150, width: 100, height: 10, direction: 'down' },
+          // Exit slope - back to ground for next section
+          { x: 1920, y: this.groundLevel - 100, width: 120, height: 100, direction: 'down' },
         ]
       },
       
@@ -1094,11 +1109,11 @@ class GameEngine {
     } else if (this.state === 'playing') {
       // Player controls
       if (this.player && this.player.active) {
-        // Shooting
+        // Shooting (ranged weapons - left click)
         if (this.inputManager.isMouseButtonPressed(0)) {
           const mousePos = this.inputManager.getMousePosition();
           const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
-          const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime);
+          const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime, false);
           
           if (result) {
             // Play weapon-specific sound
@@ -1115,6 +1130,31 @@ class GameEngine {
             else if (weapon.isMelee) soundName = 'shoot_melee';
             
             this.audioManager.playSound(soundName, 0.5);
+            
+            // Track shots fired
+            if (Array.isArray(result)) {
+              this.shotsFired += result.length;
+              result.forEach(p => {
+                this.projectiles.push(p);
+                this.collisionSystem.add(p);
+              });
+            } else {
+              this.shotsFired++;
+              this.projectiles.push(result);
+              this.collisionSystem.add(result);
+            }
+          }
+        }
+        
+        // Melee Attack (melee weapons - right click or F key)
+        if (this.inputManager.isMouseButtonPressed(2) || this.inputManager.isKeyPressed('f') || this.inputManager.isKeyPressed('F')) {
+          const mousePos = this.inputManager.getMousePosition();
+          const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
+          const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime, true);
+          
+          if (result) {
+            // Play melee sound
+            this.audioManager.playSound('melee', 0.6);
             
             // Track shots fired
             if (Array.isArray(result)) {
@@ -1153,8 +1193,8 @@ class GameEngine {
           this.player.onGround = false;
         }
         
-        // Roll
-        if (this.inputManager.isKeyPressed('Shift')) {
+        // Slide/Roll (changed from Shift to C key for better accessibility)
+        if (this.inputManager.isKeyPressed('c') || this.inputManager.isKeyPressed('C') || this.inputManager.isKeyPressed('Control')) {
           this.player.roll(this.currentTime);
         }
         
@@ -1376,6 +1416,16 @@ class GameEngine {
         this.spawnWave();
         this.spawnPickups();
         this.spawnCovers(); // Respawn covers for new wave
+        
+        // Add spawn protection when starting new wave
+        if (this.player && this.player.active) {
+          this.player.invulnerable = true;
+          setTimeout(() => {
+            if (this.player && this.player.active) {
+              this.player.invulnerable = false;
+            }
+          }, 1500); // 1.5 seconds of spawn protection
+        }
       }
     } else if (this.mode === 'campaign') {
       if (this.enemiesRemaining === 0) {
@@ -1418,6 +1468,14 @@ class GameEngine {
               
               // Heal player between levels
               this.player.heal(30);
+              
+              // Add spawn protection when starting new level
+              this.player.invulnerable = true;
+              setTimeout(() => {
+                if (this.player && this.player.active) {
+                  this.player.invulnerable = false;
+                }
+              }, 1500); // 1.5 seconds of spawn protection
             }
           }, 3000);
         } else {
@@ -1549,11 +1607,15 @@ class GameEngine {
           
           const slopeY = slope.getYAtX(playerCenterX);
           
-          if (slopeY !== null && playerBottom >= slopeY - 5 && playerBottom <= slopeY + 10) {
-            // Player is on the slope
-            this.player.y = slopeY - this.player.height;
-            this.player.dy = 0;
-            this.player.onGround = true;
+          // Improved slope collision detection to fix jump bug
+          if (slopeY !== null && playerBottom >= slopeY - 5 && playerBottom <= slopeY + 15) {
+            // Player is on or near the slope
+            // Only snap to slope if player is falling or moving downward
+            if (this.player.dy >= 0) {
+              this.player.y = slopeY - this.player.height;
+              this.player.dy = 0;
+              this.player.onGround = true;
+            }
           }
         }
       });

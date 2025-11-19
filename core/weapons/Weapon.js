@@ -114,7 +114,7 @@ class MachineGun extends Weapon {
 
 class SniperRifle extends Weapon {
   constructor() {
-    super('Sniper Rifle', 100, 1200, 5, 2500, 30);
+    super('Sniper Rifle', 150, 1200, 5, 2500, 30);
   }
 }
 
@@ -193,12 +193,17 @@ class LaserGun extends Weapon {
   }
 }
 
-// Melee Weapons
-class Knife extends Weapon {
-  constructor() {
-    super('Knife', 35, 300, 999, 0, 20); // High fire rate, infinite ammo, fast
+// Melee Weapon Base Class
+class MeleeWeapon extends Weapon {
+  constructor(name, damage, fireRate, meleeRange) {
+    super(name, damage, fireRate, 999, 0, 20); // Infinite ammo, no reload, fast projectile speed
     this.isMelee = true;
-    this.meleeRange = 60;
+    this.meleeRange = meleeRange;
+  }
+  
+  canFire(currentTime) {
+    // Melee weapons don't need ammo check
+    return currentTime - this.lastFireTime >= this.fireRate;
   }
   
   fire(x, y, targetX, targetY, currentTime) {
@@ -213,6 +218,11 @@ class Knife extends Weapon {
     const dy = targetY - y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     
+    // Check if target is within melee range
+    if (dist > this.meleeRange) {
+      return null; // Target out of range, no attack
+    }
+    
     let vx, vy;
     if (dist === 0) {
       vx = this.projectileSpeed;
@@ -223,154 +233,114 @@ class Knife extends Weapon {
     }
 
     const projectile = new Projectile(x, y, vx, vy, this.damage, this);
-    projectile.color = '#cccccc';
-    projectile.width = 8;
-    projectile.height = 4;
+    projectile.color = this.getColor();
+    projectile.width = this.getWidth();
+    projectile.height = this.getHeight();
     projectile.lifetime = this.meleeRange / this.projectileSpeed * 16; // Short lifetime for melee
     return projectile;
   }
-}
-
-class Sword extends Weapon {
-  constructor() {
-    super('Sword', 60, 500, 999, 0, 18);
-    this.isMelee = true;
-    this.meleeRange = 80;
+  
+  // Subclasses should override these for visual customization
+  getColor() {
+    return '#cccccc';
   }
   
-  fire(x, y, targetX, targetY, currentTime) {
-    if (!this.canFire(currentTime)) {
-      return null;
-    }
-
-    this.lastFireTime = currentTime;
-
-    const dx = targetX - x;
-    const dy = targetY - y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    
-    let vx, vy;
-    if (dist === 0) {
-      vx = this.projectileSpeed;
-      vy = 0;
-    } else {
-      vx = (dx / dist) * this.projectileSpeed;
-      vy = (dy / dist) * this.projectileSpeed;
-    }
-
-    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
-    projectile.color = '#aaaaff';
-    projectile.width = 12;
-    projectile.height = 6;
-    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
-    return projectile;
+  getWidth() {
+    return 8;
+  }
+  
+  getHeight() {
+    return 4;
   }
 }
 
-class Axe extends Weapon {
+// Melee Weapons
+class Knife extends MeleeWeapon {
   constructor() {
-    super('Axe', 80, 700, 999, 0, 15);
-    this.isMelee = true;
-    this.meleeRange = 70;
+    super('Knife', 35, 300, 60);
   }
   
-  fire(x, y, targetX, targetY, currentTime) {
-    if (!this.canFire(currentTime)) {
-      return null;
-    }
-
-    this.lastFireTime = currentTime;
-
-    const dx = targetX - x;
-    const dy = targetY - y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    
-    let vx, vy;
-    if (dist === 0) {
-      vx = this.projectileSpeed;
-      vy = 0;
-    } else {
-      vx = (dx / dist) * this.projectileSpeed;
-      vy = (dy / dist) * this.projectileSpeed;
-    }
-
-    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
-    projectile.color = '#884400';
-    projectile.width = 14;
-    projectile.height = 8;
-    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
-    return projectile;
+  getColor() {
+    return '#cccccc';
+  }
+  
+  getWidth() {
+    return 8;
+  }
+  
+  getHeight() {
+    return 4;
   }
 }
 
-class Hammer extends Weapon {
+class Sword extends MeleeWeapon {
   constructor() {
-    super('Hammer', 100, 900, 999, 0, 12);
-    this.isMelee = true;
-    this.meleeRange = 75;
+    super('Sword', 60, 500, 80);
   }
   
-  fire(x, y, targetX, targetY, currentTime) {
-    if (!this.canFire(currentTime)) {
-      return null;
-    }
-
-    this.lastFireTime = currentTime;
-
-    const dx = targetX - x;
-    const dy = targetY - y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    
-    let vx, vy;
-    if (dist === 0) {
-      vx = this.projectileSpeed;
-      vy = 0;
-    } else {
-      vx = (dx / dist) * this.projectileSpeed;
-      vy = (dy / dist) * this.projectileSpeed;
-    }
-
-    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
-    projectile.color = '#666666';
-    projectile.width = 16;
-    projectile.height = 10;
-    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
-    return projectile;
+  getColor() {
+    return '#aaaaff';
+  }
+  
+  getWidth() {
+    return 12;
+  }
+  
+  getHeight() {
+    return 6;
   }
 }
 
-class Spear extends Weapon {
+class Axe extends MeleeWeapon {
   constructor() {
-    super('Spear', 70, 600, 999, 0, 22);
-    this.isMelee = true;
-    this.meleeRange = 100; // Longer range than other melee
+    super('Axe', 80, 700, 70);
   }
   
-  fire(x, y, targetX, targetY, currentTime) {
-    if (!this.canFire(currentTime)) {
-      return null;
-    }
+  getColor() {
+    return '#884400';
+  }
+  
+  getWidth() {
+    return 14;
+  }
+  
+  getHeight() {
+    return 8;
+  }
+}
 
-    this.lastFireTime = currentTime;
+class Hammer extends MeleeWeapon {
+  constructor() {
+    super('Hammer', 100, 900, 75);
+  }
+  
+  getColor() {
+    return '#666666';
+  }
+  
+  getWidth() {
+    return 16;
+  }
+  
+  getHeight() {
+    return 10;
+  }
+}
 
-    const dx = targetX - x;
-    const dy = targetY - y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    
-    let vx, vy;
-    if (dist === 0) {
-      vx = this.projectileSpeed;
-      vy = 0;
-    } else {
-      vx = (dx / dist) * this.projectileSpeed;
-      vy = (dy / dist) * this.projectileSpeed;
-    }
-
-    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
-    projectile.color = '#996633';
-    projectile.width = 20;
-    projectile.height = 4;
-    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
-    return projectile;
+class Spear extends MeleeWeapon {
+  constructor() {
+    super('Spear', 70, 600, 100); // Longer range than other melee
+  }
+  
+  getColor() {
+    return '#996633';
+  }
+  
+  getWidth() {
+    return 20;
+  }
+  
+  getHeight() {
+    return 4;
   }
 }
