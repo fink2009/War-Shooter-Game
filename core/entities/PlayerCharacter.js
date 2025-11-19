@@ -219,17 +219,15 @@ class PlayerCharacter extends Entity {
             gameEngine.particleSystem.createBombDrop(target.bombX, target.bombY, target.targetY, target.delay);
             
             // Schedule damage using a safer approach
-            const damageTimeout = setTimeout(() => {
+            setTimeout(() => {
               if (target.enemy && target.enemy.active && target.enemy.health > 0) {
                 target.enemy.takeDamage(40);
               }
-              clearTimeout(damageTimeout);
             }, target.delay + 800);
           });
         }
-        const abilityTimeout = setTimeout(() => { 
+        setTimeout(() => { 
           this.specialAbilityActive = false;
-          clearTimeout(abilityTimeout);
         }, 2000);
         return 'airstrike';
         

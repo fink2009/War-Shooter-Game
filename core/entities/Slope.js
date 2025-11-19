@@ -4,6 +4,17 @@ class Slope extends Entity {
     super(x, y, width, height);
     this.type = 'slope';
     this.direction = direction; // 'up' = slopes up to the right, 'down' = slopes down to the right
+    
+    // Pre-generate texture positions for consistent rendering
+    this.textureRocks = [];
+    for (let i = 0; i < this.width; i += 25) {
+      for (let j = 0; j < this.height; j += 20) {
+        this.textureRocks.push({
+          offsetX: i + Math.random() * 15,
+          offsetY: j + Math.random() * 15
+        });
+      }
+    }
   }
 
   // Get the Y position at a given X coordinate on the slope
@@ -80,18 +91,16 @@ class Slope extends Entity {
     }
     ctx.stroke();
     
-    // Add texture details (16-bit rocks/bumps)
+    // Add texture details (16-bit rocks/bumps) - using pre-generated positions
     ctx.fillStyle = rockAccent;
-    for (let i = 0; i < this.width; i += 25) {
-      for (let j = 0; j < this.height; j += 20) {
-        const testX = this.x + i + Math.random() * 15;
-        const testY = this.y + j + Math.random() * 15;
-        const slopeY = this.getYAtX(testX);
-        
-        // Only draw rocks on the slope surface
-        if (slopeY !== null && testY >= slopeY && testY <= this.y + this.height) {
-          ctx.fillRect(testX, testY, 4, 4);
-        }
+    for (const rock of this.textureRocks) {
+      const testX = this.x + rock.offsetX;
+      const testY = this.y + rock.offsetY;
+      const slopeY = this.getYAtX(testX);
+      
+      // Only draw rocks on the slope surface
+      if (slopeY !== null && testY >= slopeY && testY <= this.y + this.height) {
+        ctx.fillRect(testX, testY, 4, 4);
       }
     }
     
