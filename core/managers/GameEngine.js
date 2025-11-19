@@ -1145,10 +1145,38 @@ class GameEngine {
         
         // Melee Attack (melee weapons - right click or F key)
         if (this.inputManager.isMouseButtonPressed(2) || this.inputManager.isKeyPressed('f') || this.inputManager.isKeyPressed('F')) {
-          // For melee attacks, use player's facing direction instead of mouse position
-          // Target is set at 50 pixels in front of player (within melee range)
-          const meleeTargetX = this.player.x + this.player.width / 2 + (this.player.facing * 50);
-          const meleeTargetY = this.player.y + this.player.height / 2;
+          // For melee attacks, try to auto-target nearest enemy in range, otherwise attack in facing direction
+          let meleeTargetX, meleeTargetY;
+          const meleeWeapon = this.player.meleeWeapon;
+          const weaponRange = meleeWeapon ? meleeWeapon.meleeRange : 60;
+          
+          // Find nearest enemy within melee range
+          let nearestEnemy = null;
+          let nearestDist = weaponRange;
+          this.enemies.forEach(enemy => {
+            if (enemy.active && enemy.health > 0) {
+              const dx = (enemy.x + enemy.width / 2) - (this.player.x + this.player.width / 2);
+              const dy = (enemy.y + enemy.height / 2) - (this.player.y + this.player.height / 2);
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              
+              // Check if enemy is in front of player and within range
+              if (dist < nearestDist && Math.sign(dx) === this.player.facing) {
+                nearestEnemy = enemy;
+                nearestDist = dist;
+              }
+            }
+          });
+          
+          if (nearestEnemy) {
+            // Target the nearest enemy
+            meleeTargetX = nearestEnemy.x + nearestEnemy.width / 2;
+            meleeTargetY = nearestEnemy.y + nearestEnemy.height / 2;
+          } else {
+            // No enemy in range, attack in facing direction at weapon's max range
+            meleeTargetX = this.player.x + this.player.width / 2 + (this.player.facing * weaponRange * 0.8);
+            meleeTargetY = this.player.y + this.player.height / 2;
+          }
+          
           const result = this.player.shoot(meleeTargetX, meleeTargetY, this.currentTime, true);
           
           if (result) {
@@ -1702,8 +1730,8 @@ class GameEngine {
     this.projectiles.forEach(proj => {
       if (!proj.active) return;
       
-      // Player projectiles hitting enemies
-      if (proj.owner instanceof Weapon && proj.owner === this.player.getCurrentWeapon()) {
+      // Player projectiles hitting enemies (both ranged and melee weapons)
+      if (proj.owner instanceof Weapon && (proj.owner === this.player.getCurrentWeapon() || proj.owner === this.player.meleeWeapon)) {
         this.enemies.forEach(enemy => {
           if (enemy.active && proj.active && proj.collidesWith(enemy)) {
             const killed = enemy.takeDamage(proj.damage);
@@ -1720,6 +1748,8 @@ class GameEngine {
             // Play hit sound - explosive projectiles get explosion sound
             if (proj.isExplosive) {
               this.audioManager.playSound('explosion', 0.6);
+            } else if (proj.owner && proj.owner.isMelee) {
+              this.audioManager.playSound('melee_hit', 0.5);
             } else {
               this.audioManager.playSound('enemy_hit', 0.3);
             }
