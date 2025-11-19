@@ -7,14 +7,14 @@ class AudioManager {
     this.musicVolume = 0.7;
     this.soundLog = [];  // Log sounds for debugging
     
-    // Initialize Web Audio API
-    this.audioContext = null;
-    this.initAudioContext();
-    
-    // Music system
+    // Music system - initialize before initAudioContext
     this.currentMusic = null;
     this.musicGainNode = null;
     this.musicOscillators = [];
+    
+    // Initialize Web Audio API (this will set musicGainNode)
+    this.audioContext = null;
+    this.initAudioContext();
     
     // Sound cache to prevent too many simultaneous identical sounds
     this.soundTimers = {};
@@ -35,8 +35,11 @@ class AudioManager {
       this.musicGainNode.connect(this.masterGainNode);
       
       // Resume audio context on user interaction (required by browsers)
-      document.addEventListener('click', () => this.resumeAudioContext(), { once: true });
-      document.addEventListener('keydown', () => this.resumeAudioContext(), { once: true });
+      // Don't use { once: true } so it can trigger multiple times if needed
+      const resumeHandler = () => this.resumeAudioContext();
+      document.addEventListener('click', resumeHandler);
+      document.addEventListener('keydown', resumeHandler);
+      document.addEventListener('touchstart', resumeHandler);
     } catch (e) {
       console.warn('Web Audio API not supported', e);
       this.enabled = false;
@@ -47,6 +50,7 @@ class AudioManager {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume();
+        console.log('Audio context resumed successfully');
       } catch (e) {
         console.warn('Could not resume audio context:', e);
       }
@@ -724,10 +728,20 @@ class AudioManager {
   // === MUSIC SYSTEM ===
   
   async playMusic(musicName) {
-    if (!this.enabled || !this.audioContext) return;
+    if (!this.enabled || !this.audioContext) {
+      console.warn('Audio not enabled or context not initialized');
+      return;
+    }
     
     // Resume audio context if needed
     await this.resumeAudioContext();
+    
+    // Check if audio context is running
+    if (this.audioContext.state !== 'running') {
+      console.warn('Audio context not running, current state:', this.audioContext.state);
+      // Try to resume again
+      await this.resumeAudioContext();
+    }
     
     // Stop current music
     this.stopMusic();
@@ -736,6 +750,7 @@ class AudioManager {
     
     // Start new music based on name
     try {
+      console.log('Starting music:', musicName);
       switch (musicName) {
         case 'menu':
           this.playMenuMusic();
@@ -754,10 +769,11 @@ class AudioManager {
           break;
         default:
           // No music
+          console.warn('Unknown music name:', musicName);
           break;
       }
     } catch (e) {
-      console.warn('Error playing music:', e);
+      console.error('Error playing music:', e);
       // Disable music on error
       this.currentMusic = null;
     }
@@ -1102,13 +1118,31 @@ class AudioManager {
   }
   
   createMusicLoop(notes, loopDuration, waveform = 'square', volume = 0.08) {
-    if (!this.audioContext || !this.musicGainNode) return;
+    if (!this.audioContext) {
+      console.warn('Cannot create music loop: audio context not available');
+      return;
+    }
+    
+    if (!this.musicGainNode) {
+      console.warn('Cannot create music loop: music gain node not available');
+      return;
+    }
+    
+    if (this.audioContext.state !== 'running') {
+      console.warn('Cannot create music loop: audio context not running, state:', this.audioContext.state);
+      return;
+    }
     
     const ctx = this.audioContext;
     let startTime = ctx.currentTime;
     
     const playLoop = () => {
       if (this.currentMusic === null || !this.musicGainNode) return;
+      
+      if (ctx.state !== 'running') {
+        console.warn('Audio context stopped running, stopping music loop');
+        return;
+      }
       
       try {
         notes.forEach(note => {
@@ -1137,7 +1171,7 @@ class AudioManager {
         // Schedule next loop
         setTimeout(playLoop, loopDuration * 1000 - 100);
       } catch (e) {
-        console.warn('Error in music loop:', e);
+        console.error('Error in music loop:', e);
         this.currentMusic = null;
       }
     };
