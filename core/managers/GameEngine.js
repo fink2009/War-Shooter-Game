@@ -11,6 +11,7 @@ class GameEngine {
     this.mode = 'campaign'; // campaign, survival, multiplayer
     this.menuState = 'main';
     this.showInventory = false;
+    this.inventoryPage = 0; // 0 = ranged weapons, 1 = melee weapons
     
     // Settings
     this.difficulty = 'medium'; // baby, easy, medium, extreme
@@ -205,6 +206,11 @@ class GameEngine {
     
     // Add some pickups
     this.spawnPickups();
+    
+    // Add a starter knife pickup near the player
+    const starterKnife = new Pickup(200, this.groundLevel - 50, 'weapon_knife');
+    this.pickups.push(starterKnife);
+    this.collisionSystem.add(starterKnife);
   }
 
   spawnWave() {
@@ -1145,60 +1151,64 @@ class GameEngine {
         
         // Melee Attack (melee weapons - right click or F key)
         if (this.inputManager.isMouseButtonPressed(2) || this.inputManager.isKeyPressed('f') || this.inputManager.isKeyPressed('F')) {
-          // For melee attacks, try to auto-target nearest enemy in range, otherwise attack in facing direction
-          let meleeTargetX, meleeTargetY;
-          const meleeWeapon = this.player.meleeWeapon;
-          const weaponRange = meleeWeapon ? meleeWeapon.meleeRange : 60;
+          // Only attack if a melee weapon is equipped
+          const meleeWeapon = this.player.getCurrentMeleeWeapon();
           
-          // Find nearest enemy within melee range
-          let nearestEnemy = null;
-          let nearestDist = weaponRange;
-          this.enemies.forEach(enemy => {
-            if (enemy.active && enemy.health > 0) {
-              const dx = (enemy.x + enemy.width / 2) - (this.player.x + this.player.width / 2);
-              const dy = (enemy.y + enemy.height / 2) - (this.player.y + this.player.height / 2);
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              
-              // Check if enemy is in front of player and within range
-              if (dist < nearestDist && Math.sign(dx) === this.player.facing) {
-                nearestEnemy = enemy;
-                nearestDist = dist;
+          if (meleeWeapon) {
+            // For melee attacks, try to auto-target nearest enemy in range, otherwise attack in facing direction
+            let meleeTargetX, meleeTargetY;
+            const weaponRange = meleeWeapon.meleeRange;
+            
+            // Find nearest enemy within melee range
+            let nearestEnemy = null;
+            let nearestDist = weaponRange;
+            this.enemies.forEach(enemy => {
+              if (enemy.active && enemy.health > 0) {
+                const dx = (enemy.x + enemy.width / 2) - (this.player.x + this.player.width / 2);
+                const dy = (enemy.y + enemy.height / 2) - (this.player.y + this.player.height / 2);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Check if enemy is in front of player and within range
+                if (dist < nearestDist && Math.sign(dx) === this.player.facing) {
+                  nearestEnemy = enemy;
+                  nearestDist = dist;
+                }
               }
-            }
-          });
-          
-          if (nearestEnemy) {
-            // Target the nearest enemy
-            meleeTargetX = nearestEnemy.x + nearestEnemy.width / 2;
-            meleeTargetY = nearestEnemy.y + nearestEnemy.height / 2;
-          } else {
-            // No enemy in range, attack in facing direction at weapon's max range
-            meleeTargetX = this.player.x + this.player.width / 2 + (this.player.facing * weaponRange * 0.8);
-            meleeTargetY = this.player.y + this.player.height / 2;
-          }
-          
-          const result = this.player.shoot(meleeTargetX, meleeTargetY, this.currentTime, true);
-          
-          if (result) {
-            // Create melee slash visual effect
-            const slashX = this.player.x + this.player.width / 2 + (this.player.facing * 30);
-            const slashY = this.player.y + this.player.height / 2;
-            this.particleSystem.createMeleeSlash(slashX, slashY, this.player.facing);
+            });
             
-            // Play melee sound
-            this.audioManager.playSound('melee', 0.6);
-            
-            // Track shots fired
-            if (Array.isArray(result)) {
-              this.shotsFired += result.length;
-              result.forEach(p => {
-                this.projectiles.push(p);
-                this.collisionSystem.add(p);
-              });
+            if (nearestEnemy) {
+              // Target the nearest enemy
+              meleeTargetX = nearestEnemy.x + nearestEnemy.width / 2;
+              meleeTargetY = nearestEnemy.y + nearestEnemy.height / 2;
             } else {
-              this.shotsFired++;
-              this.projectiles.push(result);
-              this.collisionSystem.add(result);
+              // No enemy in range, attack in facing direction at weapon's max range
+              meleeTargetX = this.player.x + this.player.width / 2 + (this.player.facing * weaponRange * 0.8);
+              meleeTargetY = this.player.y + this.player.height / 2;
+            }
+            
+            const result = this.player.shoot(meleeTargetX, meleeTargetY, this.currentTime, true);
+            
+            if (result) {
+              // Create melee slash visual effect - only when melee weapon is equipped
+              const slashX = this.player.x + this.player.width / 2 + (this.player.facing * 30);
+              const slashY = this.player.y + this.player.height / 2;
+              this.particleSystem.createMeleeSlash(slashX, slashY, this.player.facing);
+              
+              // Play melee sound
+              this.audioManager.playSound('melee', 0.6);
+              
+              // Track shots fired
+              if (Array.isArray(result)) {
+                this.shotsFired += result.length;
+                result.forEach(p => {
+                  this.projectiles.push(p);
+                  this.collisionSystem.add(p);
+                });
+              } else {
+                this.shotsFired++;
+                this.projectiles.push(result);
+                this.collisionSystem.add(result);
+              }
             }
           }
         }
@@ -1223,6 +1233,13 @@ class GameEngine {
         if ((this.inputManager.isKeyPressed('ArrowUp') || this.inputManager.isKeyPressed('w') || this.inputManager.isKeyPressed(' ')) && this.player.onGround) {
           this.player.dy = this.player.jumpStrength;
           this.player.onGround = false;
+        }
+        
+        // Block/Parry (Hold V key - only with melee weapon)
+        if (this.inputManager.isKeyPressed('v') || this.inputManager.isKeyPressed('V')) {
+          this.player.startBlocking(this.currentTime);
+        } else {
+          this.player.stopBlocking();
         }
         
         // Slide/Roll (changed from Shift to C key for better accessibility)
@@ -1277,6 +1294,42 @@ class GameEngine {
       // Toggle inventory (I key)
       if (this.inputManager.wasKeyPressed('i') || this.inputManager.wasKeyPressed('I')) {
         this.showInventory = !this.showInventory;
+        if (this.showInventory) {
+          this.inventoryPage = 0; // Reset to first page when opening
+        }
+      }
+      
+      // Handle inventory when open
+      if (this.showInventory) {
+        // Switch inventory pages with Tab
+        if (this.inputManager.wasKeyPressed('Tab')) {
+          this.inventoryPage = (this.inventoryPage + 1) % 2;
+        }
+        
+        // Select weapon based on inventory page
+        if (this.inventoryPage === 0) {
+          // Ranged weapons page
+          if (this.inputManager.wasKeyPressed('1')) {
+            this.player.switchWeapon(0);
+          } else if (this.inputManager.wasKeyPressed('2')) {
+            this.player.switchWeapon(1);
+          } else if (this.inputManager.wasKeyPressed('3')) {
+            this.player.switchWeapon(2);
+          } else if (this.inputManager.wasKeyPressed('4')) {
+            this.player.switchWeapon(3);
+          }
+        } else if (this.inventoryPage === 1) {
+          // Melee weapons page
+          if (this.inputManager.wasKeyPressed('1')) {
+            this.player.switchMeleeWeapon(0);
+          } else if (this.inputManager.wasKeyPressed('2')) {
+            this.player.switchMeleeWeapon(1);
+          } else if (this.inputManager.wasKeyPressed('3')) {
+            this.player.switchMeleeWeapon(2);
+          } else if (this.inputManager.wasKeyPressed('4')) {
+            this.player.switchMeleeWeapon(3);
+          }
+        }
       }
       
       // Pause
@@ -1731,7 +1784,7 @@ class GameEngine {
       if (!proj.active) return;
       
       // Player projectiles hitting enemies (both ranged and melee weapons)
-      if (proj.owner instanceof Weapon && (proj.owner === this.player.getCurrentWeapon() || proj.owner === this.player.meleeWeapon)) {
+      if (proj.owner instanceof Weapon && (proj.owner === this.player.getCurrentWeapon() || proj.owner === this.player.getCurrentMeleeWeapon())) {
         this.enemies.forEach(enemy => {
           if (enemy.active && proj.active && proj.collidesWith(enemy)) {
             const killed = enemy.takeDamage(proj.damage);
@@ -1835,22 +1888,50 @@ class GameEngine {
       // Enemy projectiles hitting player
       else {
         if (this.player.active && proj.collidesWith(this.player)) {
-          const damaged = this.player.takeDamage(proj.damage);
-          if (damaged) {
-            this.totalDamageTaken += proj.damage;
-            this.damageTakenThisWave += proj.damage;
-            // Play player hit sound
-            this.audioManager.playSound('player_hit', 0.5);
+          const damaged = this.player.takeDamage(proj.damage, this.currentTime);
+          
+          if (damaged === 'parry') {
+            // Perfect parry! Deflect projectile
+            proj.dx *= -1;
+            proj.dy *= -1;
+            proj.owner = this.player; // Now it belongs to player
+            this.audioManager.playSound('melee_hit', 0.8);
+            this.particleSystem.createTextPopup(
+              this.player.x + this.player.width / 2,
+              this.player.y - 20,
+              'PARRY!',
+              '#ffaa00'
+            );
+            this.camera.shake(3, 100);
+          } else if (damaged) {
+            const actualDamage = this.player.isBlocking ? Math.floor(proj.damage * 0.25) : proj.damage;
+            this.totalDamageTaken += actualDamage;
+            this.damageTakenThisWave += actualDamage;
+            
+            if (this.player.isBlocking) {
+              // Blocked hit
+              this.audioManager.playSound('player_hit', 0.3);
+              this.particleSystem.createTextPopup(
+                this.player.x + this.player.width / 2,
+                this.player.y - 20,
+                'BLOCKED',
+                '#00ffff'
+              );
+            } else {
+              // Normal hit
+              this.audioManager.playSound('player_hit', 0.5);
+            }
+            
+            proj.destroy();
+            this.particleSystem.createExplosion(
+              this.player.x + this.player.width / 2,
+              this.player.y + this.player.height / 2,
+              10,
+              '#ff0000'
+            );
+            // Screen shake when player takes damage (less if blocking)
+            this.camera.shake(this.player.isBlocking ? 2 : 5, 200);
           }
-          proj.destroy();
-          this.particleSystem.createExplosion(
-            this.player.x + this.player.width / 2,
-            this.player.y + this.player.height / 2,
-            10,
-            '#ff0000'
-          );
-          // Screen shake when player takes damage
-          this.camera.shake(5, 200);
         }
       }
     });
@@ -1954,7 +2035,7 @@ class GameEngine {
       
       // Draw inventory if open
       if (this.showInventory) {
-        this.ui.drawInventory(this.ctx, this.player);
+        this.ui.drawInventory(this.ctx, this.player, this.inventoryPage);
       }
     }
   }

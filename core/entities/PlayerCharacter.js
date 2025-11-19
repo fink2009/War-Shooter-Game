@@ -23,7 +23,8 @@ class PlayerCharacter extends Entity {
     // Combat - separate ranged and melee weapons
     this.rangedWeapons = [new Pistol()];
     this.currentRangedWeaponIndex = 0;
-    this.meleeWeapon = new Knife(); // Default melee weapon - always available
+    this.meleeWeapons = []; // Array of melee weapons
+    this.currentMeleeWeaponIndex = -1; // -1 means no melee weapon equipped
     this.score = 0;
     this.kills = 0;
     
@@ -35,6 +36,22 @@ class PlayerCharacter extends Entity {
     this.rollDuration = 400;
     this.rollCooldown = 0;
     this.invulnerable = false;
+    
+    // Melee combo system
+    this.meleeCombo = 0;
+    this.maxMeleeCombo = 3;
+    this.lastMeleeAttackTime = 0;
+    this.meleeComboWindow = 1000; // 1 second window to continue combo
+    this.meleeComboMultiplier = 1.0;
+    
+    // Parry/Block system
+    this.isBlocking = false;
+    this.blockStamina = 100;
+    this.maxBlockStamina = 100;
+    this.blockDrainRate = 20; // per second
+    this.blockRegenRate = 15; // per second
+    this.perfectParryWindow = 200; // ms for perfect parry
+    this.lastBlockTime = 0;
     
     // Special ability system
     this.specialAbilityCooldown = 0;
@@ -86,16 +103,35 @@ class PlayerCharacter extends Entity {
     return this.rangedWeapons[this.currentRangedWeaponIndex];
   }
 
+  getCurrentMeleeWeapon() {
+    if (this.currentMeleeWeaponIndex >= 0 && this.currentMeleeWeaponIndex < this.meleeWeapons.length) {
+      return this.meleeWeapons[this.currentMeleeWeaponIndex];
+    }
+    return null;
+  }
+
   switchWeapon(index) {
     if (index >= 0 && index < this.rangedWeapons.length) {
       this.currentRangedWeaponIndex = index;
     }
   }
 
+  switchMeleeWeapon(index) {
+    if (index >= 0 && index < this.meleeWeapons.length) {
+      this.currentMeleeWeaponIndex = index;
+    }
+  }
+
   addWeapon(weapon) {
     if (weapon.isMelee) {
-      // Replace melee weapon
-      this.meleeWeapon = weapon;
+      // Add to melee weapons if not already present
+      if (!this.meleeWeapons.find(w => w.name === weapon.name)) {
+        this.meleeWeapons.push(weapon);
+        // Auto-equip first melee weapon
+        if (this.meleeWeapons.length === 1) {
+          this.currentMeleeWeaponIndex = 0;
+        }
+      }
     } else {
       // Add to ranged weapons if not already present
       if (!this.rangedWeapons.find(w => w.name === weapon.name)) {
@@ -109,10 +145,21 @@ class PlayerCharacter extends Entity {
     
     if (isMeleeAttack) {
       // Use melee weapon if available
-      if (!this.meleeWeapon) {
+      weapon = this.getCurrentMeleeWeapon();
+      if (!weapon) {
         return null; // No melee weapon equipped
       }
-      weapon = this.meleeWeapon;
+      
+      // Update melee combo
+      if (currentTime - this.lastMeleeAttackTime < this.meleeComboWindow) {
+        this.meleeCombo = Math.min(this.meleeCombo + 1, this.maxMeleeCombo);
+      } else {
+        this.meleeCombo = 1;
+      }
+      this.lastMeleeAttackTime = currentTime;
+      
+      // Apply combo multiplier
+      this.meleeComboMultiplier = 1.0 + (this.meleeCombo - 1) * 0.25; // 25% damage bonus per combo level
     } else {
       // Use current ranged weapon
       weapon = this.getCurrentWeapon();
@@ -122,6 +169,19 @@ class PlayerCharacter extends Entity {
     const gunY = this.y + this.height / 2;
     
     const result = weapon.fire(gunX, gunY, targetX, targetY, currentTime);
+    
+    // Apply combo damage to melee attacks
+    if (isMeleeAttack && result) {
+      const applyComboBonus = (proj) => {
+        proj.damage = Math.floor(proj.damage * this.meleeComboMultiplier);
+      };
+      
+      if (Array.isArray(result)) {
+        result.forEach(applyComboBonus);
+      } else {
+        applyComboBonus(result);
+      }
+    }
     
     // Multi-shot power-up: fire additional projectiles at slight angles (ranged only)
     if (this.hasMultiShot && result && !isMeleeAttack) {
@@ -186,6 +246,40 @@ class PlayerCharacter extends Entity {
       this.invulnerable = true;
       this.dx = this.facing * 15; // Increased from 10 to 15 for better sliding
     }
+  }
+  
+  startBlocking(currentTime) {
+    // Can only block if have a melee weapon and stamina
+    if (this.getCurrentMeleeWeapon() && this.blockStamina > 0 && !this.isRolling) {
+      this.isBlocking = true;
+      this.lastBlockTime = currentTime;
+    }
+  }
+  
+  stopBlocking() {
+    this.isBlocking = false;
+  }
+  
+  updateBlock(deltaTime, currentTime) {
+    const dt = deltaTime / 16;
+    
+    if (this.isBlocking && this.blockStamina > 0) {
+      // Drain stamina while blocking
+      this.blockStamina = Math.max(0, this.blockStamina - (this.blockDrainRate * dt / 60));
+      
+      // Stop blocking if out of stamina
+      if (this.blockStamina <= 0) {
+        this.isBlocking = false;
+      }
+    } else if (!this.isBlocking && this.blockStamina < this.maxBlockStamina) {
+      // Regenerate stamina when not blocking
+      this.blockStamina = Math.min(this.maxBlockStamina, this.blockStamina + (this.blockRegenRate * dt / 60));
+    }
+  }
+  
+  canPerfectParry(currentTime) {
+    // Perfect parry window is right when blocking starts
+    return this.isBlocking && (currentTime - this.lastBlockTime) < this.perfectParryWindow;
   }
   
   useSpecialAbility(currentTime, gameEngine) {
@@ -264,8 +358,22 @@ class PlayerCharacter extends Entity {
     return null;
   }
 
-  takeDamage(amount) {
+  takeDamage(amount, currentTime = 0) {
     if (!this.invulnerable) {
+      // Check for blocking
+      if (this.isBlocking && this.blockStamina > 0) {
+        // Check for perfect parry
+        if (this.canPerfectParry(currentTime)) {
+          // Perfect parry - no damage, no stamina loss
+          return 'parry';
+        } else {
+          // Normal block - reduce damage by 75%
+          amount = Math.floor(amount * 0.25);
+          // Drain stamina based on damage blocked
+          this.blockStamina = Math.max(0, this.blockStamina - amount * 2);
+        }
+      }
+      
       // Check if player has shield power-up
       if (this.hasShield && this.shieldHealth > 0) {
         this.shieldHealth -= amount;
@@ -300,8 +408,18 @@ class PlayerCharacter extends Entity {
     this.getCurrentWeapon().update(currentTime);
     
     // Update melee weapon if equipped
-    if (this.meleeWeapon) {
-      this.meleeWeapon.update(currentTime);
+    const currentMelee = this.getCurrentMeleeWeapon();
+    if (currentMelee) {
+      currentMelee.update(currentTime);
+    }
+    
+    // Update blocking
+    this.updateBlock(deltaTime, currentTime);
+    
+    // Reset combo if too much time has passed
+    if (currentTime - this.lastMeleeAttackTime > this.meleeComboWindow) {
+      this.meleeCombo = 0;
+      this.meleeComboMultiplier = 1.0;
     }
     
     // Handle rolling
