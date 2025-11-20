@@ -408,7 +408,7 @@ class GameUI {
         ['V - Block/Parry', '#00ff00'],
         ['R - Reload', '#00ff00'],
         ['E/Q - Special Ability', '#00ff00'],
-        ['I - Inventory (TAB=switch)', '#00ff00'],
+        ['I - Inventory (]=switch)', '#00ff00'],
         ['', ''],
         ['TIPS', '#ffff00'],
         ['• Find melee weapons for combos', '#888'],
@@ -758,7 +758,7 @@ class GameUI {
         '',
         'INVENTORY:',
         '  I - Open Inventory',
-        '  TAB - Switch Pages (Ranged/Melee)',
+        '  ] or PageDown - Switch Pages (Ranged/Melee)',
         '',
         'GAME:',
         '  ESC - Pause/Menu',
@@ -808,8 +808,9 @@ class GameUI {
       ctx.fillStyle = '#00ff00';
       ctx.font = '20px monospace';
       ctx.fillText('Press ESC to Resume', this.width / 2, 350);
-      ctx.fillText('Press M for Main Menu', this.width / 2, 385);
-      ctx.fillText('Press R to Restart', this.width / 2, 420);
+      ctx.fillText('Press S for Settings', this.width / 2, 385);
+      ctx.fillText('Press M for Main Menu', this.width / 2, 420);
+      ctx.fillText('Press R to Restart', this.width / 2, 455);
     } else if (menuState === 'gameover') {
       ctx.fillStyle = '#ff0000';
       ctx.textAlign = 'center';
@@ -1153,7 +1154,7 @@ class GameUI {
       ctx.fillStyle = '#888888';
     }
     ctx.font = 'bold 14px monospace';
-    ctx.fillText('RANGED [TAB]', tab1X + tabWidth / 2, tabY + 22);
+    ctx.fillText('RANGED []]', tab1X + tabWidth / 2, tabY + 22);
     
     // Draw Tab 2 - Melee Weapons
     if (inventoryPage === 1) {
@@ -1172,7 +1173,7 @@ class GameUI {
       ctx.fillStyle = '#888888';
     }
     ctx.font = 'bold 14px monospace';
-    ctx.fillText('MELEE [TAB]', tab2X + tabWidth / 2, tabY + 22);
+    ctx.fillText('MELEE []]', tab2X + tabWidth / 2, tabY + 22);
     
     // List weapons
     const startY = panelY + 140;
@@ -1231,7 +1232,7 @@ class GameUI {
       ctx.fillStyle = '#888888';
       ctx.font = '16px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('Press [1-4] to equip weapon | [TAB] to switch page | [I] or [ESC] to close', this.width / 2, panelY + panelHeight - 30);
+      ctx.fillText('Press [1-4] to equip weapon | []] to switch page | [I] or [ESC] to close', this.width / 2, panelY + panelHeight - 30);
     } else {
       // Page 2: Melee Weapons
       if (player.meleeWeapons.length === 0) {
@@ -1284,7 +1285,7 @@ class GameUI {
       ctx.fillStyle = '#888888';
       ctx.font = '16px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('Press [1-4] to equip melee weapon | [TAB] to switch page | [I] or [ESC] to close', this.width / 2, panelY + panelHeight - 30);
+      ctx.fillText('Press [1-4] to equip melee weapon | []] to switch page | [I] or [ESC] to close', this.width / 2, panelY + panelHeight - 30);
     }
     
     ctx.textAlign = 'left';
