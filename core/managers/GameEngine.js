@@ -396,12 +396,12 @@ class GameEngine {
         if (enemyGroup.type === 'boss') {
           const bossId = enemyGroup.bossId !== undefined ? enemyGroup.bossId : 0;
           
-          // Base boss enhancements - ALL bosses are FEARSOME
-          enemy.maxHealth *= 12; // 12x base health (increased from 8x)
+          // Base boss enhancements - Challenging but beatable
+          enemy.maxHealth *= 9; // 9x base health (reduced from 12x for slight ease)
           enemy.health = enemy.maxHealth;
-          enemy.damage *= 4; // 4x more damage (increased from 2.5x)
-          enemy.speed *= 2.2; // 2.2x faster (increased from 1.5x)
-          enemy.shootCooldown *= 0.3; // Shoots 3.3x faster (increased from 2.5x)
+          enemy.damage *= 3; // 3x more damage (reduced from 4x for slight ease)
+          enemy.speed *= 1.8; // 1.8x faster (reduced from 2.2x for slight ease)
+          enemy.shootCooldown *= 0.4; // Shoots 2.5x faster (reduced from 0.3x for slight ease)
           enemy.aggroRange = 9999; // Infinite aggro - always targets player
           enemy.attackRange = 1000; // Very long attack range
           enemy.isBoss = true;
@@ -412,38 +412,38 @@ class GameEngine {
           switch (bossId) {
             case 0: // The Warlord - First boss (Level 3)
               enemy.bossName = 'The Warlord';
-              enemy.maxHealth *= 1.2; // 20% more health
+              enemy.maxHealth *= 1.1; // 10% more health (reduced from 1.2x for slight ease)
               enemy.specialMechanic = 'rage'; // Gets faster and stronger below 50% HP
               break;
             case 1: // The Devastator - Second boss (Level 6)
               enemy.bossName = 'The Devastator';
-              enemy.maxHealth *= 1.8; // 80% more health (increased from 1.5x)
-              enemy.damage *= 1.2; // 20% more damage
+              enemy.maxHealth *= 1.5; // 50% more health (reduced from 1.8x for slight ease)
+              enemy.damage *= 1.1; // 10% more damage (reduced from 1.2x for slight ease)
               enemy.specialMechanic = 'summon'; // Can summon minions
-              enemy.summonCooldown = 12000; // Summon every 12 seconds (faster)
+              enemy.summonCooldown = 15000; // Summon every 15 seconds (slower from 12s for slight ease)
               enemy.lastSummonTime = 0;
               break;
             case 2: // The Annihilator - Third boss (Level 9)
               enemy.bossName = 'The Annihilator';
-              enemy.maxHealth *= 2.5; // 2.5x health (increased from 2x)
-              enemy.damage *= 1.4; // 40% more damage
-              enemy.speed *= 1.2; // 20% faster
+              enemy.maxHealth *= 2.0; // 2.0x health (reduced from 2.5x for slight ease)
+              enemy.damage *= 1.2; // 20% more damage (reduced from 1.4x for slight ease)
+              enemy.speed *= 1.1; // 10% faster (reduced from 1.2x for slight ease)
               enemy.specialMechanic = 'shield'; // Periodic shield phases
-              enemy.shieldCooldown = 18000; // Faster shield cycling
+              enemy.shieldCooldown = 20000; // Slower shield cycling (from 18s for slight ease)
               enemy.lastShieldTime = 0;
               enemy.shieldActive = false;
               break;
             case 3: // The Overlord - FINAL BOSS (Level 10) - EXTREME POWER
               enemy.bossName = 'The Overlord';
-              enemy.maxHealth *= 5.0; // 5x health - MASSIVE (increased from 3x)
-              enemy.damage *= 2.5; // 2.5x damage - DEVASTATING (increased from 1.5x)
-              enemy.speed *= 1.8; // 1.8x speed - RELENTLESS (increased from 1.3x)
-              enemy.shootCooldown *= 0.5; // Shoots twice as fast as other bosses
+              enemy.maxHealth *= 3.5; // 3.5x health - MASSIVE (reduced from 5.0x for slight ease)
+              enemy.damage *= 1.8; // 1.8x damage - DEVASTATING (reduced from 2.5x for slight ease)
+              enemy.speed *= 1.5; // 1.5x speed - RELENTLESS (reduced from 1.8x for slight ease)
+              enemy.shootCooldown *= 0.6; // Shoots 1.67x faster than other bosses (reduced from 0.5x for slight ease)
               enemy.specialMechanic = 'all'; // All mechanics combined
               enemy.isFinalBoss = true;
-              enemy.summonCooldown = 10000; // Summons every 10 seconds
+              enemy.summonCooldown = 13000; // Summons every 13 seconds (slower from 10s for slight ease)
               enemy.lastSummonTime = 0;
-              enemy.shieldCooldown = 15000; // Shield every 15 seconds
+              enemy.shieldCooldown = 18000; // Shield every 18 seconds (slower from 15s for slight ease)
               enemy.lastShieldTime = 0;
               enemy.shieldActive = false;
               break;

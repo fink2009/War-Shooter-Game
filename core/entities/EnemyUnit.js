@@ -82,16 +82,16 @@ class EnemyUnit extends Entity {
         this.height = 44;
         break;
       case 'boss':
-        this.maxHealth = 800; // Increased from 500
-        this.speed = 2.5; // Increased from 1 - much faster
-        this.damage = 30; // Increased from default 10
+        this.maxHealth = 600; // Reduced from 800 for slight ease
+        this.speed = 2.2; // Reduced from 2.5 for slight ease
+        this.damage = 25; // Reduced from 30 for slight ease
         this.weapon = new MachineGun();
         this.attackRange = 700; // Increased from 500
         this.color = '#990000';
         this.width = 50;
         this.height = 70;
         this.aggroRange = 9999; // Effectively infinite - always targets player
-        this.shootCooldown = 350; // Faster shooting (from 500)
+        this.shootCooldown = 400; // Slightly slower shooting (from 350) for slight ease
         this.isBoss = true; // Mark as boss for special AI behavior
         break;
     }
@@ -358,13 +358,13 @@ class EnemyUnit extends Entity {
   updateBossMechanics(currentTime, player, deltaTime) {
     const healthPercent = this.health / this.maxHealth;
     
-    // Rage mechanic (The Warlord & The Overlord) - MORE POWERFUL
+    // Rage mechanic (The Warlord & The Overlord) - REDUCED SLIGHTLY
     if (this.specialMechanic === 'rage' || this.specialMechanic === 'all') {
       if (healthPercent < 0.5 && !this.enraged) {
         this.enraged = true;
-        this.speed *= 2.0; // 2x speed boost (increased from 1.5x)
-        this.shootCooldown *= 0.4; // Shoots 2.5x faster (increased from 0.6x)
-        this.damage = Math.floor(this.damage * 2.0); // 2x damage (increased from 1.5x)
+        this.speed *= 1.6; // 1.6x speed boost (reduced from 2.0x for slight ease)
+        this.shootCooldown *= 0.55; // Shoots 1.8x faster (reduced from 0.4x for slight ease)
+        this.damage = Math.floor(this.damage * 1.6); // 1.6x damage (reduced from 2.0x for slight ease)
       }
     }
     
