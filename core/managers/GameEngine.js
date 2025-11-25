@@ -170,12 +170,7 @@ class GameEngine {
   startGame(mode, character) {
     this.mode = mode;
     this.selectedCharacter = character;
-    this.state = 'playing';
     this.menuState = null; // Reset menu state to ensure game renders properly
-    
-    // Start gameplay music
-    this.audioManager.stopMusic();
-    this.audioManager.playMusic('gameplay');
     
     // Reset game state
     this.score = 0;
@@ -249,6 +244,14 @@ class GameEngine {
     const starterKnife = new Pickup(200, this.groundLevel - 50, 'weapon_knife');
     this.pickups.push(starterKnife);
     this.collisionSystem.add(starterKnife);
+    
+    // Set game state and music after spawning (in case a cutscene started)
+    // Only set to playing if not in cutscene (e.g., if starting on a boss level)
+    if (this.state !== 'cutscene') {
+      this.state = 'playing';
+      this.audioManager.stopMusic();
+      this.audioManager.playMusic('gameplay');
+    }
   }
 
   spawnWave() {
@@ -544,6 +547,9 @@ class GameEngine {
    */
   endBossCutscene() {
     this.state = 'playing';
+    
+    // Start boss music for the battle
+    this.audioManager.playMusic('boss');
     
     // Give player brief invulnerability after cutscene
     if (this.player && this.player.active) {
@@ -1694,14 +1700,21 @@ class GameEngine {
               this.spawnPickups();
               this.spawnCovers();
               this.spawnLevelTerrain();
-              this.state = 'playing';
+              
+              // Only set state to playing if a cutscene didn't start
+              // (spawnCampaignEnemies sets state to 'cutscene' for boss levels)
+              if (this.state !== 'cutscene') {
+                this.state = 'playing';
+              }
               this.menuState = null;
               
-              // Switch music for boss levels
-              if (this.isBossLevel) {
-                this.audioManager.playMusic('boss');
-              } else {
-                this.audioManager.playMusic('gameplay');
+              // Switch music for boss levels (only if not in cutscene, as cutscene handles music)
+              if (this.state !== 'cutscene') {
+                if (this.isBossLevel) {
+                  this.audioManager.playMusic('boss');
+                } else {
+                  this.audioManager.playMusic('gameplay');
+                }
               }
               
               // Heal player between levels
