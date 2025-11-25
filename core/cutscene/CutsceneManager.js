@@ -153,7 +153,7 @@ class CutsceneManager {
   handleSkipInput(inputManager, deltaTime) {
     if (this.state !== 'playing' && this.state !== 'paused') return;
     
-    const skipPressed = inputManager.isKeyPressed('Escape') || inputManager.isKeyPressed(' ');
+    const skipPressed = inputManager.isKeyPressed('Escape') || inputManager.isKeyPressed('Space') || inputManager.isKeyPressed(' ');
     
     if (skipPressed) {
       if (this.skipKeyPressed) {

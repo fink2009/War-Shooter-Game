@@ -36,6 +36,15 @@ class SubtitleRenderer {
     
     // Word wrap cache
     this.wrappedLines = [];
+    
+    // Cursor blink state
+    this.cursorBlinkTime = 0;
+    this.cursorVisible = true;
+    
+    // Reusable canvas for text measurement
+    this.measureCanvas = document.createElement('canvas');
+    this.measureCtx = this.measureCanvas.getContext('2d');
+  }
   }
 
   /**
@@ -98,14 +107,12 @@ class SubtitleRenderer {
     const lines = [];
     let currentLine = '';
     
-    // Create temporary canvas context for measuring
-    const tempCanvas = document.createElement('canvas');
-    const ctx = tempCanvas.getContext('2d');
-    ctx.font = this.textFont;
+    // Use cached canvas context for measuring
+    this.measureCtx.font = this.textFont;
     
     for (const word of words) {
       const testLine = currentLine ? currentLine + ' ' + word : word;
-      const metrics = ctx.measureText(testLine);
+      const metrics = this.measureCtx.measureText(testLine);
       
       if (metrics.width > this.maxWidth - this.padding * 2) {
         if (currentLine) {
@@ -136,6 +143,13 @@ class SubtitleRenderer {
     if (!this.isActive) return;
     
     this.elapsed += deltaTime;
+    
+    // Update cursor blink timer
+    this.cursorBlinkTime += deltaTime;
+    if (this.cursorBlinkTime >= 500) {
+      this.cursorVisible = !this.cursorVisible;
+      this.cursorBlinkTime = 0;
+    }
     
     // Update state machine
     switch (this.state) {
@@ -305,9 +319,9 @@ class SubtitleRenderer {
         const charsToShow = this.revealedChars - lineStart;
         ctx.fillText(line.substring(0, charsToShow), x, y + i * this.lineHeight);
         
-        // Draw cursor
+        // Draw cursor using cached blink state
         const partialWidth = ctx.measureText(line.substring(0, charsToShow)).width;
-        if (Math.floor(Date.now() / 500) % 2 === 0) {
+        if (this.cursorVisible) {
           ctx.fillStyle = this.speakerColor;
           ctx.fillText('_', x + partialWidth, y + i * this.lineHeight);
           ctx.fillStyle = this.textColor;
