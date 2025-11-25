@@ -1,0 +1,131 @@
+{
+  "cutsceneId": "the_devastator_intro",
+  "bossId": 1,
+  "level": 6,
+  "bossName": "The Devastator",
+  "duration": 14000,
+  "shots": [
+    {
+      "time": 0,
+      "duration": 3500,
+      "camera": {
+        "type": "pan",
+        "startX": 900,
+        "endX": 1800,
+        "zoom": 1.0,
+        "easing": "ease-in-out"
+      }
+    },
+    {
+      "time": 3500,
+      "duration": 3500,
+      "camera": {
+        "type": "focus",
+        "target": "boss",
+        "zoom": 1.3,
+        "offsetY": -40,
+        "easing": "ease-out"
+      }
+    },
+    {
+      "time": 7000,
+      "duration": 3500,
+      "camera": {
+        "type": "shake",
+        "intensity": 4,
+        "duration": 400
+      }
+    },
+    {
+      "time": 7000,
+      "duration": 3500,
+      "camera": {
+        "type": "static",
+        "zoom": 1.2,
+        "easing": "linear"
+      }
+    },
+    {
+      "time": 10500,
+      "duration": 3500,
+      "camera": {
+        "type": "zoom_out",
+        "zoom": 1.0,
+        "easing": "ease-in-out"
+      }
+    }
+  ],
+  "dialogue": [
+    {
+      "time": 2000,
+      "duration": 3500,
+      "speaker": "The Devastator",
+      "text": "The sound of crushing metal... the screams of the fallen..."
+    },
+    {
+      "time": 6000,
+      "duration": 4000,
+      "speaker": "The Devastator",
+      "text": "My legion answers my call. You will face not one enemy, but MANY!"
+    },
+    {
+      "time": 10500,
+      "duration": 3000,
+      "speaker": "The Devastator",
+      "text": "Prepare to be overwhelmed!"
+    }
+  ],
+  "animations": [
+    {
+      "time": 500,
+      "target": "boss",
+      "action": "walk_in"
+    },
+    {
+      "time": 3500,
+      "target": "boss",
+      "action": "pose"
+    },
+    {
+      "time": 6500,
+      "target": "boss",
+      "action": "summon_hint"
+    },
+    {
+      "time": 7000,
+      "target": "boss",
+      "action": "roar"
+    }
+  ],
+  "audio": [
+    {
+      "time": 0,
+      "type": "music",
+      "track": "boss"
+    },
+    {
+      "time": 500,
+      "type": "sfx",
+      "sound": "projectile_impact",
+      "volume": 0.4
+    },
+    {
+      "time": 6500,
+      "type": "sfx",
+      "sound": "ability",
+      "volume": 0.6
+    },
+    {
+      "time": 7000,
+      "type": "sfx",
+      "sound": "explosion",
+      "volume": 0.5
+    }
+  ],
+  "gameplayStart": 14000,
+  "metadata": {
+    "theme": "heavy_machinery",
+    "atmosphere": "oppressive",
+    "specialMechanic": "Summons scout minions every 15 seconds"
+  }
+}

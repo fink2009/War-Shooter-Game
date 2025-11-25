@@ -1,0 +1,198 @@
+{
+  "cutsceneId": "the_overlord_intro",
+  "bossId": 3,
+  "level": 10,
+  "bossName": "The Overlord",
+  "duration": 24000,
+  "isFinalBoss": true,
+  "shots": [
+    {
+      "time": 0,
+      "duration": 4000,
+      "camera": {
+        "type": "pan",
+        "startX": 600,
+        "endX": 2200,
+        "zoom": 1.0,
+        "easing": "ease-in-out"
+      }
+    },
+    {
+      "time": 4000,
+      "duration": 4000,
+      "camera": {
+        "type": "focus",
+        "target": "boss",
+        "zoom": 1.6,
+        "offsetY": -60,
+        "easing": "ease-out-cubic"
+      }
+    },
+    {
+      "time": 8000,
+      "duration": 4000,
+      "camera": {
+        "type": "static",
+        "zoom": 1.4,
+        "easing": "linear"
+      }
+    },
+    {
+      "time": 12000,
+      "duration": 4000,
+      "camera": {
+        "type": "shake",
+        "intensity": 6,
+        "duration": 800
+      }
+    },
+    {
+      "time": 12000,
+      "duration": 4000,
+      "camera": {
+        "type": "static",
+        "zoom": 1.3,
+        "easing": "linear"
+      }
+    },
+    {
+      "time": 16000,
+      "duration": 4000,
+      "camera": {
+        "type": "focus",
+        "target": "boss",
+        "zoom": 1.2,
+        "offsetY": -40,
+        "easing": "ease-in-out"
+      }
+    },
+    {
+      "time": 20000,
+      "duration": 4000,
+      "camera": {
+        "type": "zoom_out",
+        "zoom": 1.0,
+        "easing": "ease-in-out"
+      }
+    }
+  ],
+  "dialogue": [
+    {
+      "time": 2000,
+      "duration": 4000,
+      "speaker": "The Overlord",
+      "text": "So... you are the one who has carved a path through my armies."
+    },
+    {
+      "time": 6500,
+      "duration": 4500,
+      "speaker": "The Overlord",
+      "text": "The Warlord's rage... The Devastator's legions... The Annihilator's shields..."
+    },
+    {
+      "time": 11500,
+      "duration": 4500,
+      "speaker": "The Overlord",
+      "text": "ALL their powers flow through ME! I am the culmination of destruction!"
+    },
+    {
+      "time": 16500,
+      "duration": 3500,
+      "speaker": "The Overlord",
+      "text": "This is your final battle. There will be no mercy."
+    },
+    {
+      "time": 20500,
+      "duration": 3000,
+      "speaker": "The Overlord",
+      "text": "PREPARE TO BE ANNIHILATED!"
+    }
+  ],
+  "animations": [
+    {
+      "time": 500,
+      "target": "boss",
+      "action": "walk_in"
+    },
+    {
+      "time": 4000,
+      "target": "boss",
+      "action": "pose"
+    },
+    {
+      "time": 11000,
+      "target": "boss",
+      "action": "power_surge"
+    },
+    {
+      "time": 12000,
+      "target": "boss",
+      "action": "shield_activate"
+    },
+    {
+      "time": 15000,
+      "target": "boss",
+      "action": "summon_hint"
+    },
+    {
+      "time": 16500,
+      "target": "boss",
+      "action": "roar"
+    },
+    {
+      "time": 20500,
+      "target": "boss",
+      "action": "final_pose"
+    }
+  ],
+  "audio": [
+    {
+      "time": 0,
+      "type": "music",
+      "track": "boss"
+    },
+    {
+      "time": 4000,
+      "type": "sfx",
+      "sound": "explosion",
+      "volume": 0.4
+    },
+    {
+      "time": 11000,
+      "type": "sfx",
+      "sound": "ability",
+      "volume": 0.8
+    },
+    {
+      "time": 12000,
+      "type": "sfx",
+      "sound": "explosion",
+      "volume": 0.7
+    },
+    {
+      "time": 12000,
+      "type": "sfx",
+      "sound": "ability_shield",
+      "volume": 0.6
+    },
+    {
+      "time": 16500,
+      "type": "sfx",
+      "sound": "explosion",
+      "volume": 0.6
+    },
+    {
+      "time": 20500,
+      "type": "sfx",
+      "sound": "explosion",
+      "volume": 0.9
+    }
+  ],
+  "gameplayStart": 24000,
+  "metadata": {
+    "theme": "epic_finale",
+    "atmosphere": "overwhelming",
+    "specialMechanic": "Combines ALL boss abilities: Rage at 50% HP, Summons every 13s, Shield every 18s",
+    "difficulty": "extreme"
+  }
+}

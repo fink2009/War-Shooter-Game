@@ -1,0 +1,116 @@
+{
+  "cutsceneId": "the_annihilator_intro",
+  "bossId": 2,
+  "level": 9,
+  "bossName": "The Annihilator",
+  "duration": 15000,
+  "shots": [
+    {
+      "time": 0,
+      "duration": 3000,
+      "camera": {
+        "type": "pan",
+        "startX": 1000,
+        "endX": 1900,
+        "zoom": 1.0,
+        "easing": "ease-in-out"
+      }
+    },
+    {
+      "time": 3000,
+      "duration": 4000,
+      "camera": {
+        "type": "focus",
+        "target": "boss",
+        "zoom": 1.5,
+        "offsetY": -50,
+        "easing": "ease-out-cubic"
+      }
+    },
+    {
+      "time": 7000,
+      "duration": 4000,
+      "camera": {
+        "type": "static",
+        "zoom": 1.3,
+        "easing": "linear"
+      }
+    },
+    {
+      "time": 11000,
+      "duration": 4000,
+      "camera": {
+        "type": "zoom_out",
+        "zoom": 1.0,
+        "easing": "ease-in-out"
+      }
+    }
+  ],
+  "dialogue": [
+    {
+      "time": 2000,
+      "duration": 3500,
+      "speaker": "The Annihilator",
+      "text": "You have survived longer than most. But survival ends here."
+    },
+    {
+      "time": 6000,
+      "duration": 4000,
+      "speaker": "The Annihilator",
+      "text": "My shields are impenetrable. When they activate, retreat and wait..."
+    },
+    {
+      "time": 10500,
+      "duration": 4000,
+      "speaker": "The Annihilator",
+      "text": "...or charge forward and meet oblivion. The choice is yours."
+    }
+  ],
+  "animations": [
+    {
+      "time": 500,
+      "target": "boss",
+      "action": "walk_in"
+    },
+    {
+      "time": 3000,
+      "target": "boss",
+      "action": "pose"
+    },
+    {
+      "time": 6000,
+      "target": "boss",
+      "action": "shield_activate"
+    },
+    {
+      "time": 8000,
+      "target": "boss",
+      "action": "roar"
+    }
+  ],
+  "audio": [
+    {
+      "time": 0,
+      "type": "music",
+      "track": "boss"
+    },
+    {
+      "time": 6000,
+      "type": "sfx",
+      "sound": "ability_shield",
+      "volume": 0.7
+    },
+    {
+      "time": 8000,
+      "type": "sfx",
+      "sound": "explosion",
+      "volume": 0.5
+    }
+  ],
+  "gameplayStart": 15000,
+  "metadata": {
+    "theme": "tactical",
+    "atmosphere": "calculated",
+    "specialMechanic": "Activates invincible shield every 20 seconds for 3 seconds"
+  }
+}

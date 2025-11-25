@@ -7,7 +7,7 @@ class GameEngine {
     // Game Engine initialized with comprehensive improvements
     
     // Game state
-    this.state = 'loading'; // loading, menu, character_select, playing, paused, gameover, victory, inventory
+    this.state = 'loading'; // loading, menu, character_select, playing, paused, gameover, victory, inventory, cutscene
     this.mode = 'campaign'; // campaign, survival, multiplayer
     this.menuState = 'main';
     this.showInventory = false;
@@ -27,6 +27,11 @@ class GameEngine {
     this.audioManager = new AudioManager();
     this.highScoreSystem = new HighScoreSystem();
     this.ui = new GameUI(canvas);
+    
+    // Cutscene system
+    this.cutsceneManager = new CutsceneManager();
+    this.cutsceneData = {}; // Loaded cutscene data files
+    this.pendingCutscene = null; // Cutscene to play when boss spawns
     
     // World settings
     this.worldWidth = 3000;
@@ -107,6 +112,12 @@ class GameEngine {
       // await this.assetManager.loadImage('player', 'assets/sprites/player.png');
       // await this.assetManager.loadSound('shoot', 'assets/sounds/shoot.wav');
       
+      // Load cutscene data
+      await this.loadCutsceneData();
+      
+      // Initialize cutscene manager
+      this.cutsceneManager.init(this);
+      
       // Simulate loading
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -126,6 +137,28 @@ class GameEngine {
       console.error('Initialization error:', error);
       // Show error message to user
       this.state = 'error';
+    }
+  }
+  
+  async loadCutsceneData() {
+    // Load all boss cutscene data files
+    const cutsceneFiles = [
+      { id: 0, file: 'core/cutscene/data/the_warlord_intro.json' },
+      { id: 1, file: 'core/cutscene/data/the_devastator_intro.json' },
+      { id: 2, file: 'core/cutscene/data/the_annihilator_intro.json' },
+      { id: 3, file: 'core/cutscene/data/the_overlord_intro.json' }
+    ];
+    
+    for (const cutscene of cutsceneFiles) {
+      try {
+        const response = await fetch(cutscene.file);
+        if (response.ok) {
+          const data = await response.json();
+          this.cutsceneData[cutscene.id] = data;
+        }
+      } catch (error) {
+        console.warn(`Failed to load cutscene: ${cutscene.file}`, error);
+      }
     }
   }
 
@@ -465,6 +498,62 @@ class GameEngine {
     this.enemiesRemaining = this.enemies.length;
     this.currentLevelName = levelConfig.name;
     this.isBossLevel = levelConfig.isBossLevel || false;
+    
+    // Trigger cutscene for boss levels
+    if (levelConfig.isBossLevel && this.mode === 'campaign') {
+      // Find the boss that was just spawned
+      const boss = this.enemies.find(e => e.isBoss);
+      if (boss && this.cutsceneData[boss.bossId]) {
+        this.startBossCutscene(boss);
+      }
+    }
+  }
+  
+  /**
+   * Start a boss intro cutscene
+   * @param {Object} boss - The boss entity
+   */
+  startBossCutscene(boss) {
+    const cutsceneData = this.cutsceneData[boss.bossId];
+    if (!cutsceneData) {
+      console.warn('No cutscene data found for boss:', boss.bossId);
+      return;
+    }
+    
+    // Load the cutscene
+    this.cutsceneManager.loadCutscene(cutsceneData, boss, this.player);
+    
+    // Change game state to cutscene
+    this.state = 'cutscene';
+    
+    // Start playing the cutscene
+    this.cutsceneManager.play(
+      // On complete callback
+      () => {
+        this.endBossCutscene();
+      },
+      // On skip callback
+      () => {
+        this.endBossCutscene();
+      }
+    );
+  }
+  
+  /**
+   * End the boss cutscene and return to gameplay
+   */
+  endBossCutscene() {
+    this.state = 'playing';
+    
+    // Give player brief invulnerability after cutscene
+    if (this.player && this.player.active) {
+      this.player.invulnerable = true;
+      setTimeout(() => {
+        if (this.player && this.player.active) {
+          this.player.invulnerable = false;
+        }
+      }, 1000);
+    }
   }
   
   getBossName(bossId) {
@@ -964,6 +1053,14 @@ class GameEngine {
   }
 
   handleInput() {
+    // Handle cutscene state first - disable all other input during cutscene
+    if (this.state === 'cutscene') {
+      // Only allow skip input during cutscene
+      const deltaTime = this.currentTime - this.lastTime || 16;
+      this.cutsceneManager.handleSkipInput(this.inputManager, deltaTime);
+      return; // Block all other input during cutscene
+    }
+    
     if (this.state === 'character_select' || this.menuState === 'character') {
       if (this.inputManager.wasKeyPressed('1')) {
         this.audioManager.playSound('menu_select', 0.5);
@@ -1439,6 +1536,12 @@ class GameEngine {
   }
 
   update(deltaTime) {
+    // Handle cutscene state
+    if (this.state === 'cutscene') {
+      this.cutsceneManager.update(deltaTime);
+      return;
+    }
+    
     if (this.state !== 'playing') return;
     
     // Update player
@@ -2025,6 +2128,12 @@ class GameEngine {
       return;
     }
     
+    // Render cutscene state
+    if (this.state === 'cutscene') {
+      this.renderCutscene();
+      return;
+    }
+    
     if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.state === 'levelcomplete' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls') {
       // Draw game in background if paused or level complete
       if (this.state === 'paused' || this.state === 'levelcomplete') {
@@ -2126,6 +2235,38 @@ class GameEngine {
     
     // Reset camera transform
     this.camera.reset(this.ctx);
+  }
+  
+  renderCutscene() {
+    // Apply cutscene camera transform
+    this.cutsceneManager.applyCameraTransform(this.ctx);
+    
+    // === 16-BIT ARCADE BACKGROUND ===
+    this.draw16BitSky();
+    this.draw16BitMountains();
+    this.draw16BitBuildings();
+    this.draw16BitGround();
+    
+    // Draw terrain
+    this.slopes.forEach(s => s.render(this.ctx));
+    this.platforms.forEach(p => p.render(this.ctx));
+    this.covers.forEach(c => c.render(this.ctx));
+    
+    // Draw player (dimmed during cutscene)
+    if (this.player && this.player.active) {
+      this.ctx.globalAlpha = 0.7;
+      this.player.render(this.ctx);
+      this.ctx.globalAlpha = 1.0;
+    }
+    
+    // Draw enemies (bosses featured prominently)
+    this.enemies.forEach(e => e.render(this.ctx));
+    
+    // Reset camera transform
+    this.cutsceneManager.resetCameraTransform(this.ctx);
+    
+    // Draw cutscene UI elements (subtitles, skip prompt, letterbox)
+    this.cutsceneManager.render(this.ctx);
   }
   
   // 16-bit arcade style sky with dithered gradient
