@@ -45,7 +45,6 @@ class SubtitleRenderer {
     this.measureCanvas = document.createElement('canvas');
     this.measureCtx = this.measureCanvas.getContext('2d');
   }
-  }
 
   /**
    * Show a dialogue line
