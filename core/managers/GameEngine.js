@@ -548,6 +548,9 @@ class GameEngine {
   endBossCutscene() {
     this.state = 'playing';
     
+    // Start boss music for the battle
+    this.audioManager.playMusic('boss');
+    
     // Give player brief invulnerability after cutscene
     if (this.player && this.player.active) {
       this.player.invulnerable = true;
