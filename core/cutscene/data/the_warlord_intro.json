@@ -1,0 +1,99 @@
+{
+  "cutsceneId": "the_warlord_intro",
+  "bossId": 0,
+  "level": 3,
+  "bossName": "The Warlord",
+  "duration": 12000,
+  "shots": [
+    {
+      "time": 0,
+      "duration": 3000,
+      "camera": {
+        "type": "pan",
+        "startX": 800,
+        "endX": 1500,
+        "zoom": 1.0,
+        "easing": "ease-in-out"
+      }
+    },
+    {
+      "time": 3000,
+      "duration": 4000,
+      "camera": {
+        "type": "focus",
+        "target": "boss",
+        "zoom": 1.4,
+        "offsetY": -30,
+        "easing": "ease-out"
+      }
+    },
+    {
+      "time": 7000,
+      "duration": 2500,
+      "camera": {
+        "type": "static",
+        "zoom": 1.2,
+        "easing": "linear"
+      }
+    },
+    {
+      "time": 9500,
+      "duration": 2500,
+      "camera": {
+        "type": "zoom_out",
+        "zoom": 1.0,
+        "easing": "ease-in-out"
+      }
+    }
+  ],
+  "dialogue": [
+    {
+      "time": 3500,
+      "duration": 3000,
+      "speaker": "The Warlord",
+      "text": "Another fool dares to challenge my dominion?"
+    },
+    {
+      "time": 7000,
+      "duration": 3500,
+      "speaker": "The Warlord",
+      "text": "Your death will fuel my rage. When I fall below half strength... I become unstoppable!"
+    }
+  ],
+  "animations": [
+    {
+      "time": 500,
+      "target": "boss",
+      "action": "walk_in"
+    },
+    {
+      "time": 3000,
+      "target": "boss",
+      "action": "pose"
+    },
+    {
+      "time": 7000,
+      "target": "boss",
+      "action": "roar"
+    }
+  ],
+  "audio": [
+    {
+      "time": 0,
+      "type": "music",
+      "track": "boss"
+    },
+    {
+      "time": 7000,
+      "type": "sfx",
+      "sound": "explosion",
+      "volume": 0.5
+    }
+  ],
+  "gameplayStart": 12000,
+  "metadata": {
+    "theme": "rage",
+    "atmosphere": "intimidating",
+    "specialMechanic": "Enrages at 50% HP - increased speed, damage, and fire rate"
+  }
+}
