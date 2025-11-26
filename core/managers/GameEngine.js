@@ -534,6 +534,11 @@ class GameEngine {
     this.playStoryCutscene(cutsceneId, onComplete);
   }
   
+  // Level transition constants
+  static TRANSITION_OFFSCREEN_BUFFER = 100; // Pixels past screen edge
+  static TRANSITION_WALK_SPEED = 3; // Pixels per frame
+  static TRANSITION_DURATION = 2000; // Milliseconds
+
   /**
    * Start the walking off-screen level transition animation
    * @param {Function} onComplete - Callback when animation completes
@@ -543,7 +548,7 @@ class GameEngine {
     this.levelTransitionProgress = 0;
     this.levelTransitionCallback = onComplete;
     this.levelTransitionStartX = this.player.x;
-    this.levelTransitionTargetX = this.canvas.width + this.camera.x + 100; // Walk off screen to the right
+    this.levelTransitionTargetX = this.canvas.width + this.camera.x + GameEngine.TRANSITION_OFFSCREEN_BUFFER;
     this.player.invulnerable = true; // Make player invulnerable during transition
   }
   
@@ -554,20 +559,17 @@ class GameEngine {
   updateLevelTransition(deltaTime) {
     if (!this.levelTransitionActive) return;
     
-    const transitionSpeed = 3; // Pixels per frame
-    const walkDuration = 2000; // 2 seconds to walk off screen
-    
     this.levelTransitionProgress += deltaTime;
     
     // Move player to the right
     if (this.player && this.player.active) {
-      this.player.x += transitionSpeed;
+      this.player.x += GameEngine.TRANSITION_WALK_SPEED;
       this.player.facing = 1; // Face right
-      this.player.dx = transitionSpeed; // Simulate walking animation
+      this.player.dx = GameEngine.TRANSITION_WALK_SPEED; // Simulate walking animation
     }
     
     // Check if transition is complete
-    if (this.levelTransitionProgress >= walkDuration || 
+    if (this.levelTransitionProgress >= GameEngine.TRANSITION_DURATION || 
         (this.player && this.player.x > this.levelTransitionTargetX)) {
       this.levelTransitionActive = false;
       this.levelTransitionProgress = 0;
@@ -2082,6 +2084,11 @@ class GameEngine {
         // Level complete - mark as pending to prevent re-triggering
         this.pendingLevelTransition = true;
         
+        // Capture boss info before enemies array is modified
+        const bossEnemy = this.enemies.find(e => e.isBoss);
+        const wasBossLevel = this.isBossLevel;
+        const defeatedBossId = bossEnemy ? bossEnemy.bossId : undefined;
+        
         // Award level completion bonus
         const levelBonus = this.currentLevel * 1000;
         this.score += levelBonus;
@@ -2097,10 +2104,6 @@ class GameEngine {
         this.autoSave(0);
         
         const completedLevel = this.currentLevel;
-        
-        // Check if this was a boss level
-        const wasBossLevel = this.isBossLevel;
-        const defeatedBossId = this.enemies.find(e => e.isBoss)?.bossId;
         
         // Start level transition sequence after brief delay
         setTimeout(() => {
@@ -2858,9 +2861,10 @@ class GameEngine {
     this.ctx.font = '18px monospace';
     this.ctx.fillStyle = '#ffaa00';
     
-    // Show next level info
+    // Show next level info (array is 0-indexed, currentLevel is 1-indexed)
     if (this.currentLevel < this.maxLevel) {
-      const nextLevelName = GameConfig.CAMPAIGN_LEVELS[this.currentLevel]?.name || `Level ${this.currentLevel + 1}`;
+      const nextLevelIndex = this.currentLevel; // Next level index (0-indexed for current level + 1)
+      const nextLevelName = GameConfig.CAMPAIGN_LEVELS[nextLevelIndex]?.name || `Level ${this.currentLevel + 1}`;
       this.ctx.fillText(`Proceeding to: ${nextLevelName}`, this.canvas.width / 2, this.canvas.height / 2);
     }
     

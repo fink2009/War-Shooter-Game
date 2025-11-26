@@ -1289,31 +1289,51 @@ const StoryCutsceneData = {
   }
 };
 
-// Helper function to get cutscene by trigger and level
-function getStoryCutscene(trigger, level, bossId = null) {
+// Build lookup indices for O(1) access
+const CutsceneByIdIndex = {};
+const CutsceneByTriggerIndex = {};
+
+// Initialize indices
+(function buildIndices() {
   for (const key in StoryCutsceneData) {
     const cutscene = StoryCutsceneData[key];
-    if (cutscene.trigger === trigger && cutscene.level === level) {
-      if (bossId !== null && cutscene.bossId !== undefined) {
-        if (cutscene.bossId === bossId) {
-          return cutscene;
-        }
-      } else if (bossId === null) {
-        return cutscene;
-      }
+    
+    // Index by cutsceneId
+    CutsceneByIdIndex[cutscene.cutsceneId] = cutscene;
+    
+    // Index by trigger + level + bossId
+    const trigger = cutscene.trigger;
+    const level = cutscene.level;
+    const bossId = cutscene.bossId !== undefined ? cutscene.bossId : 'none';
+    
+    if (!CutsceneByTriggerIndex[trigger]) {
+      CutsceneByTriggerIndex[trigger] = {};
     }
+    if (!CutsceneByTriggerIndex[trigger][level]) {
+      CutsceneByTriggerIndex[trigger][level] = {};
+    }
+    CutsceneByTriggerIndex[trigger][level][bossId] = cutscene;
   }
-  return null;
+})();
+
+// Helper function to get cutscene by trigger and level (O(1) lookup)
+function getStoryCutscene(trigger, level, bossId = null) {
+  const triggerIndex = CutsceneByTriggerIndex[trigger];
+  if (!triggerIndex) return null;
+  
+  const levelIndex = triggerIndex[level];
+  if (!levelIndex) return null;
+  
+  // Try to find by bossId first, then fall back to 'none'
+  if (bossId !== null && levelIndex[bossId]) {
+    return levelIndex[bossId];
+  }
+  return levelIndex['none'] || null;
 }
 
-// Helper function to get cutscene by ID
+// Helper function to get cutscene by ID (O(1) lookup)
 function getStoryCutsceneById(cutsceneId) {
-  for (const key in StoryCutsceneData) {
-    if (StoryCutsceneData[key].cutsceneId === cutsceneId) {
-      return StoryCutsceneData[key];
-    }
-  }
-  return null;
+  return CutsceneByIdIndex[cutsceneId] || null;
 }
 
 // Make data accessible globally
