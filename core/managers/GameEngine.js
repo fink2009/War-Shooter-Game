@@ -27,6 +27,10 @@ class GameEngine {
     this.audioManager = new AudioManager();
     this.highScoreSystem = new HighScoreSystem();
     this.saveSystem = new SaveSystem();
+    this.tutorialManager = new TutorialManager();
+    this.animationSystem = new AnimationSystem();
+    this.storyManager = new StoryManager();
+    this.multiplayerManager = new MultiplayerManager();
     this.ui = new GameUI(canvas);
     
     // Fullscreen state
@@ -131,6 +135,12 @@ class GameEngine {
       
       // Initialize cutscene manager
       this.cutsceneManager.init(this);
+      
+      // Initialize tutorial system
+      this.tutorialManager.init(this);
+      
+      // Initialize story system
+      this.storyManager.init(this);
       
       // Set up fullscreen event listeners
       this.setupFullscreenListeners();
