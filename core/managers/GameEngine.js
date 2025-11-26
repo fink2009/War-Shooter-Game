@@ -26,7 +26,17 @@ class GameEngine {
     this.achievementSystem = new AchievementSystem();
     this.audioManager = new AudioManager();
     this.highScoreSystem = new HighScoreSystem();
+    this.saveSystem = new SaveSystem();
+    this.tutorialManager = new TutorialManager();
+    this.animationSystem = new AnimationSystem();
+    this.storyManager = new StoryManager();
+    this.multiplayerManager = new MultiplayerManager();
     this.ui = new GameUI(canvas);
+    
+    // Fullscreen state
+    this.isFullscreen = false;
+    this.originalCanvasWidth = canvas.width;
+    this.originalCanvasHeight = canvas.height;
     
     // Cutscene system
     this.cutsceneManager = new CutsceneManager();
@@ -113,6 +123,9 @@ class GameEngine {
 
   async init() {
     try {
+      // Load saved settings
+      this.loadSavedSettings();
+      
       // Load assets (placeholder - would load actual sprites/sounds)
       // await this.assetManager.loadImage('player', 'assets/sprites/player.png');
       // await this.assetManager.loadSound('shoot', 'assets/sounds/shoot.wav');
@@ -122,6 +135,15 @@ class GameEngine {
       
       // Initialize cutscene manager
       this.cutsceneManager.init(this);
+      
+      // Initialize tutorial system
+      this.tutorialManager.init(this);
+      
+      // Initialize story system
+      this.storyManager.init(this);
+      
+      // Set up fullscreen event listeners
+      this.setupFullscreenListeners();
       
       // Simulate loading
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -164,6 +186,170 @@ class GameEngine {
       } catch (error) {
         console.warn(`Failed to load cutscene: ${cutscene.file}`, error);
       }
+    }
+  }
+
+  /**
+   * Load saved settings from SaveSystem
+   */
+  loadSavedSettings() {
+    try {
+      const settings = this.saveSystem.loadSettings();
+      this.saveSystem.applySettings(this, settings);
+      console.log('Settings loaded successfully');
+    } catch (error) {
+      console.warn('Could not load saved settings:', error);
+    }
+  }
+
+  /**
+   * Save current settings to SaveSystem
+   */
+  saveCurrentSettings() {
+    const settings = {
+      masterVolume: this.masterVolume,
+      musicVolume: this.musicVolume,
+      sfxVolume: this.sfxVolume,
+      audioEnabled: this.audioEnabled,
+      fullscreen: this.isFullscreen,
+      screenShake: this.screenShake,
+      particleQuality: this.particleQuality,
+      showFPS: this.showFPS,
+      hudOpacity: this.hudOpacity,
+      crosshairStyle: this.crosshairStyle,
+      difficulty: this.difficulty,
+      autoReload: this.autoReload,
+      mouseAiming: this.mouseAiming,
+      cameraSmoothness: this.cameraSmoothness,
+      colorBlindMode: this.colorBlindMode,
+      bloodEffects: this.bloodEffects,
+      screenFlash: this.screenFlash,
+      enemyAggression: this.enemyAggression,
+      bulletSpeed: this.bulletSpeed,
+      explosionSize: this.explosionSize
+    };
+    this.saveSystem.saveSettings(settings);
+  }
+
+  /**
+   * Set up fullscreen event listeners
+   */
+  setupFullscreenListeners() {
+    // Handle fullscreen change events
+    document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
+    document.addEventListener('webkitfullscreenchange', () => this.handleFullscreenChange());
+    document.addEventListener('mozfullscreenchange', () => this.handleFullscreenChange());
+    document.addEventListener('MSFullscreenChange', () => this.handleFullscreenChange());
+  }
+
+  /**
+   * Handle fullscreen change event
+   */
+  handleFullscreenChange() {
+    const isNowFullscreen = !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+    
+    this.isFullscreen = isNowFullscreen;
+    
+    if (isNowFullscreen) {
+      this.scaleCanvasToFullscreen();
+    } else {
+      this.restoreCanvasSize();
+    }
+  }
+
+  /**
+   * Toggle fullscreen mode
+   */
+  toggleFullscreen() {
+    if (!this.isFullscreen) {
+      this.enterFullscreen();
+    } else {
+      this.exitFullscreen();
+    }
+  }
+
+  /**
+   * Enter fullscreen mode
+   */
+  enterFullscreen() {
+    const elem = document.documentElement;
+    
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      elem.mozRequestFullScreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+  }
+
+  /**
+   * Exit fullscreen mode
+   */
+  exitFullscreen() {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+
+  /**
+   * Scale canvas to fill the screen while maintaining aspect ratio
+   */
+  scaleCanvasToFullscreen() {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const aspectRatio = this.originalCanvasWidth / this.originalCanvasHeight;
+    
+    let newWidth, newHeight;
+    
+    if (screenWidth / screenHeight > aspectRatio) {
+      // Screen is wider than canvas aspect ratio
+      newHeight = screenHeight;
+      newWidth = screenHeight * aspectRatio;
+    } else {
+      // Screen is taller than canvas aspect ratio
+      newWidth = screenWidth;
+      newHeight = screenWidth / aspectRatio;
+    }
+    
+    this.canvas.style.width = `${newWidth}px`;
+    this.canvas.style.height = `${newHeight}px`;
+    this.canvas.style.position = 'fixed';
+    this.canvas.style.left = `${(screenWidth - newWidth) / 2}px`;
+    this.canvas.style.top = `${(screenHeight - newHeight) / 2}px`;
+  }
+
+  /**
+   * Restore canvas to original size
+   */
+  restoreCanvasSize() {
+    this.canvas.style.width = '';
+    this.canvas.style.height = '';
+    this.canvas.style.position = '';
+    this.canvas.style.left = '';
+    this.canvas.style.top = '';
+  }
+
+  /**
+   * Auto-save game progress
+   * @param {number} slotIndex - The save slot to use
+   */
+  autoSave(slotIndex = 0) {
+    if (this.state === 'playing' || this.state === 'levelcomplete') {
+      this.saveSystem.autoSave(this, slotIndex);
     }
   }
 
@@ -1064,6 +1250,13 @@ class GameEngine {
   }
 
   handleInput() {
+    // Global fullscreen toggle (works in any state)
+    if (this.inputManager.wasKeyPressed('f') || this.inputManager.wasKeyPressed('F') || 
+        this.inputManager.wasKeyPressed('F11')) {
+      this.toggleFullscreen();
+      // Don't return - let other handlers process too
+    }
+    
     // Handle cutscene state first - disable all other input during cutscene
     if (this.state === 'cutscene') {
       // Only allow skip input during cutscene
@@ -1703,6 +1896,9 @@ class GameEngine {
         // Reset wave damage tracking
         this.damageTakenThisWave = 0;
         
+        // Auto-save after wave completion
+        this.autoSave(0);
+        
         this.wave++;
         this.spawnWave();
         this.spawnPickups();
@@ -1732,6 +1928,9 @@ class GameEngine {
           // Show level complete message briefly
           this.state = 'levelcomplete';
           this.menuState = 'levelcomplete';
+          
+          // Auto-save progress
+          this.autoSave(0);
           
           // Advance to next level after delay
           setTimeout(() => {
@@ -1782,6 +1981,9 @@ class GameEngine {
           this.state = 'victory';
           this.menuState = 'victory';
           this.ui.setLastScore(this.score);
+          
+          // Auto-save final progress
+          this.autoSave(0);
           
           // Play victory music
           this.audioManager.stopMusic();
