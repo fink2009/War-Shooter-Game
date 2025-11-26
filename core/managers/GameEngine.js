@@ -382,6 +382,11 @@ class GameEngine {
     this.damageTakenThisWave = 0;
     this.gameStartTime = performance.now();
     
+    // Story transition state for walking animation
+    this.levelTransitionActive = false;
+    this.levelTransitionProgress = 0;
+    this.pendingLevelTransition = false;
+    
     // Create player with difficulty modifiers
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
     
@@ -421,6 +426,24 @@ class GameEngine {
     // Spawn level terrain (platforms, slopes)
     this.spawnLevelTerrain();
     
+    // For campaign mode, check if we should play prologue cutscene
+    if (mode === 'campaign' && this.currentLevel === 1) {
+      // Play prologue cutscene before Level 1
+      this.playStoryCutscene('prologue', () => {
+        // After prologue, play level 1 intro
+        this.playStoryCutscene('level1_intro', () => {
+          // Then start gameplay
+          this.spawnCampaignEnemies();
+          this.spawnPickups();
+          this.addStarterKnife();
+          this.state = 'playing';
+          this.audioManager.stopMusic();
+          this.audioManager.playMusic('gameplay');
+        });
+      });
+      return; // Exit early, cutscene will handle rest
+    }
+    
     // Spawn initial enemies
     if (mode === 'survival') {
       this.spawnWave();
@@ -432,9 +455,7 @@ class GameEngine {
     this.spawnPickups();
     
     // Add a starter knife pickup near the player
-    const starterKnife = new Pickup(200, this.groundLevel - 50, 'weapon_knife');
-    this.pickups.push(starterKnife);
-    this.collisionSystem.add(starterKnife);
+    this.addStarterKnife();
     
     // Set game state and music after spawning (in case a cutscene started)
     // Only set to playing if not in cutscene (e.g., if starting on a boss level)
@@ -442,6 +463,128 @@ class GameEngine {
       this.state = 'playing';
       this.audioManager.stopMusic();
       this.audioManager.playMusic('gameplay');
+    }
+  }
+  
+  /**
+   * Add starter knife pickup near player spawn
+   */
+  addStarterKnife() {
+    const starterKnife = new Pickup(200, this.groundLevel - 50, 'weapon_knife');
+    this.pickups.push(starterKnife);
+    this.collisionSystem.add(starterKnife);
+  }
+  
+  /**
+   * Play a story cutscene by ID
+   * @param {string} cutsceneId - ID of the cutscene to play
+   * @param {Function} onComplete - Callback when cutscene ends
+   */
+  playStoryCutscene(cutsceneId, onComplete) {
+    // Get cutscene data from StoryCutsceneData
+    if (typeof window.getStoryCutsceneById !== 'function') {
+      console.warn('StoryCutsceneData not loaded');
+      if (onComplete) onComplete();
+      return;
+    }
+    
+    const cutsceneData = window.getStoryCutsceneById(cutsceneId);
+    if (!cutsceneData) {
+      console.warn('Cutscene not found:', cutsceneId);
+      if (onComplete) onComplete();
+      return;
+    }
+    
+    // Load the cutscene
+    this.cutsceneManager.loadCutscene(cutsceneData, null, this.player);
+    
+    // Change game state to cutscene
+    this.state = 'cutscene';
+    
+    // Start playing the cutscene
+    this.cutsceneManager.play(
+      // On complete callback
+      () => {
+        if (onComplete) onComplete();
+      },
+      // On skip callback
+      () => {
+        if (onComplete) onComplete();
+      }
+    );
+  }
+  
+  /**
+   * Play a level intro cutscene
+   * @param {number} level - Level number
+   * @param {Function} onComplete - Callback when cutscene ends
+   */
+  playLevelIntroCutscene(level, onComplete) {
+    const cutsceneId = `level${level}_intro`;
+    this.playStoryCutscene(cutsceneId, onComplete);
+  }
+  
+  /**
+   * Play a level outro cutscene (after level completion)
+   * @param {number} level - Level number
+   * @param {Function} onComplete - Callback when cutscene ends
+   */
+  playLevelOutroCutscene(level, onComplete) {
+    const cutsceneId = `level${level}_outro`;
+    this.playStoryCutscene(cutsceneId, onComplete);
+  }
+  
+  // Level transition constants
+  static TRANSITION_OFFSCREEN_BUFFER = 100; // Pixels past screen edge
+  static TRANSITION_WALK_SPEED = 3; // Pixels per frame
+  static TRANSITION_DURATION = 2000; // Milliseconds
+
+  /**
+   * Start the walking off-screen level transition animation
+   * @param {Function} onComplete - Callback when animation completes
+   */
+  startLevelTransition(onComplete) {
+    this.levelTransitionActive = true;
+    this.levelTransitionProgress = 0;
+    this.levelTransitionCallback = onComplete;
+    this.levelTransitionStartX = this.player.x;
+    this.levelTransitionTargetX = this.canvas.width + this.camera.x + GameEngine.TRANSITION_OFFSCREEN_BUFFER;
+    this.player.invulnerable = true; // Make player invulnerable during transition
+  }
+  
+  /**
+   * Update level transition animation
+   * @param {number} deltaTime - Time since last frame
+   */
+  updateLevelTransition(deltaTime) {
+    if (!this.levelTransitionActive) return;
+    
+    this.levelTransitionProgress += deltaTime;
+    
+    // Move player to the right
+    if (this.player && this.player.active) {
+      this.player.x += GameEngine.TRANSITION_WALK_SPEED;
+      this.player.facing = 1; // Face right
+      this.player.dx = GameEngine.TRANSITION_WALK_SPEED; // Simulate walking animation
+    }
+    
+    // Check if transition is complete
+    if (this.levelTransitionProgress >= GameEngine.TRANSITION_DURATION || 
+        (this.player && this.player.x > this.levelTransitionTargetX)) {
+      this.levelTransitionActive = false;
+      this.levelTransitionProgress = 0;
+      
+      // Reset player position for next level
+      if (this.player) {
+        this.player.x = 100;
+        this.player.dx = 0;
+      }
+      
+      // Call completion callback
+      if (this.levelTransitionCallback) {
+        this.levelTransitionCallback();
+        this.levelTransitionCallback = null;
+      }
     }
   }
 
@@ -697,7 +840,7 @@ class GameEngine {
     if (levelConfig.isBossLevel && this.mode === 'campaign') {
       // Find the boss that was just spawned
       const boss = this.enemies.find(e => e.isBoss);
-      if (boss && this.cutsceneData[boss.bossId]) {
+      if (boss) {
         this.startBossCutscene(boss);
       }
     }
@@ -708,7 +851,19 @@ class GameEngine {
    * @param {Object} boss - The boss entity
    */
   startBossCutscene(boss) {
-    const cutsceneData = this.cutsceneData[boss.bossId];
+    // Try to get story cutscene data first
+    let cutsceneData = null;
+    
+    // Check if StoryCutsceneData is available
+    if (typeof window.getStoryCutscene === 'function') {
+      cutsceneData = window.getStoryCutscene('boss_spawn', this.currentLevel, boss.bossId);
+    }
+    
+    // Fallback to old JSON cutscene data if story cutscene not found
+    if (!cutsceneData && this.cutsceneData[boss.bossId]) {
+      cutsceneData = this.cutsceneData[boss.bossId];
+    }
+    
     if (!cutsceneData) {
       console.warn('No cutscene data found for boss:', boss.bossId);
       return;
@@ -1788,6 +1943,16 @@ class GameEngine {
       return;
     }
     
+    // Handle level transition animation state
+    if (this.state === 'leveltransition') {
+      this.updateLevelTransition(deltaTime);
+      // Still update camera to follow player during transition
+      if (this.player && this.player.active) {
+        this.camera.update();
+      }
+      return;
+    }
+    
     if (this.state !== 'playing') return;
     
     // Update player
@@ -1915,82 +2080,142 @@ class GameEngine {
         }
       }
     } else if (this.mode === 'campaign') {
-      if (this.enemiesRemaining === 0) {
-        // Level complete - check if more levels remain
-        if (this.currentLevel < this.maxLevel) {
-          // Award level completion bonus
-          const levelBonus = this.currentLevel * 1000;
-          this.score += levelBonus;
-          
-          // Play level complete sound
-          this.audioManager.playSound('pickup_powerup', 0.8);
-          
-          // Show level complete message briefly
-          this.state = 'levelcomplete';
-          this.menuState = 'levelcomplete';
-          
-          // Auto-save progress
-          this.autoSave(0);
-          
-          // Advance to next level after delay
-          setTimeout(() => {
-            if (this.state === 'levelcomplete') {
-              this.currentLevel++;
-              this.enemies = [];
-              this.projectiles = [];
-              this.pickups = [];
-              this.covers = [];
-              this.platforms = [];
-              this.slopes = [];
-              this.spawnCampaignEnemies();
-              this.spawnPickups();
-              this.spawnCovers();
-              this.spawnLevelTerrain();
-              
-              // Only set state to playing if a cutscene didn't start
-              // (spawnCampaignEnemies sets state to 'cutscene' for boss levels)
-              if (this.state !== 'cutscene') {
-                this.state = 'playing';
+      if (this.enemiesRemaining === 0 && !this.levelTransitionActive && !this.pendingLevelTransition) {
+        // Level complete - mark as pending to prevent re-triggering
+        this.pendingLevelTransition = true;
+        
+        // Capture boss info before enemies array is modified
+        const bossEnemy = this.enemies.find(e => e.isBoss);
+        const wasBossLevel = this.isBossLevel;
+        const defeatedBossId = bossEnemy ? bossEnemy.bossId : undefined;
+        
+        // Award level completion bonus
+        const levelBonus = this.currentLevel * 1000;
+        this.score += levelBonus;
+        
+        // Play level complete sound
+        this.audioManager.playSound('pickup_powerup', 0.8);
+        
+        // Show level complete message briefly
+        this.state = 'levelcomplete';
+        this.menuState = 'levelcomplete';
+        
+        // Auto-save progress
+        this.autoSave(0);
+        
+        const completedLevel = this.currentLevel;
+        
+        // Start level transition sequence after brief delay
+        setTimeout(() => {
+          if (this.state === 'levelcomplete' || this.pendingLevelTransition) {
+            // Play level outro cutscene first
+            this.playLevelOutroCutscene(completedLevel, () => {
+              // If boss was defeated, check for boss defeat cutscene
+              if (wasBossLevel && defeatedBossId !== undefined) {
+                this.playStoryCutscene(`level${completedLevel}_boss_defeat`, () => {
+                  this.startWalkingTransition(completedLevel);
+                });
+              } else {
+                this.startWalkingTransition(completedLevel);
               }
-              this.menuState = null;
-              
-              // Switch music for boss levels (only if not in cutscene, as cutscene handles music)
-              if (this.state !== 'cutscene') {
-                if (this.isBossLevel) {
-                  this.audioManager.playMusic('boss');
-                } else {
-                  this.audioManager.playMusic('gameplay');
-                }
-              }
-              
-              // Heal player between levels
-              this.player.heal(30);
-              
-              // Add spawn protection when starting new level
-              this.player.invulnerable = true;
-              setTimeout(() => {
-                if (this.player && this.player.active) {
-                  this.player.invulnerable = false;
-                }
-              }, 1500); // 1.5 seconds of spawn protection
-            }
-          }, 3000);
-        } else {
-          // All levels complete - Victory!
-          this.finalPlayTime = this.currentTime - this.gameStartTime;
-          this.state = 'victory';
-          this.menuState = 'victory';
-          this.ui.setLastScore(this.score);
-          
-          // Auto-save final progress
-          this.autoSave(0);
-          
-          // Play victory music
-          this.audioManager.stopMusic();
-          this.audioManager.playMusic('victory');
-        }
+            });
+          }
+        }, 2000);
       }
     }
+  }
+  
+  /**
+   * Start walking transition and proceed to next level
+   * @param {number} completedLevel - The level that was just completed
+   */
+  startWalkingTransition(completedLevel) {
+    // Check if more levels remain
+    if (completedLevel < this.maxLevel) {
+      // Start walking off-screen animation
+      this.state = 'leveltransition';
+      this.startLevelTransition(() => {
+        // After walking off, advance to next level
+        this.currentLevel = completedLevel + 1;
+        this.pendingLevelTransition = false;
+        this.setupNextLevel();
+      });
+    } else {
+      // All levels complete - play victory ending cutscene
+      this.playStoryCutscene('victory_ending', () => {
+        this.showVictoryScreen();
+      });
+    }
+  }
+  
+  /**
+   * Set up the next level (called after walking transition)
+   */
+  setupNextLevel() {
+    // Clear old level entities
+    this.enemies = [];
+    this.projectiles = [];
+    this.pickups = [];
+    this.covers = [];
+    this.platforms = [];
+    this.slopes = [];
+    
+    // Reset player position
+    this.player.x = 100;
+    this.player.y = this.groundLevel - 50;
+    
+    // Spawn terrain first
+    this.spawnCovers();
+    this.spawnLevelTerrain();
+    
+    // Play level intro cutscene
+    this.playLevelIntroCutscene(this.currentLevel, () => {
+      // After cutscene, spawn enemies and start gameplay
+      this.spawnCampaignEnemies();
+      this.spawnPickups();
+      
+      // Only set state to playing if a boss cutscene didn't start
+      if (this.state !== 'cutscene') {
+        this.state = 'playing';
+        this.menuState = null;
+        
+        // Switch music for boss levels
+        if (this.isBossLevel) {
+          this.audioManager.playMusic('boss');
+        } else {
+          this.audioManager.playMusic('gameplay');
+        }
+      }
+      
+      // Heal player between levels
+      this.player.heal(30);
+      
+      // Add spawn protection when starting new level
+      this.player.invulnerable = true;
+      setTimeout(() => {
+        if (this.player && this.player.active) {
+          this.player.invulnerable = false;
+        }
+      }, 1500);
+    });
+  }
+  
+  /**
+   * Show victory screen after final cutscene
+   */
+  showVictoryScreen() {
+    this.finalPlayTime = this.currentTime - this.gameStartTime;
+    this.state = 'victory';
+    this.menuState = 'victory';
+    this.ui.setLastScore(this.score);
+    this.pendingLevelTransition = false;
+    
+    // Auto-save final progress
+    this.autoSave(0);
+    
+    // Play victory music
+    this.audioManager.stopMusic();
+    this.audioManager.playMusic('victory');
   }
 
   swapWeapon(slotIndex) {
@@ -2436,6 +2661,12 @@ class GameEngine {
       return;
     }
     
+    // Render level transition (player walking off-screen)
+    if (this.state === 'leveltransition') {
+      this.renderLevelTransition();
+      return;
+    }
+    
     if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.state === 'levelcomplete' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls') {
       // Draw game in background if paused or level complete
       if (this.state === 'paused' || this.state === 'levelcomplete') {
@@ -2569,6 +2800,76 @@ class GameEngine {
     
     // Draw cutscene UI elements (subtitles, skip prompt, letterbox)
     this.cutsceneManager.render(this.ctx);
+  }
+  
+  /**
+   * Render the level transition (player walking off-screen)
+   */
+  renderLevelTransition() {
+    // Apply camera transform
+    this.camera.apply(this.ctx);
+    
+    // === 16-BIT ARCADE BACKGROUND ===
+    this.draw16BitSky();
+    this.draw16BitMountains();
+    this.draw16BitBuildings();
+    this.draw16BitGround();
+    
+    // Draw terrain
+    this.slopes.forEach(s => s.render(this.ctx));
+    this.platforms.forEach(p => p.render(this.ctx));
+    this.covers.forEach(c => c.render(this.ctx));
+    
+    // Draw pickups
+    this.pickups.forEach(p => p.render(this.ctx));
+    
+    // Draw player (walking animation)
+    if (this.player && this.player.active) {
+      this.player.render(this.ctx);
+    }
+    
+    // Reset camera transform
+    this.camera.reset(this.ctx);
+    
+    // Draw transition UI overlay
+    this.renderLevelTransitionUI();
+  }
+  
+  /**
+   * Render level transition UI elements
+   */
+  renderLevelTransitionUI() {
+    this.ctx.save();
+    
+    // Cinematic letterbox bars
+    const barHeight = 50;
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+    this.ctx.fillRect(0, 0, this.canvas.width, barHeight);
+    this.ctx.fillRect(0, this.canvas.height - barHeight, this.canvas.width, barHeight);
+    
+    // "Continuing..." text
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.font = 'bold 24px monospace';
+    this.ctx.textAlign = 'center';
+    
+    // Pulsing animation for text
+    const pulse = Math.sin(Date.now() / 300) * 0.2 + 0.8;
+    this.ctx.globalAlpha = pulse;
+    
+    this.ctx.fillText(`LEVEL ${this.currentLevel} COMPLETE`, this.canvas.width / 2, this.canvas.height / 2 - 50);
+    
+    this.ctx.font = '18px monospace';
+    this.ctx.fillStyle = '#ffaa00';
+    
+    // Show next level info (array is 0-indexed, currentLevel is 1-indexed)
+    if (this.currentLevel < this.maxLevel) {
+      const nextLevelIndex = this.currentLevel; // Next level index (0-indexed for current level + 1)
+      const nextLevelName = GameConfig.CAMPAIGN_LEVELS[nextLevelIndex]?.name || `Level ${this.currentLevel + 1}`;
+      this.ctx.fillText(`Proceeding to: ${nextLevelName}`, this.canvas.width / 2, this.canvas.height / 2);
+    }
+    
+    this.ctx.globalAlpha = 1.0;
+    this.ctx.restore();
   }
   
   // 16-bit arcade style sky with dithered gradient
