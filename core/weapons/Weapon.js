@@ -345,3 +345,147 @@ class Spear extends MeleeWeapon {
     return 4;
   }
 }
+
+// ==========================================
+// NEW AREA DAMAGE WEAPONS
+// ==========================================
+
+/**
+ * Rocket Launcher - High damage, large explosion radius
+ */
+class RocketLauncher extends Weapon {
+  constructor() {
+    super('Rocket Launcher', 200, 2500, 5, 3500, 12);
+    this.explosionRadius = 150;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.isExplosive = true;
+    projectile.explosionRadius = this.explosionRadius;
+    projectile.color = '#ff6600';
+    projectile.width = 14;
+    projectile.height = 8;
+    projectile.isRocket = true;
+    return projectile;
+  }
+}
+
+/**
+ * Molotov Cocktail - Thrown weapon with arc trajectory
+ * Creates fire area on impact that deals damage over time
+ */
+class MolotovCocktail extends Weapon {
+  constructor() {
+    super('Molotov', 15, 2000, 3, 4000, 8);
+    this.fireRadius = 100;
+    this.fireDuration = 5000;
+    this.isThrown = true;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction with arc trajectory
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = -5; // Arc upward
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      // Add upward arc based on distance
+      vy = -Math.abs(this.projectileSpeed * 0.8);
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.isFireWeapon = true;
+    projectile.fireRadius = this.fireRadius;
+    projectile.fireDuration = this.fireDuration;
+    projectile.affectedByGravity = true;
+    projectile.color = '#ff4400';
+    projectile.width = 10;
+    projectile.height = 16;
+    projectile.isMolotov = true;
+    return projectile;
+  }
+}
+
+/**
+ * Mine Launcher - Deploys proximity mines
+ * Mines arm after delay and explode when enemies are nearby
+ */
+class MineLauncher extends Weapon {
+  constructor() {
+    super('Mine Launcher', 100, 1500, 5, 3000, 10);
+    this.explosionRadius = 80;
+    this.armTime = 1000;
+    this.triggerRadius = 80;
+    this.maxMines = 5;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction - mines travel slower
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.isMine = true;
+    projectile.armTime = this.armTime;
+    projectile.deployTime = currentTime;
+    projectile.triggerRadius = this.triggerRadius;
+    projectile.explosionRadius = this.explosionRadius;
+    projectile.isExplosive = true;
+    projectile.affectedByGravity = true;
+    projectile.color = '#888888';
+    projectile.width = 12;
+    projectile.height = 12;
+    return projectile;
+  }
+}

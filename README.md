@@ -1,0 +1,299 @@
+# War Shooter
+
+A browser-based 16-bit arcade side-scrolling shooter game built with vanilla JavaScript and HTML5 Canvas. Features pixel-art style graphics, multiple game modes, and comprehensive gameplay systems.
+
+![War Shooter](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Chromebook-orange.svg)
+
+## 🎮 Features
+
+### Game Modes
+- **Campaign Mode**: 10-level story-driven campaign with 4 unique boss battles
+- **Survival Mode**: Endless wave-based survival with increasing difficulty
+- **Multiplayer Mode**: WebRTC-based peer-to-peer co-op and versus modes (Coming Soon)
+
+### Characters
+| Character | Health | Speed | Special Ability | Description |
+|-----------|--------|-------|-----------------|-------------|
+| Soldier | 100 | Normal | Airstrike | Balanced all-rounder |
+| Scout | 80 | Fast | Sprint Boost | High mobility fighter |
+| Heavy | 150 | Slow | Shield | Tank class with damage resistance |
+| Medic | 90 | Normal | Med Pack | Passive healing + emergency heal |
+
+### Weapons
+
+#### Ranged Weapons
+- **Pistol**: Starting weapon, reliable and quick
+- **Rifle**: High fire rate, good damage
+- **Shotgun**: Devastating at close range
+- **Machine Gun**: Spray and pray with 100 rounds
+- **Sniper Rifle**: One-shot potential from distance
+- **Grenade Launcher**: Explosive area damage
+- **Laser Gun**: Unlimited ammo energy weapon
+- **Rocket Launcher**: Massive explosion radius
+- **Molotov Cocktail**: Fire-based area denial
+- **Mine Launcher**: Tactical trap deployment
+
+#### Melee Weapons
+- **Knife**: Quick attacks, short range
+- **Sword**: Balanced damage and speed
+- **Axe**: High damage, slower swing
+- **Hammer**: Maximum damage, slowest
+- **Spear**: Longest reach of all melee
+
+### Enemy Types
+- **Infantry**: Standard enemy, balanced stats
+- **Heavy**: High health, uses machine gun
+- **Sniper**: Long range, deadly accuracy
+- **Scout**: Fast-moving flanker
+- **Drone**: Flying enemy, aerial attacks
+- **Berserker**: Melee rusher, high damage
+- **Bomber**: Explodes on contact or death
+- **Riot**: Front-facing shield defense
+- **Boss**: Unique mechanics per encounter
+
+### Boss Encounters
+1. **The Warlord** (Level 3): Rage mode below 50% HP
+2. **The Devastator** (Level 6): Summons minion reinforcements
+3. **The Annihilator** (Level 9): Periodic invulnerable shield phases
+4. **The Overlord** (Level 10): All mechanics combined - final challenge
+
+### Power-ups
+- Health Pack: Restore health
+- Ammo Box: Refill ammunition
+- Damage Boost: Double damage temporarily
+- Speed Boost: Increased movement speed
+- Rapid Fire: Faster shooting
+- Multi-Shot: Three projectiles per shot
+- Invincibility: Brief invulnerability
+- Shield: Absorbs damage
+
+## 🎯 How to Play
+
+### Controls
+
+See [CONTROLS.md](CONTROLS.md) for detailed control information.
+
+#### Movement
+- **WASD / Arrow Keys**: Move left/right and jump
+- **Space**: Jump
+- **S / Down Arrow**: Crouch
+- **C / Ctrl**: Dodge Roll (invulnerable)
+
+#### Combat
+- **Left Click**: Shoot (ranged weapon)
+- **Right Click / F**: Melee attack
+- **V**: Block/Parry (with melee weapon equipped)
+- **R**: Reload
+- **E / Q**: Special Ability
+- **1-4**: Switch weapons
+
+#### System
+- **ESC**: Pause menu
+- **I**: Inventory
+- **H**: Help overlay
+- **F / F11**: Toggle fullscreen
+- **M**: Return to main menu
+
+### Objectives
+
+**Campaign Mode**:
+- Progress through 10 levels
+- Defeat all enemies in each level
+- Boss battles every 3 levels
+- Complete the final boss to win
+
+**Survival Mode**:
+- Survive as many waves as possible
+- Waves increase in difficulty
+- Score points for kills and combos
+- Boss every 5 waves
+
+### Tips
+- Use cover objects to block enemy fire
+- Chain kills quickly for combo bonuses
+- Parry timing: Block just before a projectile hits for a perfect parry
+- Each character's ability can turn the tide of battle
+- Check the minimap for enemy and item positions
+- New enemy types require different strategies
+
+## 🚀 Getting Started
+
+### Requirements
+- Modern web browser (Chrome, Firefox, Edge, Safari)
+- JavaScript enabled
+- No server required - runs entirely client-side
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/fink2009/War-Shooter-Game.git
+```
+
+2. Open `index.html` in a web browser:
+```bash
+# Or use a local server
+python -m http.server 8000
+# Then open http://localhost:8000 in your browser
+```
+
+### Chromebook Compatibility
+This game is designed to work on Chromebooks:
+- No plugins or extensions required
+- Works in Chrome browser
+- Touch controls support (optional)
+- Optimized for lower-end hardware
+
+## 🔧 Configuration
+
+The game can be configured via `config.js`. Key settings include:
+
+```javascript
+// Display
+CANVAS_WIDTH: 1200
+CANVAS_HEIGHT: 600
+
+// Gameplay
+PLAYER.SPEED: 4
+PLAYER.JUMP_STRENGTH: -12
+PLAYER.DEFAULT_HEALTH: 100
+
+// Audio
+AUDIO.MASTER_VOLUME: 1.0
+AUDIO.MUSIC_VOLUME: 0.7
+AUDIO.SFX_VOLUME: 0.8
+```
+
+See `config.js` for full configuration options.
+
+## 💾 Save System
+
+The game uses localStorage for saving:
+- 3 save slots available
+- Auto-save after each level/wave
+- Manual save from pause menu
+- Export/import saves as JSON backup
+- Settings saved separately
+
+## 🏗️ Project Structure
+
+```
+War-Shooter-Game/
+├── index.html          # Main HTML entry point
+├── main.js             # Game initialization
+├── style.css           # Styles
+├── config.js           # Game configuration
+├── README.md           # This file
+├── CONTROLS.md         # Control scheme details
+├── CHANGELOG.md        # Version history
+└── core/
+    ├── entities/       # Game entities
+    │   ├── Entity.js
+    │   ├── PlayerCharacter.js
+    │   ├── EnemyUnit.js
+    │   ├── Projectile.js
+    │   ├── Pickup.js
+    │   ├── Cover.js
+    │   ├── Platform.js
+    │   └── Slope.js
+    ├── managers/       # Game managers
+    │   ├── GameEngine.js
+    │   ├── InputManager.js
+    │   └── AssetManager.js
+    ├── systems/        # Game systems
+    │   ├── SaveSystem.js
+    │   ├── Camera.js
+    │   ├── CollisionSystem.js
+    │   ├── ParticleSystem.js
+    │   ├── AchievementSystem.js
+    │   ├── AudioManager.js
+    │   └── HighScoreSystem.js
+    ├── weapons/        # Weapon definitions
+    │   └── Weapon.js
+    ├── ui/             # UI components
+    │   └── GameUI.js
+    └── cutscene/       # Cutscene system
+        ├── CutsceneCamera.js
+        ├── CutsceneManager.js
+        ├── SubtitleRenderer.js
+        └── data/       # Cutscene data files
+```
+
+## 🎨 Art Style
+
+The game features a 16-bit arcade aesthetic:
+- Pixel-art inspired character sprites
+- Retro color palettes
+- CRT-style scanline effects (optional)
+- Particle-based explosions and effects
+- Classic arcade UI design
+
+## 🔊 Audio
+
+- Dynamic music that changes based on game state
+- Synthesized sound effects
+- Volume controls for music and SFX separately
+- Mute toggle available
+
+## 🎖️ Achievements
+
+Unlock achievements for:
+- Combat milestones (kills, combos)
+- Survival records (waves survived)
+- Campaign completion
+- Skill-based challenges
+- Collection goals
+
+## 🛠️ Development
+
+### Tech Stack
+- Pure JavaScript (ES6+)
+- HTML5 Canvas for rendering
+- Web Audio API for sound
+- localStorage for persistence
+- WebRTC for multiplayer (planned)
+
+### Adding New Content
+
+#### Adding a New Weapon
+1. Define weapon stats in `config.js` under `WEAPONS`
+2. Create a new class extending `Weapon` in `Weapon.js`
+3. Add to pickup pool if desired
+
+#### Adding a New Enemy
+1. Define enemy stats in `config.js` under `ENEMY.TYPES`
+2. Add case to `EnemyUnit.applyEnemyType()`
+3. Add unique render logic if needed
+
+### Running Tests
+```bash
+# Open in browser with developer console
+# Use window.game for debug access
+```
+
+### Debug Mode
+In the settings menu, page 4 allows access to dev tools with password `QUICKTEST`:
+- Press `K` during gameplay to kill all enemies
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Credits
+
+- Game Design & Development: The War Shooter Team
+- Inspired by classic arcade shooters like Metal Slug, Contra, and Gunstar Heroes
+- Built with vanilla JavaScript and HTML5 Canvas
+
+## 📞 Support
+
+For issues, suggestions, or contributions:
+- Open an issue on GitHub
+- Submit a pull request
+- Contact the development team
+
+---
+
+**Enjoy the game! 🎮**

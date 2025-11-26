@@ -82,17 +82,83 @@ class EnemyUnit extends Entity {
         this.height = 44;
         break;
       case 'boss':
-        this.maxHealth = 600; // Reduced from 800 for slight ease
-        this.speed = 2.2; // Reduced from 2.5 for slight ease
-        this.damage = 25; // Reduced from 30 for slight ease
+        this.maxHealth = 600;
+        this.speed = 2.2;
+        this.damage = 25;
         this.weapon = new MachineGun();
-        this.attackRange = 700; // Increased from 500
+        this.attackRange = 700;
         this.color = '#990000';
         this.width = 50;
         this.height = 70;
-        this.aggroRange = 9999; // Effectively infinite - always targets player
-        this.shootCooldown = 400; // Slightly slower shooting (from 350) for slight ease
-        this.isBoss = true; // Mark as boss for special AI behavior
+        this.aggroRange = 9999;
+        this.shootCooldown = 400;
+        this.isBoss = true;
+        break;
+      
+      // New enemy types
+      case 'drone':
+        this.maxHealth = 60;
+        this.speed = 3;
+        this.damage = 12;
+        this.weapon = new LaserGun();
+        this.aggroRange = 500;
+        this.attackRange = 350;
+        this.shootCooldown = 800;
+        this.color = '#6666ff';
+        this.width = 32;
+        this.height = 24;
+        this.isFlying = true;
+        this.flyHeight = 80; // Hovers above ground
+        this.hoverOffset = 0; // For bobbing animation
+        break;
+        
+      case 'berserker':
+        this.maxHealth = 70;
+        this.speed = 5;
+        this.damage = 35;
+        this.weapon = new Knife(); // Melee weapon
+        this.aggroRange = 300;
+        this.attackRange = 50; // Very close range
+        this.shootCooldown = 500;
+        this.color = '#ff0066';
+        this.width = 30;
+        this.height = 50;
+        this.isMelee = true;
+        break;
+        
+      case 'bomber':
+        this.maxHealth = 50;
+        this.speed = 1.5;
+        this.damage = 80;
+        this.weapon = null; // No weapon - explodes instead
+        this.aggroRange = 350;
+        this.attackRange = 80; // Explosion trigger range
+        this.shootCooldown = 0;
+        this.color = '#ff6600';
+        this.width = 35;
+        this.height = 45;
+        this.isExplosive = true;
+        this.explosionRadius = 120;
+        this.flashTimer = 0;
+        this.aboutToExplode = false;
+        this.explodeDelay = 1500; // Flash for 1.5 seconds before exploding
+        break;
+        
+      case 'riot':
+        this.maxHealth = 80;
+        this.speed = 2;
+        this.damage = 15;
+        this.weapon = new Pistol();
+        this.aggroRange = 400;
+        this.attackRange = 200;
+        this.shootCooldown = 900;
+        this.color = '#4466aa';
+        this.width = 36;
+        this.height = 52;
+        this.hasShield = true;
+        this.shieldHealth = 100;
+        this.shieldMaxHealth = 100;
+        this.shieldActive = true;
         break;
     }
     this.health = this.maxHealth;
@@ -105,10 +171,26 @@ class EnemyUnit extends Entity {
     this.damage = Math.floor(this.damage * multiplier);
   }
 
-  takeDamage(amount) {
+  takeDamage(amount, attackDirection = 0) {
     // Bosses with shield active are invulnerable
     if (this.invulnerable && this.shieldActive) {
       return false;
+    }
+    
+    // Riot shield blocks frontal attacks
+    if (this.enemyType === 'riot' && this.shieldActive && this.shieldHealth > 0) {
+      // Check if attack is from the front (based on enemy facing direction)
+      const attackFromFront = (attackDirection === 0) || (attackDirection * this.facing >= 0);
+      
+      if (attackFromFront) {
+        // Shield absorbs damage
+        this.shieldHealth -= amount;
+        if (this.shieldHealth <= 0) {
+          this.shieldActive = false;
+          this.shieldHealth = 0;
+        }
+        return false; // Enemy didn't take damage
+      }
     }
     
     this.health -= amount;
@@ -137,6 +219,23 @@ class EnemyUnit extends Entity {
     
     // State machine
     this.stateTimer += deltaTime;
+    
+    // Special AI for new enemy types
+    if (this.enemyType === 'drone') {
+      return this.updateDroneAI(player, distToPlayer, currentTime, deltaTime);
+    }
+    
+    if (this.enemyType === 'berserker') {
+      return this.updateBerserkerAI(player, distToPlayer, currentTime, deltaTime);
+    }
+    
+    if (this.enemyType === 'bomber') {
+      return this.updateBomberAI(player, distToPlayer, currentTime, deltaTime);
+    }
+    
+    if (this.enemyType === 'riot') {
+      return this.updateRiotAI(player, distToPlayer, currentTime, deltaTime);
+    }
     
     // Bosses have hyper-aggressive AI - always chase and attack regardless of distance
     if (this.isBoss) {
@@ -302,15 +401,174 @@ class EnemyUnit extends Entity {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  /**
+   * Drone AI - Flying enemy that hovers and strafes
+   */
+  updateDroneAI(player, distToPlayer, currentTime, deltaTime) {
+    // Update hover bobbing
+    this.hoverOffset = Math.sin(currentTime / 300) * 10;
+    
+    if (distToPlayer < this.aggroRange) {
+      // Strafe around player
+      const angle = Math.atan2(player.y - this.y, player.x - this.x);
+      const strafeAngle = angle + Math.PI / 2 + Math.sin(currentTime / 1000) * 0.5;
+      
+      this.dx = Math.cos(strafeAngle) * this.speed * 0.8;
+      this.facing = player.x > this.x ? 1 : -1;
+      
+      // Attack when in range
+      if (distToPlayer < this.attackRange && currentTime - this.lastShotTime > this.shootCooldown) {
+        this.lastShotTime = currentTime;
+        return this.shoot(player.x + player.width / 2, player.y + player.height / 2, currentTime);
+      }
+    } else {
+      // Patrol in the air
+      this.patrol();
+    }
+    
+    return null;
+  }
+
+  /**
+   * Berserker AI - Rushes player for melee attack
+   */
+  updateBerserkerAI(player, distToPlayer, currentTime, deltaTime) {
+    // Always chase player aggressively
+    const rushSpeed = this.speed * 1.2;
+    
+    if (this.x < player.x) {
+      this.dx = rushSpeed;
+      this.facing = 1;
+    } else {
+      this.dx = -rushSpeed;
+      this.facing = -1;
+    }
+    
+    // Melee attack when in range
+    if (distToPlayer < this.attackRange) {
+      if (currentTime - this.lastShotTime > this.shootCooldown) {
+        this.lastShotTime = currentTime;
+        // Create melee projectile
+        const meleeX = this.x + this.width / 2 + (this.facing * 20);
+        const meleeY = this.y + this.height / 2;
+        return this.weapon.fire(meleeX, meleeY, player.x + player.width / 2, player.y + player.height / 2, currentTime);
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Bomber AI - Slowly approaches and explodes
+   */
+  updateBomberAI(player, distToPlayer, currentTime, deltaTime) {
+    // Check if about to explode
+    if (this.aboutToExplode) {
+      this.flashTimer += deltaTime;
+      this.dx = 0; // Stop moving
+      
+      if (this.flashTimer >= this.explodeDelay) {
+        // Explode!
+        this.explode(currentTime);
+      }
+      return null;
+    }
+    
+    // Move toward player
+    if (distToPlayer < this.aggroRange) {
+      if (this.x < player.x) {
+        this.dx = this.speed;
+        this.facing = 1;
+      } else {
+        this.dx = -this.speed;
+        this.facing = -1;
+      }
+      
+      // Trigger explosion when close enough
+      if (distToPlayer < this.attackRange) {
+        this.aboutToExplode = true;
+        this.flashTimer = 0;
+      }
+    } else {
+      this.patrol();
+    }
+    
+    return null;
+  }
+
+  /**
+   * Riot AI - Uses shield to block frontal attacks
+   */
+  updateRiotAI(player, distToPlayer, currentTime, deltaTime) {
+    // Always face the player to keep shield up
+    this.facing = player.x > this.x ? 1 : -1;
+    
+    if (distToPlayer < this.aggroRange) {
+      // Advance slowly
+      if (distToPlayer > this.attackRange) {
+        this.dx = this.facing * this.speed * 0.6;
+      } else {
+        // In attack range, strafe and shoot
+        this.dx = Math.sin(currentTime / 500) * this.speed * 0.3;
+        
+        if (currentTime - this.lastShotTime > this.shootCooldown) {
+          this.lastShotTime = currentTime;
+          return this.shoot(player.x + player.width / 2, player.y + player.height / 2, currentTime);
+        }
+      }
+    } else {
+      this.patrol();
+    }
+    
+    return null;
+  }
+
+  /**
+   * Bomber explosion - Deals damage to nearby entities
+   */
+  explode(currentTime) {
+    // Mark as destroyed
+    this.health = 0;
+    this.destroy();
+    
+    // Create explosion effect via game engine
+    if (window.game) {
+      // Create explosion particles
+      window.game.particleSystem.createExplosion(
+        this.x + this.width / 2,
+        this.y + this.height / 2,
+        30,
+        '#ff6600'
+      );
+      
+      // Play explosion sound
+      window.game.audioManager.playSound('explosion', 0.8);
+      
+      // Camera shake
+      window.game.camera.shake(10, 400);
+      
+      // Damage player if in range
+      const distToPlayer = this.distanceTo(window.game.player);
+      if (distToPlayer < this.explosionRadius && window.game.player.active) {
+        // Damage falls off with distance
+        const damageMultiplier = 1 - (distToPlayer / this.explosionRadius);
+        const damage = Math.floor(this.damage * damageMultiplier);
+        window.game.player.takeDamage(damage, currentTime);
+      }
+    }
+  }
+
   update(deltaTime, player, groundLevel, currentTime, worldWidth = 3000) {
     const dt = deltaTime / 16;
     
-    // Update weapon
-    this.weapon.update(currentTime);
-    
-    // Automatic reload for enemies when out of ammo
-    if (this.weapon.currentAmmo === 0 && !this.weapon.isReloading) {
-      this.weapon.reload(currentTime);
+    // Update weapon (if exists)
+    if (this.weapon) {
+      this.weapon.update(currentTime);
+      
+      // Automatic reload for enemies when out of ammo
+      if (this.weapon.currentAmmo === 0 && !this.weapon.isReloading) {
+        this.weapon.reload(currentTime);
+      }
     }
     
     // Boss-specific mechanics
@@ -341,14 +599,21 @@ class EnemyUnit extends Entity {
       this.facing = -1;
     }
     
-    // Apply gravity
-    this.dy += this.gravity * dt;
-    this.y += this.dy * dt;
-    
-    // Ground collision
-    if (this.y + this.height >= groundLevel) {
-      this.y = groundLevel - this.height;
+    // Apply gravity (except for flying enemies)
+    if (this.isFlying) {
+      // Flying enemies hover at a specific height
+      const targetY = groundLevel - this.height - this.flyHeight + (this.hoverOffset || 0);
+      this.y += (targetY - this.y) * 0.05 * dt;
       this.dy = 0;
+    } else {
+      this.dy += this.gravity * dt;
+      this.y += this.dy * dt;
+      
+      // Ground collision
+      if (this.y + this.height >= groundLevel) {
+        this.y = groundLevel - this.height;
+        this.dy = 0;
+      }
     }
     
     // Return projectiles from AI
@@ -454,6 +719,39 @@ class EnemyUnit extends Entity {
         helmetLight = '#5a0a0a';
         armorColor = '#2a0000';
         break;
+      // New enemy type colors
+      case 'drone':
+        bodyColor = '#4466aa'; // Blue
+        bodyLight = '#5577bb';
+        bodyDark = '#335599';
+        helmetColor = '#223388';
+        helmetLight = '#4466aa';
+        armorColor = '#112277';
+        break;
+      case 'berserker':
+        bodyColor = '#aa2244'; // Red-pink
+        bodyLight = '#cc3355';
+        bodyDark = '#881133';
+        helmetColor = '#660022';
+        helmetLight = '#aa2244';
+        armorColor = '#440011';
+        break;
+      case 'bomber':
+        bodyColor = '#cc6622'; // Orange
+        bodyLight = '#dd7733';
+        bodyDark = '#aa5511';
+        helmetColor = '#884400';
+        helmetLight = '#cc6622';
+        armorColor = '#663300';
+        break;
+      case 'riot':
+        bodyColor = '#4a6688'; // Steel blue
+        bodyLight = '#5a7799';
+        bodyDark = '#3a5577';
+        helmetColor = '#2a4466';
+        helmetLight = '#4a6688';
+        armorColor = '#1a3355';
+        break;
       default:
         bodyColor = '#8b5a2a';
         bodyLight = '#9b6a3a';
@@ -466,6 +764,22 @@ class EnemyUnit extends Entity {
     // Scale for boss - make them more imposing
     const scale = this.enemyType === 'boss' ? 1.6 : 1.0;
     const offsetY = this.enemyType === 'boss' ? -15 : 0;
+    
+    // Special render for drone (different shape)
+    if (this.enemyType === 'drone') {
+      this.renderDrone(ctx, bodyColor, bodyLight, bodyDark);
+      return;
+    }
+    
+    // Special render for bomber (shows flash when about to explode)
+    if (this.enemyType === 'bomber' && this.aboutToExplode) {
+      const flashOn = Math.floor(this.flashTimer / 100) % 2 === 0;
+      if (flashOn) {
+        bodyColor = '#ff0000';
+        bodyLight = '#ff4444';
+        bodyDark = '#cc0000';
+      }
+    }
     
     // Boss intimidation aura
     if (this.enemyType === 'boss') {
@@ -607,6 +921,28 @@ class EnemyUnit extends Entity {
     ctx.lineWidth = 1;
     ctx.strokeRect(this.x + 6, this.y + 4 + offsetY, this.width - 12, this.height - 4);
     
+    // Riot shield visual
+    if (this.enemyType === 'riot' && this.shieldActive && this.shieldHealth > 0) {
+      const shieldX = this.x + (this.facing > 0 ? this.width - 5 : -10);
+      const shieldY = this.y + 10;
+      const shieldWidth = 8;
+      const shieldHeight = this.height - 20;
+      
+      // Shield body
+      ctx.fillStyle = '#6688aa';
+      ctx.fillRect(shieldX, shieldY, shieldWidth, shieldHeight);
+      
+      // Shield border
+      ctx.strokeStyle = '#88aacc';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(shieldX, shieldY, shieldWidth, shieldHeight);
+      
+      // Shield health indicator
+      const shieldPercent = this.shieldHealth / this.shieldMaxHealth;
+      ctx.fillStyle = '#aaccff';
+      ctx.fillRect(shieldX + 1, shieldY + 2, shieldWidth - 2, (shieldHeight - 4) * shieldPercent);
+    }
+    
     // === HEALTH BAR (16-bit arcade style) ===
     const barWidth = this.width;
     const barHeight = 4;
@@ -628,9 +964,93 @@ class EnemyUnit extends Entity {
     ctx.fillStyle = 'rgba(255, 100, 100, 0.4)';
     ctx.fillRect(this.x, this.y - 9, barWidth * healthPercent, 1);
     
+    // Shield health bar for Riot (below main health bar)
+    if (this.enemyType === 'riot' && this.shieldMaxHealth > 0) {
+      const shieldPercent = this.shieldHealth / this.shieldMaxHealth;
+      ctx.fillStyle = '#000033';
+      ctx.fillRect(this.x, this.y - 5, barWidth, 3);
+      ctx.fillStyle = this.shieldActive ? '#4488ff' : '#224466';
+      ctx.fillRect(this.x, this.y - 5, barWidth * shieldPercent, 3);
+    }
+    
     // Draw AI state indicator (16-bit retro style)
     ctx.fillStyle = '#ffff00';
     ctx.font = '8px monospace';
     ctx.fillText(this.aiState.substring(0, 3).toUpperCase(), this.x, this.y - 13);
+  }
+
+  /**
+   * Render drone enemy (unique flying shape)
+   */
+  renderDrone(ctx, bodyColor, bodyLight, bodyDark) {
+    // Shadow on ground (lower)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(this.x + 4, this.y + this.height + this.flyHeight - 20, this.width - 8, 6);
+    
+    // Drone body (oval-ish shape)
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(this.x + 4, this.y + 4, this.width - 8, this.height - 8);
+    
+    // Body highlights
+    ctx.fillStyle = bodyLight;
+    ctx.fillRect(this.x + 4, this.y + 4, this.width - 8, 4);
+    ctx.fillRect(this.x + 4, this.y + 4, 4, this.height - 8);
+    
+    // Body shadows
+    ctx.fillStyle = bodyDark;
+    ctx.fillRect(this.x + 4, this.y + this.height - 8, this.width - 8, 4);
+    ctx.fillRect(this.x + this.width - 8, this.y + 4, 4, this.height - 8);
+    
+    // Cockpit/eye
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(this.x + 10, this.y + 8, 12, 6);
+    ctx.fillStyle = '#ff6666';
+    ctx.fillRect(this.x + 11, this.y + 9, 4, 2);
+    
+    // Rotors (animated based on time)
+    const rotorPhase = Date.now() / 50 % 8;
+    ctx.fillStyle = '#333333';
+    
+    // Left rotor
+    if (rotorPhase < 4) {
+      ctx.fillRect(this.x - 4, this.y + 2, 10, 3);
+    } else {
+      ctx.fillRect(this.x - 2, this.y + 2, 6, 3);
+    }
+    
+    // Right rotor
+    if (rotorPhase < 4) {
+      ctx.fillRect(this.x + this.width - 6, this.y + 2, 10, 3);
+    } else {
+      ctx.fillRect(this.x + this.width - 4, this.y + 2, 6, 3);
+    }
+    
+    // Weapon pod
+    ctx.fillStyle = '#222222';
+    ctx.fillRect(this.x + this.width / 2 - 3, this.y + this.height - 6, 6, 8);
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(this.x + this.width / 2 - 1, this.y + this.height, 2, 4);
+    
+    // Outline
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x + 4, this.y + 4, this.width - 8, this.height - 8);
+    
+    // Health bar
+    const barWidth = this.width;
+    const barHeight = 4;
+    const healthPercent = this.health / this.maxHealth;
+    
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(this.x - 1, this.y - 10, barWidth + 2, barHeight + 2);
+    ctx.fillStyle = '#660000';
+    ctx.fillRect(this.x, this.y - 9, barWidth, barHeight);
+    ctx.fillStyle = '#ff3333';
+    ctx.fillRect(this.x, this.y - 9, barWidth * healthPercent, barHeight);
+    
+    // AI state
+    ctx.fillStyle = '#ffff00';
+    ctx.font = '8px monospace';
+    ctx.fillText('DRN', this.x, this.y - 13);
   }
 }
