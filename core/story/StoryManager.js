@@ -220,24 +220,47 @@ class StoryManager {
   }
 
   /**
-   * Save story progress
+   * Save story progress through SaveSystem if available, fallback to localStorage
    */
   saveProgress() {
     try {
-      localStorage.setItem('warShooterStory', JSON.stringify({
-        progress: this.storyProgress,
-        logs: this.unlockedLogs
-      }));
+      // Use SaveSystem if available via gameEngine
+      if (this.gameEngine && this.gameEngine.saveSystem) {
+        const allData = this.gameEngine.saveSystem.loadAllData();
+        if (!allData.storyData) {
+          allData.storyData = {};
+        }
+        allData.storyData.progress = this.storyProgress;
+        allData.storyData.logs = this.unlockedLogs;
+        this.gameEngine.saveSystem.saveAllData(allData);
+      } else {
+        // Fallback to direct localStorage
+        localStorage.setItem('warShooterStory', JSON.stringify({
+          progress: this.storyProgress,
+          logs: this.unlockedLogs
+        }));
+      }
     } catch (e) {
-      console.warn('Could not save story progress:', e);
+      // Silently fail - save is not critical
     }
   }
 
   /**
-   * Load story progress
+   * Load story progress through SaveSystem if available, fallback to localStorage
    */
   loadProgress() {
     try {
+      // Use SaveSystem if available via gameEngine
+      if (this.gameEngine && this.gameEngine.saveSystem) {
+        const allData = this.gameEngine.saveSystem.loadAllData();
+        if (allData.storyData) {
+          this.storyProgress = allData.storyData.progress || {};
+          this.unlockedLogs = allData.storyData.logs || [];
+          return;
+        }
+      }
+      
+      // Fallback to direct localStorage
       const saved = localStorage.getItem('warShooterStory');
       if (saved) {
         const data = JSON.parse(saved);
@@ -245,7 +268,7 @@ class StoryManager {
         this.unlockedLogs = data.logs || [];
       }
     } catch (e) {
-      console.warn('Could not load story progress:', e);
+      // Silently fail - load is not critical
     }
   }
 

@@ -97,8 +97,7 @@ class MultiplayerManager {
     const offer = await this.peerConnection.createOffer();
     await this.peerConnection.setLocalDescription(offer);
     
-    console.log('Room created:', this.roomCode);
-    console.log('Share this offer with the client:', JSON.stringify(this.peerConnection.localDescription));
+    // Debug info available through getConnectionInfo() method
     
     return this.roomCode;
   }
@@ -131,8 +130,7 @@ class MultiplayerManager {
     const answer = await this.peerConnection.createAnswer();
     await this.peerConnection.setLocalDescription(answer);
     
-    console.log('Joining room:', roomCode);
-    console.log('Send this answer to the host:', JSON.stringify(this.peerConnection.localDescription));
+    // Answer available through peerConnection.localDescription
   }
 
   /**
@@ -143,7 +141,7 @@ class MultiplayerManager {
     if (!this.isHost) return;
     
     await this.peerConnection.setRemoteDescription(new RTCSessionDescription(clientAnswer));
-    console.log('Answer accepted, connection establishing...');
+    this.connectionState = 'establishing';
   }
 
   /**
@@ -157,20 +155,17 @@ class MultiplayerManager {
     // Handle ICE candidates
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
-        console.log('ICE candidate:', event.candidate);
-        // In a real app, send this to the other peer via signaling server
+        // Store ICE candidate for signaling (would be sent via signaling server in production)
+        this.lastIceCandidate = event.candidate;
       }
     };
     
     // Handle connection state changes
     this.peerConnection.onconnectionstatechange = () => {
-      console.log('Connection state:', this.peerConnection.connectionState);
-      
       if (this.peerConnection.connectionState === 'connected') {
         this.connectionState = 'connected';
         this.isConnected = true;
         this.startPingLoop();
-        console.log('Peer connected!');
       } else if (this.peerConnection.connectionState === 'disconnected' || 
                  this.peerConnection.connectionState === 'failed') {
         this.handleDisconnect();
@@ -179,7 +174,7 @@ class MultiplayerManager {
     
     // Handle ICE connection state
     this.peerConnection.oniceconnectionstatechange = () => {
-      console.log('ICE connection state:', this.peerConnection.iceConnectionState);
+      // Connection state tracked through connectionState property
     };
   }
 
@@ -188,18 +183,17 @@ class MultiplayerManager {
    */
   setupDataChannelHandlers() {
     this.dataChannel.onopen = () => {
-      console.log('Data channel open');
       this.connectionState = 'connected';
       this.isConnected = true;
     };
     
     this.dataChannel.onclose = () => {
-      console.log('Data channel closed');
       this.handleDisconnect();
     };
     
-    this.dataChannel.onerror = (error) => {
-      console.error('Data channel error:', error);
+    this.dataChannel.onerror = () => {
+      // Error handling - consider retry logic
+      this.handleDisconnect();
     };
     
     this.dataChannel.onmessage = (event) => {
@@ -207,7 +201,7 @@ class MultiplayerManager {
         const message = JSON.parse(event.data);
         this.handleMessage(message);
       } catch (e) {
-        console.error('Failed to parse message:', e);
+        // Silently ignore malformed messages
       }
     };
   }
@@ -373,8 +367,19 @@ class MultiplayerManager {
    * @param {Object} data - Chat data
    */
   handleChat(data) {
-    console.log(`[${data.sender}]: ${data.message}`);
-    // Could display in game UI
+    // Store chat message for UI display
+    if (!this.chatMessages) {
+      this.chatMessages = [];
+    }
+    this.chatMessages.push({
+      sender: data.sender,
+      message: data.message,
+      timestamp: Date.now()
+    });
+    // Keep only last 50 messages
+    if (this.chatMessages.length > 50) {
+      this.chatMessages.shift();
+    }
   }
 
   /**
@@ -523,8 +528,6 @@ class MultiplayerManager {
       this.pingInterval = null;
     }
     
-    console.log('Disconnected from peer');
-    
     // Attempt reconnection
     this.attemptReconnect();
   }
@@ -533,9 +536,12 @@ class MultiplayerManager {
    * Attempt to reconnect
    */
   attemptReconnect() {
-    // Simple reconnection logic
-    console.log('Attempting to reconnect...');
-    // In a real implementation, this would retry the connection
+    // Simple reconnection logic - could implement exponential backoff
+    this.reconnectAttempts = (this.reconnectAttempts || 0) + 1;
+    if (this.reconnectAttempts < 3) {
+      // In a real implementation, this would retry the connection
+      this.connectionState = 'reconnecting';
+    }
   }
 
   /**

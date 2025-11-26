@@ -452,36 +452,36 @@ class SaveSystem {
   extractGameData(gameEngine) {
     return {
       name: `${gameEngine.mode} - ${gameEngine.selectedCharacter}`,
-      playTime: gameEngine.currentTime - (gameEngine.gameStartTime || 0),
-      score: gameEngine.score,
+      playTime: (gameEngine.currentTime || 0) - (gameEngine.gameStartTime || 0),
+      score: gameEngine.score || 0,
 
       campaign: gameEngine.mode === 'campaign' ? {
-        currentLevel: gameEngine.currentLevel,
-        completedLevels: Array.from({ length: gameEngine.currentLevel - 1 }, (_, i) => i + 1),
-        difficulty: gameEngine.difficulty,
-        selectedCharacter: gameEngine.selectedCharacter
+        currentLevel: gameEngine.currentLevel || 1,
+        completedLevels: Array.from({ length: (gameEngine.currentLevel || 1) - 1 }, (_, i) => i + 1),
+        difficulty: gameEngine.difficulty || 'medium',
+        selectedCharacter: gameEngine.selectedCharacter || 'soldier'
       } : null,
 
       survival: gameEngine.mode === 'survival' ? {
-        currentWave: gameEngine.wave,
-        score: gameEngine.score
+        currentWave: gameEngine.wave || 1,
+        score: gameEngine.score || 0
       } : null,
 
       unlocks: {
-        weapons: gameEngine.player ? 
-          gameEngine.player.rangedWeapons.map(w => w.name.toLowerCase().replace(' ', '_')) : [],
-        characters: [gameEngine.selectedCharacter]
+        weapons: gameEngine.player && gameEngine.player.rangedWeapons ? 
+          gameEngine.player.rangedWeapons.map(w => w.name.toLowerCase().replace(' ', '_')) : ['pistol'],
+        characters: [gameEngine.selectedCharacter || 'soldier']
       },
 
       stats: {
-        kills: gameEngine.kills,
+        kills: gameEngine.kills || 0,
         deaths: gameEngine.player && !gameEngine.player.active ? 1 : 0,
-        damageDealt: gameEngine.totalDamageDealt,
-        damageTaken: gameEngine.totalDamageTaken,
-        shotsFired: gameEngine.shotsFired,
-        shotsHit: gameEngine.shotsHit,
-        maxCombo: gameEngine.maxCombo,
-        bossesKilled: gameEngine.bossesKilled
+        damageDealt: gameEngine.totalDamageDealt || 0,
+        damageTaken: gameEngine.totalDamageTaken || 0,
+        shotsFired: gameEngine.shotsFired || 0,
+        shotsHit: gameEngine.shotsHit || 0,
+        maxCombo: gameEngine.maxCombo || 0,
+        bossesKilled: gameEngine.bossesKilled || 0
       }
     };
   }
