@@ -192,6 +192,13 @@ class GameUI {
       ctx.font = '12px monospace';
       ctx.fillText(`[${window.game.difficulty.toUpperCase()}]`, this.width / 2 - 30, this.height - 10);
       ctx.fillText('Press H for Help', this.width / 2 + 40, this.height - 10);
+      
+      // Dev tools indicator
+      if (window.game.devToolUnlocked) {
+        ctx.fillStyle = '#ffff00';
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText('[DEV MODE] Press K to kill all', 10, this.height - 2);
+      }
     }
     
     // Active power-ups indicator with timers
@@ -627,7 +634,7 @@ class GameUI {
       const page = window.game ? window.game.settingsPage : 0;
       ctx.fillStyle = '#888';
       ctx.font = '16px monospace';
-      ctx.fillText(`Page ${page + 1}/3 - Use ← → to navigate`, this.width / 2, 110);
+      ctx.fillText(`Page ${page + 1}/4 - Use ← → to navigate`, this.width / 2, 110);
       
       ctx.font = '20px monospace';
       
@@ -732,6 +739,81 @@ class GameUI {
         ctx.fillStyle = '#888';
         ctx.font = '12px monospace';
         ctx.fillText('Tweak these settings to customize your experience', this.width / 2, 395);
+      }
+      else if (page === 3) {
+        // Page 3: Dev Tools (Password Protected)
+        ctx.fillStyle = '#ffff00';
+        ctx.fillText('DEV TOOLS (PASSWORD PROTECTED)', this.width / 2, 150);
+        
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '16px monospace';
+        
+        if (window.game && !window.game.devToolUnlocked) {
+          // Password entry screen
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText('Enter password to unlock dev tools:', this.width / 2, 200);
+          
+          // Password input field
+          ctx.fillStyle = '#1a2a3a';
+          ctx.fillRect(this.width / 2 - 150, 230, 300, 40);
+          ctx.strokeStyle = '#4a6a8a';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(this.width / 2 - 150, 230, 300, 40);
+          
+          // Show input (masked)
+          const maskedInput = window.game.devToolPasswordInput.replace(/./g, '*');
+          ctx.fillStyle = '#ffff00';
+          ctx.font = '20px monospace';
+          ctx.fillText(maskedInput, this.width / 2, 258);
+          
+          // Cursor blink
+          if (Math.floor(Date.now() / 500) % 2 === 0) {
+            const textWidth = ctx.measureText(maskedInput).width;
+            ctx.fillText('_', this.width / 2 + textWidth / 2 + 10, 258);
+          }
+          
+          ctx.fillStyle = '#888';
+          ctx.font = '14px monospace';
+          ctx.fillText('Type password and press ENTER', this.width / 2, 300);
+          ctx.fillText('Press BACKSPACE to delete', this.width / 2, 320);
+          
+          ctx.fillStyle = '#666';
+          ctx.font = '12px monospace';
+          ctx.fillText('Hint: Password is for quick testing', this.width / 2, 360);
+        } else if (window.game && window.game.devToolUnlocked) {
+          // Dev tools unlocked screen
+          ctx.fillStyle = '#00ff00';
+          ctx.font = 'bold 20px monospace';
+          ctx.fillText('✓ DEV TOOLS UNLOCKED', this.width / 2, 200);
+          
+          ctx.fillStyle = '#ffff00';
+          ctx.font = '16px monospace';
+          ctx.fillText('Available Dev Tools:', this.width / 2, 240);
+          
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '14px monospace';
+          ctx.textAlign = 'left';
+          
+          const toolsX = this.width / 2 - 200;
+          let toolsY = 280;
+          
+          ctx.fillText('• Press [K] during gameplay:', toolsX, toolsY);
+          toolsY += 25;
+          ctx.fillStyle = '#00ff00';
+          ctx.fillText('  Instantly kills all enemies (including bosses)', toolsX + 20, toolsY);
+          toolsY += 30;
+          
+          ctx.fillStyle = '#888';
+          ctx.font = '12px monospace';
+          ctx.fillText('This tool is designed for quickly testing later levels', toolsX, toolsY);
+          toolsY += 20;
+          ctx.fillText('without having to fight through earlier stages.', toolsX, toolsY);
+          
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffaa00';
+          ctx.font = '14px monospace';
+          ctx.fillText('Use responsibly! This is for testing only.', this.width / 2, 420);
+        }
       }
       
       ctx.fillStyle = '#888';

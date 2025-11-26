@@ -103,6 +103,11 @@ class GameEngine {
     this.screenFlash = true; // Flash on damage/events
     this.settingsPage = 0; // For multi-page settings menu
     
+    // Dev tool settings
+    this.devToolPassword = 'QUICKTEST'; // Password to unlock dev tools
+    this.devToolUnlocked = false; // Whether dev tools are unlocked
+    this.devToolPasswordInput = ''; // Current password input
+    
     this.init();
   }
 
@@ -1092,7 +1097,7 @@ class GameEngine {
         this.settingsPage = Math.max(0, this.settingsPage - 1);
       } else if (this.inputManager.wasKeyPressed('ArrowRight')) {
         this.audioManager.playSound('menu_navigate', 0.3);
-        this.settingsPage = Math.min(2, this.settingsPage + 1);
+        this.settingsPage = Math.min(3, this.settingsPage + 1);
       }
       
       // Page 0: Difficulty & Audio
@@ -1184,6 +1189,43 @@ class GameEngine {
           this.explosionSize = Math.max(0.5, this.explosionSize - 0.1);
         } else if (this.inputManager.wasKeyPressed('-')) {
           this.explosionSize = Math.min(2.0, this.explosionSize + 0.1);
+        }
+      }
+      // Page 3: Dev Tools (Password Protected)
+      else if (this.settingsPage === 3) {
+        // Handle password input
+        const allowedChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        
+        // Check for any character key press
+        for (const char of allowedChars) {
+          if (this.inputManager.wasKeyPressed(char)) {
+            if (this.devToolPasswordInput.length < 20) {
+              this.devToolPasswordInput += char.toUpperCase();
+              this.audioManager.playSound('menu_navigate', 0.2);
+            }
+            break;
+          }
+        }
+        
+        // Backspace to delete last character
+        if (this.inputManager.wasKeyPressed('Backspace')) {
+          if (this.devToolPasswordInput.length > 0) {
+            this.devToolPasswordInput = this.devToolPasswordInput.slice(0, -1);
+            this.audioManager.playSound('menu_navigate', 0.2);
+          }
+        }
+        
+        // Enter to submit password
+        if (this.inputManager.wasKeyPressed('Enter')) {
+          if (this.devToolPasswordInput === this.devToolPassword) {
+            this.devToolUnlocked = true;
+            this.audioManager.playSound('pickup_powerup', 0.7);
+            this.devToolPasswordInput = '';
+          } else if (this.devToolPasswordInput.length > 0) {
+            // Wrong password
+            this.audioManager.playSound('player_hit', 0.5);
+            this.devToolPasswordInput = '';
+          }
         }
       }
       
@@ -1428,6 +1470,11 @@ class GameEngine {
       // Toggle help overlay (H key)
       if (this.inputManager.wasKeyPressed('h') || this.inputManager.wasKeyPressed('H')) {
         this.showHelp = !this.showHelp;
+      }
+      
+      // Dev Tool: Instant Kill All Enemies (K key)
+      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('k') || this.inputManager.wasKeyPressed('K'))) {
+        this.devToolInstantKillAll();
       }
       
       // Toggle inventory (I key)
@@ -1760,6 +1807,46 @@ class GameEngine {
       this.weaponSwapPopup = null;
       this.state = 'playing';
     }
+  }
+
+  // Dev tool: Instant kill all enemies
+  devToolInstantKillAll() {
+    if (!this.devToolUnlocked) return;
+    
+    let killCount = 0;
+    this.enemies.forEach(enemy => {
+      if (enemy.active && enemy.health > 0) {
+        enemy.health = 0;
+        enemy.destroy();
+        killCount++;
+        
+        // Create explosion effect
+        this.particleSystem.createExplosion(
+          enemy.x + enemy.width / 2,
+          enemy.y + enemy.height / 2
+        );
+      }
+    });
+    
+    // Update kills and score
+    this.kills += killCount;
+    this.score += killCount * 100;
+    
+    // Play sound effect
+    this.audioManager.playSound('explosion', 0.8);
+    
+    // Show notification
+    if (this.particleSystem && killCount > 0) {
+      this.particleSystem.createTextPopup(
+        this.player.x + this.player.width / 2,
+        this.player.y - 50,
+        `DEV: ${killCount} ENEMIES ELIMINATED`,
+        '#ffff00'
+      );
+    }
+    
+    // Screen shake for dramatic effect
+    this.camera.shake(10, 500);
   }
 
   handleCollisions() {
