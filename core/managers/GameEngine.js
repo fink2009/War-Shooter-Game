@@ -1406,7 +1406,8 @@ class GameEngine {
 
   handleInput() {
     // Global fullscreen toggle (works in any state)
-    if (this.inputManager.wasKeyPressed('f') || this.inputManager.wasKeyPressed('F') || 
+    // Changed from 'F' to Backquote (`) to avoid conflict with melee attack
+    if (this.inputManager.wasKeyPressed('`') || this.inputManager.wasKeyPressed('Backquote') || 
         this.inputManager.wasKeyPressed('F11')) {
       this.toggleFullscreen();
       // Don't return - let other handlers process too
