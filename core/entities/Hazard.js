@@ -2,6 +2,10 @@
  * Base Hazard class for environmental hazards
  * Hazards can damage both player and enemies
  */
+
+// Global counter for unique entity IDs
+let hazardEntityIdCounter = 0;
+
 class Hazard extends Entity {
   /**
    * Create a new hazard
@@ -37,6 +41,19 @@ class Hazard extends Entity {
   }
 
   /**
+   * Get a unique ID for an entity (for damage tracking)
+   * @param {Entity} entity - Entity to get ID for
+   * @returns {string} Unique entity ID
+   */
+  getEntityId(entity) {
+    // Use entity's existing unique ID if available, otherwise assign one
+    if (!entity._hazardTrackingId) {
+      entity._hazardTrackingId = entity.type + '_' + (++hazardEntityIdCounter);
+    }
+    return entity._hazardTrackingId;
+  }
+
+  /**
    * Check if hazard can damage an entity
    * @param {Entity} entity - Entity to check
    * @param {number} currentTime - Current game time
@@ -45,7 +62,7 @@ class Hazard extends Entity {
   canDamage(entity, currentTime) {
     if (!this.isActive) return false;
     
-    const entityId = entity.type + '_' + (entity.x * 1000 + entity.y);
+    const entityId = this.getEntityId(entity);
     const lastDamage = this.lastDamageTime[entityId] || 0;
     
     if (currentTime - lastDamage >= this.damageInterval) {

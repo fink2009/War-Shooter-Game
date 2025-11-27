@@ -524,6 +524,7 @@ class JumpPad extends Entity {
     this.lastActivationTime = currentTime;
     this.isReady = false;
     this.compressionAmount = 1;
+    this.cooldownEndTime = currentTime + this.cooldown; // Track cooldown end time
     
     // Apply vertical boost
     if (entity.dy !== undefined) {
@@ -548,11 +549,6 @@ class JumpPad extends Entity {
       );
     }
     
-    // Reset ready state after cooldown
-    setTimeout(() => {
-      this.isReady = true;
-    }, this.cooldown);
-    
     return true;
   }
 
@@ -567,6 +563,11 @@ class JumpPad extends Entity {
       if (this.compressionAmount < 0) {
         this.compressionAmount = 0;
       }
+    }
+    
+    // Check if cooldown has ended (using game time instead of setTimeout)
+    if (!this.isReady && window.game && window.game.currentTime >= this.cooldownEndTime) {
+      this.isReady = true;
     }
     
     // Update glow

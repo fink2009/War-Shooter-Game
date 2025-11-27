@@ -1685,9 +1685,9 @@ class EnemyUnit extends Entity {
   applyGoldenTint(color) {
     // Parse the color
     const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
     
     // Apply golden tint (increase red and green, decrease blue)
     const newR = Math.min(255, Math.floor(r * 1.2 + 30));
@@ -1705,9 +1705,9 @@ class EnemyUnit extends Entity {
   applyMiniBossTint(color) {
     // Parse the color
     const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
     
     // Apply red/purple tint
     const newR = Math.min(255, Math.floor(r * 1.3 + 40));
