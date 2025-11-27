@@ -36,6 +36,22 @@ class GameEngine {
     // Phase 1: Hazard Manager
     this.hazardManager = new HazardManager();
     
+    // Phase 2: Progression & Stealth Systems
+    this.upgradeSystem = new UpgradeSystem();
+    this.currencySystem = new CurrencySystem();
+    this.attachmentSystem = new AttachmentSystem();
+    this.noiseSystem = new NoiseSystem();
+    this.formationSystem = new FormationSystem();
+    
+    // Phase 2: UI Menus
+    this.upgradeMenu = new UpgradeMenu(canvas);
+    this.shopMenu = new ShopMenu(canvas);
+    this.attachmentMenu = new AttachmentMenu(canvas);
+    
+    // Phase 2: Coin pickups and shop vendor
+    this.coinPickups = [];
+    this.shopVendor = null;
+    
     // Fullscreen state
     this.isFullscreen = false;
     this.originalCanvasWidth = canvas.width;
@@ -151,6 +167,14 @@ class GameEngine {
       
       // Initialize story system
       this.storyManager.init(this);
+      
+      // Phase 2: Initialize progression menus
+      this.upgradeMenu.init(this.upgradeSystem, this.currencySystem);
+      this.shopMenu.init(this.currencySystem);
+      this.attachmentMenu.init(this.attachmentSystem, this.currencySystem);
+      
+      // Give starting coins to new players
+      this.currencySystem.giveStartingCoins(100);
       
       // Set up fullscreen event listeners
       this.setupFullscreenListeners();
@@ -420,6 +444,11 @@ class GameEngine {
       }
     }, 1500); // 1.5 seconds of spawn protection
     
+    // Phase 2: Apply permanent upgrades to player
+    if (this.upgradeSystem) {
+      this.upgradeSystem.applyToPlayer(this.player);
+    }
+    
     this.camera.follow(this.player);
     
     // Clear arrays
@@ -436,6 +465,12 @@ class GameEngine {
     this.switches = [];
     this.doors = [];
     this.jumpPads = [];
+    
+    // Phase 2: Clear coins and shop vendor
+    this.coinPickups = [];
+    this.shopVendor = null;
+    this.noiseSystem.clear();
+    this.formationSystem.clear();
     
     // Spawn cover objects
     this.spawnCovers();
@@ -1929,6 +1964,29 @@ class GameEngine {
         }
       }
       
+      // Phase 2: Handle Phase 2 menus when open (check BEFORE toggle logic)
+      if (this.upgradeMenu.visible) {
+        this.upgradeMenu.handleInput(this.inputManager);
+      } else if (this.shopMenu.visible) {
+        this.shopMenu.handleInput(this.inputManager);
+      } else if (this.attachmentMenu.visible) {
+        this.attachmentMenu.handleInput(this.inputManager);
+      } else {
+        // Phase 2: Toggle upgrade menu (U key) - only when no menu is open
+        if (this.inputManager.wasKeyPressed('u') || this.inputManager.wasKeyPressed('U')) {
+          this.upgradeMenu.show();
+        }
+      }
+      
+      // Phase 2: Interact with shop vendor (E key)
+      if (this.inputManager.wasKeyPressed('e') || this.inputManager.wasKeyPressed('E')) {
+        if (this.shopVendor && this.shopVendor.canInteract(this.player)) {
+          if (!this.shopMenu.visible) {
+            this.shopMenu.open(this.shopVendor, this.player);
+          }
+        }
+      }
+      
       // Handle inventory when open
       if (this.showInventory) {
         // Switch inventory pages with ] or Page Down (changed from Tab to avoid browser issues)
@@ -2137,6 +2195,21 @@ class GameEngine {
     this.doors.forEach(d => d.update(deltaTime));
     this.jumpPads.forEach(j => j.update(deltaTime));
     
+    // Phase 2: Update coin pickups
+    this.coinPickups.forEach(coin => {
+      coin.update(deltaTime, this.player, this.currencySystem);
+    });
+    this.coinPickups = this.coinPickups.filter(c => c.active);
+    
+    // Phase 2: Update shop vendor
+    if (this.shopVendor) {
+      this.shopVendor.update(deltaTime, this.player);
+    }
+    
+    // Phase 2: Update noise and formation systems
+    this.noiseSystem.update(deltaTime, this.enemies);
+    this.formationSystem.update(deltaTime);
+    
     // Update particles
     this.particleSystem.update(deltaTime);
     
@@ -2174,6 +2247,18 @@ class GameEngine {
         const waveBonus = this.wave * 500;
         this.score += waveBonus;
         
+        // Phase 2: Currency wave bonus
+        if (this.currencySystem) {
+          const coinBonus = this.currencySystem.calculateWaveBonus(this.wave);
+          this.currencySystem.addCoins(coinBonus);
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            `+${coinBonus} COINS`,
+            '#ffd700'
+          );
+        }
+        
         // Play wave complete sound
         this.audioManager.playSound('pickup_powerup', 0.7);
         
@@ -2190,6 +2275,23 @@ class GameEngine {
         
         // Phase 1: Spawn new hazards for new wave
         this.hazardManager.spawnHazards(this.mode, this.currentLevel, this.wave, this.groundLevel, this.worldWidth);
+        
+        // Phase 2: Spawn shop vendor every 5 waves
+        if (shouldSpawnShop(this.wave)) {
+          const shopSpawnOffset = { x: 100, y: 60 }; // Offset from player position
+          this.shopVendor = new ShopVendor(
+            this.player.x + shopSpawnOffset.x, 
+            this.groundLevel - shopSpawnOffset.y
+          );
+          this.particleSystem.createTextPopup(
+            this.shopVendor.x + this.shopVendor.width / 2,
+            this.shopVendor.y - 40,
+            'SHOP OPEN!',
+            '#00ff00'
+          );
+        } else {
+          this.shopVendor = null;
+        }
         
         // Add spawn protection when starting new wave
         if (this.player && this.player.active) {
@@ -2727,6 +2829,31 @@ class GameEngine {
               const pickup = new Pickup(enemy.x, enemy.y, type);
               this.pickups.push(pickup);
               this.collisionSystem.add(pickup);
+              
+              // Phase 2: Spawn coin pickup
+              if (this.currencySystem) {
+                const coinValue = this.currencySystem.calculateEnemyDrop(enemy);
+                const coin = new CoinPickup(
+                  enemy.x + enemy.width / 2 + (Math.random() - 0.5) * 30,
+                  enemy.y + enemy.height / 2,
+                  coinValue
+                );
+                this.coinPickups.push(coin);
+              }
+              
+              // Phase 2: Check for attachment drop
+              if (this.attachmentSystem) {
+                const attachmentDrop = this.attachmentSystem.checkDrop(enemy);
+                if (attachmentDrop) {
+                  this.attachmentSystem.addToInventory(attachmentDrop);
+                  this.particleSystem.createTextPopup(
+                    enemy.x + enemy.width / 2,
+                    enemy.y - 40,
+                    'ATTACHMENT!',
+                    '#ff00ff'
+                  );
+                }
+              }
             }
           }
         });
@@ -3012,7 +3139,60 @@ class GameEngine {
       if (this.showInventory) {
         this.ui.drawInventory(this.ctx, this.player, this.inventoryPage);
       }
+      
+      // Phase 2: Draw upgrade menu if open
+      if (this.upgradeMenu.visible) {
+        this.upgradeMenu.render(this.ctx);
+      }
+      
+      // Phase 2: Draw shop menu if open
+      if (this.shopMenu.visible) {
+        this.shopMenu.render(this.ctx);
+      }
+      
+      // Phase 2: Draw attachment menu if open
+      if (this.attachmentMenu.visible) {
+        this.attachmentMenu.render(this.ctx);
+      }
+      
+      // Phase 2: Draw coin counter in HUD
+      if (this.currencySystem) {
+        this.drawCoinCounter(this.ctx);
+      }
     }
+  }
+  
+  /**
+   * Draw coin counter in HUD
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  drawCoinCounter(ctx) {
+    const coins = this.currencySystem.getCoins();
+    const x = this.canvas.width - 120;
+    const y = 20;
+    
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(x - 10, y - 5, 110, 30);
+    
+    // Coin icon
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath();
+    ctx.arc(x + 10, y + 10, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#b8860b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#b8860b';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('$', x + 10, y + 14);
+    
+    // Coin amount
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 18px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(this.currencySystem.formatCoins(coins), x + 28, y + 17);
   }
 
   renderGame() {
@@ -3052,6 +3232,14 @@ class GameEngine {
     
     // Draw pickups
     this.pickups.forEach(p => p.render(this.ctx));
+    
+    // Phase 2: Draw coin pickups
+    this.coinPickups.forEach(coin => coin.render(this.ctx));
+    
+    // Phase 2: Draw shop vendor
+    if (this.shopVendor && this.shopVendor.active) {
+      this.shopVendor.render(this.ctx);
+    }
     
     // Draw player
     if (this.player && this.player.active) {

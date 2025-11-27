@@ -658,6 +658,101 @@ const GameConfig = {
       arc: 90, // degrees
       duration: 5 // seconds of firing before reload
     }
+  },
+
+  // Phase 2: Upgrade System Configuration
+  UPGRADES: {
+    HEALTH: { max: 5, costs: [500, 1000, 1500, 2500, 4000], bonuses: [20, 40, 60, 80, 100] },
+    DAMAGE: { max: 5, costs: [500, 1000, 1500, 2500, 4000], bonuses: [0.1, 0.2, 0.3, 0.45, 0.6] },
+    SPEED: { max: 5, costs: [500, 1000, 1500, 2500, 4000], bonuses: [0.15, 0.3, 0.45, 0.6, 0.75] },
+    RELOAD: { max: 5, costs: [500, 1000, 1500, 2500, 4000], bonuses: [0.1, 0.2, 0.3, 0.4, 0.5] },
+    COOLDOWN: { max: 5, costs: [500, 1000, 1500, 2500, 4000], bonuses: [0.1, 0.2, 0.3, 0.4, 0.5] },
+    ARMOR: { max: 5, costs: [500, 1000, 1500, 2500, 4000], bonuses: [0.05, 0.1, 0.15, 0.22, 0.3] }
+  },
+
+  // Phase 2: Currency System Configuration
+  CURRENCY: {
+    enemyDropRange: { min: 5, max: 10 },
+    eliteMultiplier: 3,
+    miniBossMultiplier: 8,
+    bossMultiplier: 40,
+    pickupRange: 50,
+    waveBonus: 50,
+    destructionDrop: { min: 2, max: 5 }
+  },
+
+  // Phase 2: Shop System Configuration
+  SHOP: {
+    spawnInterval: 5,
+    items: {
+      healthRefill: 100,
+      ammoPack: 50,
+      randomPowerup: 150,
+      tempUpgrade: 200,
+      weaponUnlock: 500,
+      reviveToken: 300
+    }
+  },
+
+  // Phase 2: Weapon Attachments Configuration
+  ATTACHMENTS: {
+    SCOPE: { cost: 400, rangeBonus: 0.5, zoomLevel: 1.5 },
+    EXTENDED_MAG: { cost: 300, capacityBonus: 0.5 },
+    SUPPRESSOR: { cost: 500, damagePenalty: 0.1, noiseReduction: 0.5 },
+    LASER_SIGHT: { cost: 250, accuracyBonus: 0.15 },
+    RAPID_BOLT: { cost: 350, fireRateBonus: 0.25, damagePenalty: 0.05 },
+    BAYONET: { cost: 200, meleeDamage: 15 },
+    SHARPENING: { cost: 300, damageBonus: 0.3 },
+    LIGHTWEIGHT: { cost: 250, speedBonus: 0.2, damagePenalty: 5 },
+    maxSlots: 3,
+    dropChance: 0.05
+  },
+
+  // Phase 2: Stealth System Configuration
+  STEALTH: {
+    crouchSpeedMultiplier: 0.5,
+    crouchDetectionMultiplier: 0.5,
+    backstabMultiplier: 3,
+    backstabAngle: 120,
+    backstabInstantKillThreshold: 100,
+    noiseRanges: {
+      gunshot: 300,
+      suppressedGunshot: 150,
+      explosion: 500,
+      running: 100,
+      melee: 50,
+      crouch: 0
+    },
+    awarenessTransitions: {
+      toSuspicious: 2,
+      toAlert: 1,
+      toCombat: 0.5,
+      fallbackToSuspicious: 10,
+      fallbackToUnaware: 5
+    }
+  },
+
+  // Phase 2: Enemy Formation Configuration
+  FORMATIONS: {
+    LINE: { spacing: 80, minMembers: 3 },
+    V_SHAPE: { angle: 60, spacing: 100, minMembers: 3 },
+    CIRCLE: { minMembers: 4 },
+    PINCER: { angle: 180, minMembers: 4 },
+    FIRING_LINE: { frontSpacing: 80, rowSpacing: 100, minMembers: 4 },
+    SCATTER: { minDistance: 100, maxDistance: 200, minMembers: 2 },
+    reformTime: 5
+  },
+
+  // Phase 2: Tactical AI Configuration
+  TACTICAL_AI: {
+    coverSeekThreshold: 0.3,
+    blindFireAccuracyPenalty: 0.5,
+    flankingDistance: 200,
+    retreatHealthThreshold: 0.2,
+    suppressionFireRate: 0.5,
+    grenadeTossChance: 0.1,
+    grenadeFuseTime: 3,
+    coverEvaluationRadius: 300
   }
 };
 
@@ -683,3 +778,10 @@ Object.freeze(GameConfig.HAZARDS);
 Object.freeze(GameConfig.ELITE);
 Object.freeze(GameConfig.MINIBOSS);
 Object.freeze(GameConfig.ENEMIES);
+Object.freeze(GameConfig.UPGRADES);
+Object.freeze(GameConfig.CURRENCY);
+Object.freeze(GameConfig.SHOP);
+Object.freeze(GameConfig.ATTACHMENTS);
+Object.freeze(GameConfig.STEALTH);
+Object.freeze(GameConfig.FORMATIONS);
+Object.freeze(GameConfig.TACTICAL_AI);

@@ -227,7 +227,11 @@ class PlayerCharacter extends Entity {
     if (!this.isCrouching && this.onGround) {
       this.isCrouching = true;
       this.height = 30;
-      this.speed = 2;
+      // Phase 2: Use stealth config for crouch speed
+      const stealthConfig = typeof GameConfig !== 'undefined' && GameConfig.STEALTH ? 
+        GameConfig.STEALTH : { crouchSpeedMultiplier: 0.5 };
+      this.speed = this.baseSpeed * stealthConfig.crouchSpeedMultiplier;
+      this.state = 'crouching';
     }
   }
 
@@ -365,6 +369,11 @@ class PlayerCharacter extends Entity {
     }
     
     if (!this.invulnerable) {
+      // Phase 2: Apply armor reduction from upgrades
+      if (this.armorReduction && this.armorReduction > 0) {
+        amount = Math.floor(amount * (1 - this.armorReduction));
+      }
+      
       // Check for blocking
       if (this.isBlocking && this.blockStamina > 0) {
         // Check for perfect parry
@@ -391,6 +400,17 @@ class PlayerCharacter extends Entity {
         }
       } else {
         this.health -= amount;
+      }
+      
+      // Phase 2: Check for revive token
+      if (this.health <= 0 && this.hasReviveToken) {
+        this.health = Math.floor(this.maxHealth * 0.5); // Revive with 50% health
+        this.hasReviveToken = false;
+        this.invulnerable = true;
+        setTimeout(() => {
+          if (this.active) this.invulnerable = false;
+        }, 2000);
+        return 'revived';
       }
       
       if (this.health <= 0) {
@@ -452,8 +472,9 @@ class PlayerCharacter extends Entity {
         this.state = 'idle';
       }
       
-      // Crouching
-      if (inputManager.isKeyPressed('ArrowDown') || inputManager.isKeyPressed('s')) {
+      // Crouching (CTRL, S, or Down arrow)
+      if (inputManager.isKeyPressed('ArrowDown') || inputManager.isKeyPressed('s') || 
+          inputManager.isKeyPressed('Control')) {
         this.crouch();
       } else {
         this.stand();
