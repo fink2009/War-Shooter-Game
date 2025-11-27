@@ -8,6 +8,14 @@ const AIState = {
   RETREAT: 'retreat'
 };
 
+// Phase 2: Awareness states for stealth system
+const AwarenessState = {
+  UNAWARE: 'unaware',      // White - Normal patrol, can be backstabbed
+  SUSPICIOUS: 'suspicious', // Yellow - Investigating, 150% detection range
+  ALERT: 'alert',          // Orange - Saw player/heard gunshot, 200% detection range
+  COMBAT: 'combat'         // Red - Actively engaging, infinite detection
+};
+
 // Base Enemy class with advanced AI
 class EnemyUnit extends Entity {
   constructor(x, y, enemyType = 'infantry') {
@@ -30,6 +38,30 @@ class EnemyUnit extends Entity {
     this.target = null;
     this.lastStateChange = 0;
     this.stateTimer = 0;
+    
+    // Phase 2: Stealth Awareness
+    this.awarenessState = AwarenessState.UNAWARE;
+    this.awarenessLevel = 0; // 0-1, fills up towards next state
+    this.lastNoiseLocation = null;
+    this.investigateTimer = 0;
+    this.awarenessDecayTimer = 0;
+    this.canBeBackstabbed = true;
+    
+    // Phase 2: Formation
+    this.formationId = null;
+    this.formationRole = null;
+    this.formationTarget = null;
+    this.formationDx = 0;
+    this.formationDy = 0;
+    
+    // Phase 2: Tactical AI
+    this.coverTarget = null;
+    this.isInCover = false;
+    this.isFlanking = false;
+    this.isRetreating = false;
+    this.isSuppressing = false;
+    this.grenadeTimer = 0;
+    this.lastGrenadeTime = 0;
     
     // Movement
     this.dx = 0;
@@ -1526,6 +1558,61 @@ class EnemyUnit extends Entity {
     ctx.fillStyle = '#ffff00';
     ctx.font = '8px monospace';
     ctx.fillText(this.aiState.substring(0, 3).toUpperCase(), this.x, this.y - 13);
+    
+    // Phase 2: Draw awareness state indicator
+    this.drawAwarenessIndicator(ctx);
+  }
+  
+  /**
+   * Draw awareness state indicator above enemy
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  drawAwarenessIndicator(ctx) {
+    if (!this.awarenessState || this.awarenessState === 'unaware') return;
+    
+    let color = '#ffffff';
+    let symbol = '';
+    
+    switch (this.awarenessState) {
+      case 'suspicious':
+        color = '#ffff00';
+        symbol = '?';
+        break;
+      case 'alert':
+        color = '#ff8800';
+        symbol = '!';
+        break;
+      case 'combat':
+        color = '#ff0000';
+        symbol = '!!';
+        break;
+    }
+    
+    // Draw colored outline on enemy
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+    
+    // Draw exclamation/question mark
+    if (symbol) {
+      ctx.fillStyle = color;
+      ctx.font = 'bold 16px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(symbol, this.x + this.width / 2, this.y - 18);
+      ctx.textAlign = 'left';
+    }
+    
+    // Draw awareness level meter
+    if (this.awarenessLevel > 0 && this.awarenessLevel < 1) {
+      const meterWidth = this.width;
+      const meterHeight = 3;
+      const meterY = this.y - 16;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(this.x, meterY, meterWidth, meterHeight);
+      ctx.fillStyle = color;
+      ctx.fillRect(this.x, meterY, meterWidth * this.awarenessLevel, meterHeight);
+    }
   }
 
   /**

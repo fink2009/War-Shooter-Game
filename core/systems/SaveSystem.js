@@ -80,7 +80,12 @@ class SaveSystem {
       bossesDefeated: 0,
       weaponsCollected: 0,
       gamesPlayed: 0,
-      campaignCompletions: 0
+      campaignCompletions: 0,
+      // Phase 2: New stats
+      stealthKills: 0,
+      totalCoinsEarned: 0,
+      upgradesPurchased: 0,
+      attachmentsCollected: 0
     };
   }
 
