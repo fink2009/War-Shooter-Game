@@ -1958,12 +1958,17 @@ class GameEngine {
         }
       }
       
-      // Phase 2: Toggle upgrade menu (U key)
-      if (this.inputManager.wasKeyPressed('u') || this.inputManager.wasKeyPressed('U')) {
-        if (!this.upgradeMenu.visible && !this.shopMenu.visible && !this.attachmentMenu.visible) {
+      // Phase 2: Handle Phase 2 menus when open (check BEFORE toggle logic)
+      if (this.upgradeMenu.visible) {
+        this.upgradeMenu.handleInput(this.inputManager);
+      } else if (this.shopMenu.visible) {
+        this.shopMenu.handleInput(this.inputManager);
+      } else if (this.attachmentMenu.visible) {
+        this.attachmentMenu.handleInput(this.inputManager);
+      } else {
+        // Phase 2: Toggle upgrade menu (U key) - only when no menu is open
+        if (this.inputManager.wasKeyPressed('u') || this.inputManager.wasKeyPressed('U')) {
           this.upgradeMenu.show();
-        } else if (this.upgradeMenu.visible) {
-          this.upgradeMenu.hide();
         }
       }
       
@@ -1974,15 +1979,6 @@ class GameEngine {
             this.shopMenu.open(this.shopVendor, this.player);
           }
         }
-      }
-      
-      // Phase 2: Handle Phase 2 menus when open
-      if (this.upgradeMenu.visible) {
-        this.upgradeMenu.handleInput(this.inputManager);
-      } else if (this.shopMenu.visible) {
-        this.shopMenu.handleInput(this.inputManager);
-      } else if (this.attachmentMenu.visible) {
-        this.attachmentMenu.handleInput(this.inputManager);
       }
       
       // Handle inventory when open

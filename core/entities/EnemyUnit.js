@@ -8,13 +8,7 @@ const AIState = {
   RETREAT: 'retreat'
 };
 
-// Phase 2: Awareness states for stealth system
-const AwarenessState = {
-  UNAWARE: 'unaware',      // White - Normal patrol, can be backstabbed
-  SUSPICIOUS: 'suspicious', // Yellow - Investigating, 150% detection range
-  ALERT: 'alert',          // Orange - Saw player/heard gunshot, 200% detection range
-  COMBAT: 'combat'         // Red - Actively engaging, infinite detection
-};
+// Note: AwarenessState is defined in NoiseSystem.js and must be loaded first
 
 // Base Enemy class with advanced AI
 class EnemyUnit extends Entity {
