@@ -37,7 +37,7 @@ Complete control reference for War Shooter.
 |--------|-----|-------------|
 | Pause Game | ESC | Pause/unpause gameplay |
 | Toggle Help | H | Show/hide control help overlay |
-| Toggle Fullscreen | F11 / F | Enter/exit fullscreen mode |
+| Toggle Fullscreen | F11 / ` | Enter/exit fullscreen mode |
 | Return to Menu | M | Return to main menu (when paused) |
 | Restart | R | Restart game (game over/victory) |
 
@@ -166,7 +166,7 @@ Each character has a unique special ability activated with E or Q:
 For Chromebook users:
 - All controls work with standard keyboard
 - No external mouse required (use touchpad)
-- F11 may be mapped to browser fullscreen - try F key instead
+- F11 may be mapped to browser fullscreen - try ` (backtick/tilde) key instead
 - Some keyboard shortcuts may conflict with ChromeOS - use alternatives
 
 ## Accessibility Options

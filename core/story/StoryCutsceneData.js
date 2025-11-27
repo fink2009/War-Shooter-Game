@@ -14,20 +14,21 @@ const StoryCutsceneData = {
         time: 0,
         duration: 4000,
         camera: {
-          type: 'static',
-          x: 0,
-          y: 0,
-          zoom: 1.0
+          type: 'focus',
+          target: 'player',
+          zoom: 1.1,
+          offsetY: -20,
+          easing: 'ease-out'
         }
       },
       {
         time: 4000,
         duration: 5000,
         camera: {
-          type: 'pan',
-          startX: 200,
-          endX: 600,
+          type: 'focus',
+          target: 'player',
           zoom: 1.2,
+          offsetY: -30,
           easing: 'ease-in-out'
         }
       },

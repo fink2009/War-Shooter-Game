@@ -586,7 +586,7 @@ const GameConfig = {
   // Fullscreen settings
   FULLSCREEN: {
     KEYBOARD_SHORTCUT: 'F11',
-    ALTERNATE_SHORTCUT: 'F',
+    ALTERNATE_SHORTCUT: '`',
     MAINTAIN_ASPECT_RATIO: true
   }
 };

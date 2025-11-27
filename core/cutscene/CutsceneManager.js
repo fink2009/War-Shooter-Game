@@ -135,14 +135,19 @@ class CutsceneManager {
     this.subtitleRenderer.clear();
     this.camera.reset();
     
-    // Callback
-    if (this.onSkip) {
-      this.onSkip();
-    }
-    
-    // Reset state
+    // Reset cutscene data BEFORE callback to allow chaining cutscenes
     this.currentCutscene = null;
     this.state = 'idle';
+    
+    // Store callback reference before clearing
+    const callback = this.onSkip;
+    this.onComplete = null;
+    this.onSkip = null;
+    
+    // Callback (may start a new cutscene)
+    if (callback) {
+      callback();
+    }
   }
 
   /**
@@ -368,13 +373,19 @@ class CutsceneManager {
     this.subtitleRenderer.clear();
     this.camera.reset();
     
-    // Callback
-    if (this.onComplete) {
-      this.onComplete();
-    }
-    
-    // Reset
+    // Reset cutscene data BEFORE callback to allow chaining cutscenes
+    // (callback may load a new cutscene, so we must reset first)
     this.currentCutscene = null;
+    
+    // Store callback reference before clearing
+    const callback = this.onComplete;
+    this.onComplete = null;
+    this.onSkip = null;
+    
+    // Callback (may start a new cutscene)
+    if (callback) {
+      callback();
+    }
   }
 
   /**
