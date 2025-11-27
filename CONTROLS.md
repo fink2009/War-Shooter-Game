@@ -32,6 +32,14 @@ Complete control reference for War Shooter.
 | Open Inventory | I | Open weapon inventory |
 | Switch Inventory Page | ] / Page Down | Toggle between ranged and melee |
 
+### Phase 3 Controls
+| Action | Key | Description |
+|--------|-----|-------------|
+| Toggle Flashlight | F | Turn flashlight on/off (night only) |
+| Enter/Exit Vehicle | E | Mount or dismount vehicles |
+| Mount/Dismount Weapon | E | Use stationary mounted weapons |
+| Vehicle Fire | Left Click | Fire vehicle weapons when mounted |
+
 ### System Controls
 | Action | Key | Description |
 |--------|-----|-------------|

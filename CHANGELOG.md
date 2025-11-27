@@ -5,6 +5,60 @@ All notable changes to War Shooter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2024 (Phase 3 Expansion)
+
+### Added
+- **Weather System**: Dynamic weather effects
+  - 5 weather types: Clear, Rain, Fog, Snow, Sandstorm
+  - Rain: 500 particles, 80% visibility, slippery movement, puddles
+  - Fog: 50% visibility, +70% stealth bonus, drifting clouds
+  - Snow: 70% visibility, -15% speed, footprints, cold damage
+  - Sandstorm: 40% visibility, -20% speed, continuous damage, screen shake
+  - Smooth weather transitions with configurable duration
+  - Particle rendering for rain, snow, and sandstorm
+  
+- **Time of Day System**: Day/night cycle
+  - 3 phases: Day (100% brightness), Dusk (70% brightness), Night (40% brightness)
+  - Dusk features orange tint with 60-second transition
+  - Night reduces enemy vision by 50% and adds stealth bonus
+  - Smooth brightness and tint transitions between phases
+  
+- **Flashlight**: Night vision tool
+  - Toggle with F key
+  - 200px cone range, 45° cone angle
+  - 30-second battery with recharge when off
+  - Visual cone rendering with gradient lighting
+  
+- **Vehicles**: Drivable combat vehicles
+  - **Tank**: 500 HP, 75% armor, cannon (100 dmg) + MG (15 dmg), crush damage (200)
+  - **Jeep**: 200 HP, 25% armor, fast movement, mounted gun (20 dmg), 2 seats
+  - Enter/exit with E key
+  - Fuel system with consumption per second
+  - Explosive destruction with damage radius
+  - 16-bit pixel art rendering with animations
+  
+- **Mounted Weapons**: Stationary weapons
+  - **HMG**: 25 damage, 0.1s fire rate, 500px range, 360° rotation, overheat system, shield
+  - **Sniper**: 100 damage, 2s fire rate, 800px range, 180° arc, zoom capability
+  - **Rocket**: 150 explosion damage, 4s fire rate, 600px range, 10 ammo, 270° rotation
+  - Mount with E key, vulnerable from behind (120° arc)
+  - Heat indicator for HMG, ammo counter for rocket
+  
+- **New Power-Ups**: 5 new power-up types
+  - **Time Slow**: 5s duration, enemies move at 70% speed (purple)
+  - **Double Jump**: 15s duration, mid-air jump ability (light blue)
+  - **Grappling Hook**: 20s/10 uses, 300px range (brown)
+  - **Ghost Mode**: 4s duration, pass through enemies/bullets (white)
+  - **Magnet**: 10s duration, 200px auto-collect, 1.5x coin multiplier (pink)
+  - Unique 16-bit icons for each power-up
+
+### Changed
+- Updated GameEngine with Phase 3 system integration
+- Extended config.js with WEATHER, TIME_OF_DAY, FLASHLIGHT, VEHICLES, MOUNTED_WEAPONS, POWERUPS sections
+- Added vehicle and mounted weapon rendering in game loop
+- Weather effects render as overlay after world rendering
+- Time of day overlay renders after camera reset for full-screen effect
+
 ## [1.2.0] - 2024 (Phase 2 Expansion)
 
 ### Added

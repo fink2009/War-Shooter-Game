@@ -91,6 +91,32 @@ class Pickup extends Entity {
         this.duration = 7000;
         this.shieldHealth = 50;
         break;
+      // Phase 3: New Power-Ups
+      case 'powerup_time_slow':
+        this.color = '#9933ff';
+        this.duration = 5000;
+        this.slowdown = 0.7;
+        break;
+      case 'powerup_double_jump':
+        this.color = '#66ccff';
+        this.duration = 15000;
+        break;
+      case 'powerup_grappling_hook':
+        this.color = '#996633';
+        this.duration = 20000;
+        this.uses = 10;
+        this.grappleRange = 300;
+        break;
+      case 'powerup_ghost_mode':
+        this.color = '#ffffff';
+        this.duration = 4000;
+        break;
+      case 'powerup_magnet':
+        this.color = '#ff3366';
+        this.duration = 10000;
+        this.magnetRange = 200;
+        this.coinMultiplier = 1.5;
+        break;
     }
   }
 
@@ -206,6 +232,68 @@ class Pickup extends Entity {
             player.hasShield = false;
             player.shieldHealth = 0;
             player.shieldEndTime = null;
+          }
+        }, this.duration);
+        break;
+      // Phase 3: New Power-Up Applications
+      case 'powerup_time_slow':
+        player.hasTimeSlow = true;
+        player.timeSlowAmount = this.slowdown;
+        player.timeSlowEndTime = performance.now() + this.duration;
+        setTimeout(() => {
+          if (player.active) {
+            player.hasTimeSlow = false;
+            player.timeSlowAmount = 1.0;
+            player.timeSlowEndTime = null;
+          }
+        }, this.duration);
+        break;
+      case 'powerup_double_jump':
+        player.hasDoubleJump = true;
+        player.doubleJumpAvailable = true;
+        player.doubleJumpEndTime = performance.now() + this.duration;
+        setTimeout(() => {
+          if (player.active) {
+            player.hasDoubleJump = false;
+            player.doubleJumpAvailable = false;
+            player.doubleJumpEndTime = null;
+          }
+        }, this.duration);
+        break;
+      case 'powerup_grappling_hook':
+        player.hasGrapplingHook = true;
+        player.grapplingHookUses = this.uses;
+        player.grapplingHookRange = this.grappleRange;
+        player.grapplingHookEndTime = performance.now() + this.duration;
+        setTimeout(() => {
+          if (player.active) {
+            player.hasGrapplingHook = false;
+            player.grapplingHookUses = 0;
+            player.grapplingHookEndTime = null;
+          }
+        }, this.duration);
+        break;
+      case 'powerup_ghost_mode':
+        player.hasGhostMode = true;
+        player.ghostModeEndTime = performance.now() + this.duration;
+        setTimeout(() => {
+          if (player.active) {
+            player.hasGhostMode = false;
+            player.ghostModeEndTime = null;
+          }
+        }, this.duration);
+        break;
+      case 'powerup_magnet':
+        player.hasMagnet = true;
+        player.magnetRange = this.magnetRange;
+        player.magnetCoinMultiplier = this.coinMultiplier;
+        player.magnetEndTime = performance.now() + this.duration;
+        setTimeout(() => {
+          if (player.active) {
+            player.hasMagnet = false;
+            player.magnetRange = 0;
+            player.magnetCoinMultiplier = 1.0;
+            player.magnetEndTime = null;
           }
         }, this.duration);
         break;
@@ -362,16 +450,53 @@ class Pickup extends Entity {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
     } else if (this.pickupType.startsWith('powerup')) {
-      // Draw star/power icon
+      // Draw power-up specific icons
       ctx.fillStyle = '#ffffff';
       const cx = this.x + this.width / 2;
       const cy = this.y + yOffset + this.height / 2;
-      ctx.fillRect(cx - 1, cy - 4, 2, 8);
-      ctx.fillRect(cx - 4, cy - 1, 8, 2);
-      ctx.fillRect(cx - 3, cy - 3, 2, 2);
-      ctx.fillRect(cx + 1, cy - 3, 2, 2);
-      ctx.fillRect(cx - 3, cy + 1, 2, 2);
-      ctx.fillRect(cx + 1, cy + 1, 2, 2);
+      
+      if (this.pickupType === 'powerup_time_slow') {
+        // Clock icon for time slow
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillRect(cx - 1, cy - 4, 2, 4);
+        ctx.fillRect(cx, cy - 1, 4, 2);
+      } else if (this.pickupType === 'powerup_double_jump') {
+        // Double arrow up icon
+        ctx.fillRect(cx - 1, cy - 3, 2, 6);
+        ctx.fillRect(cx - 3, cy - 1, 2, 2);
+        ctx.fillRect(cx + 1, cy - 1, 2, 2);
+        ctx.fillRect(cx - 3, cy - 5, 2, 2);
+        ctx.fillRect(cx + 1, cy - 5, 2, 2);
+      } else if (this.pickupType === 'powerup_grappling_hook') {
+        // Hook icon
+        ctx.fillRect(cx - 4, cy - 4, 2, 8);
+        ctx.fillRect(cx - 2, cy + 2, 4, 2);
+        ctx.fillRect(cx + 2, cy - 2, 2, 6);
+      } else if (this.pickupType === 'powerup_ghost_mode') {
+        // Ghost icon (wavy shape)
+        ctx.fillRect(cx - 4, cy - 4, 8, 6);
+        ctx.fillRect(cx - 4, cy + 2, 2, 2);
+        ctx.fillRect(cx, cy + 2, 2, 2);
+        ctx.fillRect(cx + 2, cy + 2, 2, 2);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(cx - 2, cy - 2, 2, 2);
+        ctx.fillRect(cx + 1, cy - 2, 2, 2);
+      } else if (this.pickupType === 'powerup_magnet') {
+        // Magnet icon (U-shape)
+        ctx.fillRect(cx - 4, cy - 4, 2, 8);
+        ctx.fillRect(cx + 2, cy - 4, 2, 8);
+        ctx.fillRect(cx - 4, cy + 2, 8, 2);
+      } else {
+        // Default star/power icon
+        ctx.fillRect(cx - 1, cy - 4, 2, 8);
+        ctx.fillRect(cx - 4, cy - 1, 8, 2);
+        ctx.fillRect(cx - 3, cy - 3, 2, 2);
+        ctx.fillRect(cx + 1, cy - 3, 2, 2);
+        ctx.fillRect(cx - 3, cy + 1, 2, 2);
+        ctx.fillRect(cx + 1, cy + 1, 2, 2);
+      }
     } else {
       ctx.fillText(symbol, this.x + this.width / 2, this.y + yOffset + this.height / 2);
     }
