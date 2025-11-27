@@ -126,6 +126,7 @@ class GameEngine {
     this.devToolPassword = 'QUICKTEST'; // Password to unlock dev tools
     this.devToolUnlocked = false; // Whether dev tools are unlocked
     this.devToolPasswordInput = ''; // Current password input
+    this.devInvincibilityEnabled = false; // Dev tool: permanent invincibility
     
     this.init();
   }
@@ -1915,6 +1916,11 @@ class GameEngine {
         this.devToolInstantKillAll();
       }
       
+      // Dev Tool: Toggle Invincibility (G key for God mode)
+      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G'))) {
+        this.devToolToggleInvincibility();
+      }
+      
       // Toggle inventory (I key)
       if (this.inputManager.wasKeyPressed('i') || this.inputManager.wasKeyPressed('I')) {
         this.showInventory = !this.showInventory;
@@ -2390,6 +2396,32 @@ class GameEngine {
     
     // Screen shake for dramatic effect
     this.camera.shake(10, 500);
+  }
+
+  // Dev tool: Toggle invincibility (God mode)
+  devToolToggleInvincibility() {
+    if (!this.devToolUnlocked) return;
+    
+    this.devInvincibilityEnabled = !this.devInvincibilityEnabled;
+    
+    // Play sound effect
+    if (this.devInvincibilityEnabled) {
+      this.audioManager.playSound('pickup_powerup', 0.7);
+    } else {
+      this.audioManager.playSound('menu_navigate', 0.5);
+    }
+    
+    // Show notification
+    if (this.particleSystem && this.player && this.player.active) {
+      const message = this.devInvincibilityEnabled ? 'DEV: GOD MODE ENABLED' : 'DEV: GOD MODE DISABLED';
+      const color = this.devInvincibilityEnabled ? '#00ffff' : '#ff6600';
+      this.particleSystem.createTextPopup(
+        this.player.x + this.player.width / 2,
+        this.player.y - 50,
+        message,
+        color
+      );
+    }
   }
 
   handleCollisions() {

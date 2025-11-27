@@ -197,7 +197,25 @@ class GameUI {
       if (window.game.devToolUnlocked) {
         ctx.fillStyle = '#ffff00';
         ctx.font = 'bold 12px monospace';
-        ctx.fillText('[DEV MODE] Press K to kill all', 10, this.height - 2);
+        let devHint = '[DEV MODE] K: Kill all';
+        if (window.game.devInvincibilityEnabled) {
+          devHint += ' | G: God Mode [ON]';
+        } else {
+          devHint += ' | G: God Mode';
+        }
+        ctx.fillText(devHint, 10, this.height - 2);
+        
+        // Show prominent God Mode indicator when active
+        if (window.game.devInvincibilityEnabled) {
+          ctx.fillStyle = '#00ffff';
+          ctx.font = 'bold 14px monospace';
+          const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+          ctx.globalAlpha = pulse;
+          ctx.textAlign = 'center';
+          ctx.fillText('⚡ GOD MODE ACTIVE ⚡', this.width / 2, 65);
+          ctx.textAlign = 'left';
+          ctx.globalAlpha = 1;
+        }
       }
     }
     
@@ -801,18 +819,28 @@ class GameUI {
           toolsY += 25;
           ctx.fillStyle = '#00ff00';
           ctx.fillText('  Instantly kills all enemies (including bosses)', toolsX + 20, toolsY);
-          toolsY += 30;
+          toolsY += 35;
+          
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText('• Press [G] during gameplay:', toolsX, toolsY);
+          toolsY += 25;
+          const invincibilityStatus = window.game.devInvincibilityEnabled ? 'ON' : 'OFF';
+          const invincibilityColor = window.game.devInvincibilityEnabled ? '#00ffff' : '#00ff00';
+          ctx.fillStyle = invincibilityColor;
+          ctx.fillText(`  God Mode - Player invincibility [${invincibilityStatus}]`, toolsX + 20, toolsY);
+          toolsY += 35;
           
           ctx.fillStyle = '#888';
           ctx.font = '12px monospace';
-          ctx.fillText('This tool is designed for quickly testing later levels', toolsX, toolsY);
+          ctx.fillText('These tools are designed for quickly testing the game', toolsX, toolsY);
           toolsY += 20;
-          ctx.fillText('without having to fight through earlier stages.', toolsX, toolsY);
+          ctx.fillText('without having to fight through challenging stages.', toolsX, toolsY);
+          toolsY += 30;
           
           ctx.textAlign = 'center';
           ctx.fillStyle = '#ffaa00';
           ctx.font = '14px monospace';
-          ctx.fillText('Use responsibly! This is for testing only.', this.width / 2, 420);
+          ctx.fillText('Use responsibly! This is for testing only.', this.width / 2, toolsY);
         }
       }
       

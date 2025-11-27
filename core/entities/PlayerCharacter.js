@@ -359,6 +359,11 @@ class PlayerCharacter extends Entity {
   }
 
   takeDamage(amount, currentTime = 0) {
+    // Check for dev tool invincibility (God mode)
+    if (window.game && window.game.devInvincibilityEnabled) {
+      return false;
+    }
+    
     if (!this.invulnerable) {
       // Check for blocking
       if (this.isBlocking && this.blockStamina > 0) {
