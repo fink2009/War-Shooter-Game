@@ -160,8 +160,190 @@ class EnemyUnit extends Entity {
         this.shieldMaxHealth = 100;
         this.shieldActive = true;
         break;
+        
+      // Phase 1 new enemy types
+      case 'medic':
+        // Medic stats from config
+        const medicConfig = typeof GameConfig !== 'undefined' && GameConfig.ENEMIES ? 
+          GameConfig.ENEMIES.MEDIC : {};
+        this.maxHealth = medicConfig.health || 80;
+        this.speed = 1.8;
+        this.damage = 8;
+        this.weapon = new Pistol();
+        this.aggroRange = 350;
+        this.attackRange = 250;
+        this.shootCooldown = 1200;
+        this.color = '#44aa44';
+        this.width = 28;
+        this.height = 48;
+        this.isMedic = true;
+        this.healAmount = medicConfig.healAmount || 15;
+        this.healRate = (medicConfig.healRate || 3) * 1000; // Convert to ms
+        this.healRange = medicConfig.healRange || 200;
+        this.lastHealTime = 0;
+        this.currentHealTarget = null;
+        break;
+        
+      case 'engineer':
+        // Engineer stats from config
+        const engineerConfig = typeof GameConfig !== 'undefined' && GameConfig.ENEMIES ? 
+          GameConfig.ENEMIES.ENGINEER : {};
+        this.maxHealth = engineerConfig.health || 100;
+        this.speed = 1.5;
+        this.damage = 12;
+        this.weapon = new Pistol();
+        this.aggroRange = 400;
+        this.attackRange = 300;
+        this.shootCooldown = 1000;
+        this.color = '#4477aa';
+        this.width = 30;
+        this.height = 50;
+        this.isEngineer = true;
+        this.turretHealth = engineerConfig.turretHealth || 30;
+        this.turretDamage = engineerConfig.turretDamage || 10;
+        this.maxTurrets = engineerConfig.maxTurrets || 2;
+        this.deployCooldown = (engineerConfig.deployCooldown || 8) * 1000;
+        this.lastDeployTime = 0;
+        this.deployedTurrets = [];
+        break;
+        
+      case 'flamethrower':
+        // Flamethrower stats from config
+        const flameConfig = typeof GameConfig !== 'undefined' && GameConfig.ENEMIES ? 
+          GameConfig.ENEMIES.FLAMETHROWER : {};
+        this.maxHealth = flameConfig.health || 150;
+        this.speed = 1.2;
+        this.damage = flameConfig.damage || 12;
+        this.weapon = null; // Uses flamethrower attack
+        this.aggroRange = 250;
+        this.attackRange = flameConfig.range || 150;
+        this.flameArc = (flameConfig.arc || 90) * Math.PI / 180; // Convert to radians
+        this.flameDuration = (flameConfig.duration || 5) * 1000;
+        this.flameReloadTime = 3000;
+        this.shootCooldown = 100; // Rapid fire
+        this.color = '#dd5500';
+        this.width = 34;
+        this.height = 54;
+        this.isFlamethrower = true;
+        this.isFiring = false;
+        this.firingTime = 0;
+        this.reloadingTime = 0;
+        this.isReloading = false;
+        this.flameParticles = [];
+        this.immuneToFire = true;
+        break;
     }
     this.health = this.maxHealth;
+  }
+
+  /**
+   * Make this enemy an elite variant
+   * Elite enemies have enhanced stats and visual effects
+   */
+  makeElite() {
+    // Don't make bosses or drones elite
+    if (this.isBoss || this.enemyType === 'drone') return;
+    
+    const config = typeof GameConfig !== 'undefined' && GameConfig.ELITE ? 
+      GameConfig.ELITE : {};
+    
+    this.isElite = true;
+    
+    // Apply stat multipliers
+    const healthMult = config.healthMultiplier || 2;
+    const damageMult = config.damageMultiplier || 1.5;
+    const speedMult = config.speedMultiplier || 1.2;
+    
+    this.maxHealth = Math.floor(this.maxHealth * healthMult);
+    this.health = this.maxHealth;
+    this.damage = Math.floor(this.damage * damageMult);
+    this.speed *= speedMult;
+    
+    // Elite score value is doubled
+    this.scoreMultiplier = config.scoreMultiplier || 2;
+    
+    // Elite drops guaranteed power-up
+    this.guaranteedDrop = true;
+  }
+
+  /**
+   * Make this enemy a mini-boss
+   * Mini-bosses have significantly enhanced stats and special abilities
+   */
+  makeMiniBoss() {
+    // Don't make actual bosses into mini-bosses
+    if (this.isBoss) return;
+    
+    const config = typeof GameConfig !== 'undefined' && GameConfig.MINIBOSS ? 
+      GameConfig.MINIBOSS : {};
+    
+    this.isMiniBoss = true;
+    this.isElite = true; // Mini-bosses are also elite
+    
+    // Apply stat multipliers (more powerful than elite)
+    const healthMult = config.healthMultiplier || 6;
+    const damageMult = config.damageMultiplier || 4.5;
+    
+    this.maxHealth = Math.floor(this.maxHealth * healthMult);
+    this.health = this.maxHealth;
+    this.damage = Math.floor(this.damage * damageMult);
+    this.speed *= 1.3;
+    
+    // Make them larger
+    this.width = Math.floor(this.width * 1.3);
+    this.height = Math.floor(this.height * 1.3);
+    
+    // Mini-boss score value
+    this.scoreMultiplier = 5;
+    this.guaranteedDrop = true;
+    
+    // Add special abilities based on enemy type
+    this.addMiniBossAbilities();
+  }
+
+  /**
+   * Add special abilities for mini-boss variant
+   */
+  addMiniBossAbilities() {
+    switch (this.enemyType) {
+      case 'heavy':
+        // Shield ability, charge attack
+        this.hasShieldAbility = true;
+        this.shieldCooldown = 10000;
+        this.lastShieldTime = 0;
+        this.hasChargeAttack = true;
+        this.chargeCooldown = 8000;
+        this.lastChargeTime = 0;
+        break;
+        
+      case 'berserker':
+        // Enrage mode, leap attack
+        this.hasEnrage = true;
+        this.enrageCooldown = 12000;
+        this.lastEnrageTime = 0;
+        this.hasLeapAttack = true;
+        this.leapCooldown = 6000;
+        this.lastLeapTime = 0;
+        break;
+        
+      case 'sniper':
+        // Explosive shots, repositioning
+        this.hasExplosiveShots = true;
+        this.explosiveRadius = 60;
+        this.hasReposition = true;
+        this.repositionCooldown = 5000;
+        this.lastRepositionTime = 0;
+        break;
+        
+      case 'bomber':
+        // Drops mine field, bigger suicide explosion
+        this.hasMineField = true;
+        this.mineCooldown = 7000;
+        this.lastMineTime = 0;
+        this.explosionRadius *= 2;
+        this.damage *= 1.5;
+        break;
+    }
   }
 
   applyDifficulty(multiplier) {
@@ -235,6 +417,19 @@ class EnemyUnit extends Entity {
     
     if (this.enemyType === 'riot') {
       return this.updateRiotAI(player, distToPlayer, currentTime, deltaTime);
+    }
+    
+    // Phase 1 new enemy types
+    if (this.enemyType === 'medic') {
+      return this.updateMedicAI(player, distToPlayer, currentTime, deltaTime);
+    }
+    
+    if (this.enemyType === 'engineer') {
+      return this.updateEngineerAI(player, distToPlayer, currentTime, deltaTime);
+    }
+    
+    if (this.enemyType === 'flamethrower') {
+      return this.updateFlamethrowerAI(player, distToPlayer, currentTime, deltaTime);
     }
     
     // Bosses have hyper-aggressive AI - always chase and attack regardless of distance
@@ -524,6 +719,315 @@ class EnemyUnit extends Entity {
   }
 
   /**
+   * Medic AI - Heals nearby allies and stays back from combat
+   */
+  updateMedicAI(player, distToPlayer, currentTime, deltaTime) {
+    // Medics prioritize healing nearby allies
+    this.updateHealingBehavior(currentTime);
+    
+    // Face the player
+    this.facing = player.x > this.x ? 1 : -1;
+    
+    // Stay back from combat
+    if (distToPlayer < this.aggroRange) {
+      if (distToPlayer < 200) {
+        // Too close, retreat
+        this.dx = -this.facing * this.speed;
+      } else if (distToPlayer > this.attackRange) {
+        // Close in slowly
+        this.dx = this.facing * this.speed * 0.5;
+      } else {
+        // In optimal range, strafe
+        this.dx = Math.sin(currentTime / 800) * this.speed * 0.4;
+        
+        // Shoot occasionally
+        if (currentTime - this.lastShotTime > this.shootCooldown) {
+          this.lastShotTime = currentTime;
+          return this.shoot(player.x + player.width / 2, player.y + player.height / 2, currentTime);
+        }
+      }
+    } else {
+      this.patrol();
+    }
+    
+    return null;
+  }
+
+  /**
+   * Update healing behavior for medic
+   * @param {number} currentTime - Current game time
+   */
+  updateHealingBehavior(currentTime) {
+    // Check if it's time to heal
+    if (currentTime - this.lastHealTime < this.healRate) return;
+    
+    // Find nearby allies that need healing
+    if (window.game && window.game.enemies) {
+      let bestTarget = null;
+      let lowestHealthPercent = 1;
+      
+      window.game.enemies.forEach(ally => {
+        if (ally === this || !ally.active || ally.health <= 0) return;
+        
+        const dist = this.distanceTo(ally);
+        if (dist <= this.healRange) {
+          const healthPercent = ally.health / ally.maxHealth;
+          if (healthPercent < lowestHealthPercent && healthPercent < 0.9) {
+            lowestHealthPercent = healthPercent;
+            bestTarget = ally;
+          }
+        }
+      });
+      
+      if (bestTarget) {
+        this.currentHealTarget = bestTarget;
+        this.lastHealTime = currentTime;
+        
+        // Heal the target
+        bestTarget.health = Math.min(bestTarget.maxHealth, bestTarget.health + this.healAmount);
+        
+        // Create heal visual effect
+        if (window.game && window.game.particleSystem) {
+          window.game.particleSystem.createTextPopup(
+            bestTarget.x + bestTarget.width / 2,
+            bestTarget.y - 10,
+            `+${this.healAmount}`,
+            '#44ff44'
+          );
+          
+          // Create heal beam particles
+          const startX = this.x + this.width / 2;
+          const startY = this.y + this.height / 2;
+          const endX = bestTarget.x + bestTarget.width / 2;
+          const endY = bestTarget.y + bestTarget.height / 2;
+          
+          for (let i = 0; i < 5; i++) {
+            const t = i / 4;
+            const px = startX + (endX - startX) * t;
+            const py = startY + (endY - startY) * t;
+            window.game.particleSystem.createExplosion(px, py, 3, '#44ff44');
+          }
+        }
+        
+        // Play heal sound
+        if (window.game && window.game.audioManager) {
+          window.game.audioManager.playSound('pickup_health', 0.4);
+        }
+      } else {
+        this.currentHealTarget = null;
+      }
+    }
+  }
+
+  /**
+   * Engineer AI - Deploys turrets and runs away from player
+   */
+  updateEngineerAI(player, distToPlayer, currentTime, deltaTime) {
+    // Clean up destroyed turrets
+    if (this.deployedTurrets) {
+      this.deployedTurrets = this.deployedTurrets.filter(t => t.active);
+    }
+    
+    // Face player
+    this.facing = player.x > this.x ? 1 : -1;
+    
+    // Deploy turrets when in range
+    if (distToPlayer < this.aggroRange) {
+      // Try to deploy turret
+      if (currentTime - this.lastDeployTime >= this.deployCooldown) {
+        if (this.deployedTurrets.length < this.maxTurrets) {
+          this.deployTurret(currentTime);
+        }
+      }
+      
+      // Run away if player is close
+      if (distToPlayer < 200) {
+        this.dx = -this.facing * this.speed * 1.5;
+      } else if (distToPlayer < this.attackRange) {
+        // Strafe and shoot
+        this.dx = Math.sin(currentTime / 600) * this.speed * 0.5;
+        
+        if (currentTime - this.lastShotTime > this.shootCooldown) {
+          this.lastShotTime = currentTime;
+          return this.shoot(player.x + player.width / 2, player.y + player.height / 2, currentTime);
+        }
+      } else {
+        // Approach cautiously
+        this.dx = this.facing * this.speed * 0.4;
+      }
+    } else {
+      this.patrol();
+    }
+    
+    return null;
+  }
+
+  /**
+   * Deploy a mini-turret
+   * @param {number} currentTime - Current game time
+   */
+  deployTurret(currentTime) {
+    if (!window.game) return;
+    
+    this.lastDeployTime = currentTime;
+    
+    // Deploy turret at random position nearby
+    const offsetX = (Math.random() - 0.5) * 150;
+    const turretX = this.x + offsetX;
+    const turretY = window.game.groundLevel - 30;
+    
+    // Create mini-turret (using hazard system if available)
+    if (window.game.hazardManager) {
+      const turret = new Turret(turretX, turretY);
+      turret.maxHealth = this.turretHealth;
+      turret.health = this.turretHealth;
+      turret.damage = this.turretDamage;
+      turret.detectionRange = 150;
+      turret.fireRate = 1000;
+      turret.isEngineerTurret = true;
+      
+      window.game.hazardManager.addHazard(turret);
+      this.deployedTurrets.push(turret);
+      
+      // Play deploy sound
+      if (window.game.audioManager) {
+        window.game.audioManager.playSound('projectile_impact', 0.5);
+      }
+      
+      // Visual effect
+      if (window.game.particleSystem) {
+        window.game.particleSystem.createExplosion(turretX, turretY, 10, '#4477aa');
+      }
+    }
+  }
+
+  /**
+   * Flamethrower AI - Approaches and fires continuous flame cone
+   */
+  updateFlamethrowerAI(player, distToPlayer, currentTime, deltaTime) {
+    // Face player
+    this.facing = player.x > this.x ? 1 : -1;
+    
+    // Handle reload
+    if (this.isReloading) {
+      this.reloadingTime += deltaTime;
+      this.isFiring = false;
+      if (this.reloadingTime >= this.flameReloadTime) {
+        this.isReloading = false;
+        this.reloadingTime = 0;
+        this.firingTime = 0;
+      }
+      this.dx = 0;
+      return null;
+    }
+    
+    if (distToPlayer < this.aggroRange) {
+      // Approach player to get in range
+      if (distToPlayer > this.attackRange * 0.8) {
+        this.dx = this.facing * this.speed;
+        this.isFiring = false;
+      } else {
+        // In range - fire!
+        this.dx = this.facing * this.speed * 0.3; // Slow movement while firing
+        this.isFiring = true;
+        
+        // Track firing time
+        this.firingTime += deltaTime;
+        if (this.firingTime >= this.flameDuration) {
+          // Need to reload
+          this.isReloading = true;
+          this.isFiring = false;
+        }
+        
+        // Apply flame damage
+        if (currentTime - this.lastShotTime > this.shootCooldown) {
+          this.lastShotTime = currentTime;
+          this.applyFlameDamage(player, currentTime);
+        }
+        
+        // Update flame particles
+        this.updateFlameParticles(deltaTime);
+      }
+    } else {
+      this.isFiring = false;
+      this.patrol();
+    }
+    
+    return null;
+  }
+
+  /**
+   * Apply flamethrower damage in cone area
+   * @param {PlayerCharacter} player - The player
+   * @param {number} currentTime - Current game time
+   */
+  applyFlameDamage(player, currentTime) {
+    if (!player || !player.active) return;
+    
+    const myX = this.x + this.width / 2;
+    const myY = this.y + this.height / 2;
+    const playerX = player.x + player.width / 2;
+    const playerY = player.y + player.height / 2;
+    
+    // Check if player is in cone
+    const dist = this.distanceTo(player);
+    if (dist > this.attackRange) return;
+    
+    // Check angle
+    const dx = playerX - myX;
+    const dy = playerY - myY;
+    const angle = Math.atan2(dy, dx);
+    const facingAngle = this.facing > 0 ? 0 : Math.PI;
+    let angleDiff = Math.abs(angle - facingAngle);
+    if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+    
+    if (angleDiff <= this.flameArc / 2) {
+      // Player is in flame cone
+      if (!player.invulnerable) {
+        player.takeDamage(this.damage, currentTime);
+        
+        // Fire damage visual
+        if (window.game && window.game.particleSystem) {
+          window.game.particleSystem.createExplosion(
+            playerX, playerY, 5, '#ff4400'
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Update flame particle effects
+   * @param {number} deltaTime - Time since last update
+   */
+  updateFlameParticles(deltaTime) {
+    if (!this.isFiring || !window.game) return;
+    
+    const startX = this.x + this.width / 2 + (this.facing * 15);
+    const startY = this.y + this.height / 2;
+    
+    // Create flame particles
+    if (Math.random() < 0.8) {
+      const angle = (this.facing > 0 ? 0 : Math.PI) + (Math.random() - 0.5) * this.flameArc;
+      const speed = 5 + Math.random() * 5;
+      const endX = startX + Math.cos(angle) * this.attackRange * 0.8;
+      const endY = startY + Math.sin(angle) * this.attackRange * 0.3;
+      
+      // Create particle trail
+      if (window.game.particleSystem) {
+        for (let i = 0; i < 3; i++) {
+          const t = i / 3;
+          const px = startX + (endX - startX) * t + (Math.random() - 0.5) * 10;
+          const py = startY + (endY - startY) * t + (Math.random() - 0.5) * 10;
+          const colors = ['#ff4400', '#ff6600', '#ffaa00', '#ffff00'];
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          window.game.particleSystem.createExplosion(px, py, 2, color);
+        }
+      }
+    }
+  }
+
+  /**
    * Bomber explosion - Deals damage to nearby entities
    */
   explode(currentTime) {
@@ -672,6 +1176,11 @@ class EnemyUnit extends Entity {
   }
 
   render(ctx) {
+    // Draw elite/mini-boss aura first (behind enemy)
+    if (this.isElite || this.isMiniBoss) {
+      this.drawEliteAura(ctx);
+    }
+    
     // Draw shadow (16-bit style)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.fillRect(this.x + 2, this.y + this.height, this.width - 4, 4);
@@ -752,6 +1261,31 @@ class EnemyUnit extends Entity {
         helmetLight = '#4a6688';
         armorColor = '#1a3355';
         break;
+      // Phase 1 new enemy type colors
+      case 'medic':
+        bodyColor = '#44aa44'; // Green
+        bodyLight = '#55bb55';
+        bodyDark = '#339933';
+        helmetColor = '#228822';
+        helmetLight = '#44aa44';
+        armorColor = '#116611';
+        break;
+      case 'engineer':
+        bodyColor = '#4477aa'; // Blue-gray
+        bodyLight = '#5588bb';
+        bodyDark = '#336699';
+        helmetColor = '#225588';
+        helmetLight = '#4477aa';
+        armorColor = '#114477';
+        break;
+      case 'flamethrower':
+        bodyColor = '#dd5500'; // Orange-red
+        bodyLight = '#ee6611';
+        bodyDark = '#bb4400';
+        helmetColor = '#993300';
+        helmetLight = '#dd5500';
+        armorColor = '#772200';
+        break;
       default:
         bodyColor = '#8b5a2a';
         bodyLight = '#9b6a3a';
@@ -759,6 +1293,21 @@ class EnemyUnit extends Entity {
         helmetColor = '#6b3a10';
         helmetLight = '#7b4a20';
         armorColor = '#5b2a00';
+    }
+    
+    // Elite/Mini-boss golden tint
+    if (this.isElite && !this.isMiniBoss) {
+      // Apply golden tint to colors
+      bodyColor = this.applyGoldenTint(bodyColor);
+      bodyLight = this.applyGoldenTint(bodyLight);
+      bodyDark = this.applyGoldenTint(bodyDark);
+    }
+    
+    // Mini-boss red/purple tint
+    if (this.isMiniBoss) {
+      bodyColor = this.applyMiniBossTint(bodyColor);
+      bodyLight = this.applyMiniBossTint(bodyLight);
+      bodyDark = this.applyMiniBossTint(bodyDark);
     }
     
     // Scale for boss - make them more imposing
@@ -1052,5 +1601,217 @@ class EnemyUnit extends Entity {
     ctx.fillStyle = '#ffff00';
     ctx.font = '8px monospace';
     ctx.fillText('DRN', this.x, this.y - 13);
+  }
+
+  /**
+   * Draw elite/mini-boss aura effect
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  drawEliteAura(ctx) {
+    const pulsePhase = Date.now() / 200;
+    const pulseSize = 3 + Math.sin(pulsePhase) * 2;
+    
+    if (this.isMiniBoss) {
+      // Mini-boss red/purple aura
+      ctx.globalAlpha = 0.3 + Math.sin(pulsePhase) * 0.1;
+      ctx.fillStyle = '#aa00aa';
+      ctx.fillRect(
+        this.x - pulseSize - 3,
+        this.y - pulseSize - 3,
+        this.width + pulseSize * 2 + 6,
+        this.height + pulseSize * 2 + 6
+      );
+      ctx.fillStyle = '#ff0066';
+      ctx.fillRect(
+        this.x - pulseSize,
+        this.y - pulseSize,
+        this.width + pulseSize * 2,
+        this.height + pulseSize * 2
+      );
+    } else if (this.isElite) {
+      // Elite golden aura
+      ctx.globalAlpha = 0.25 + Math.sin(pulsePhase) * 0.1;
+      ctx.fillStyle = '#ffdd00';
+      ctx.fillRect(
+        this.x - pulseSize,
+        this.y - pulseSize,
+        this.width + pulseSize * 2,
+        this.height + pulseSize * 2
+      );
+    }
+    ctx.globalAlpha = 1;
+    
+    // Draw crown icon for elite/mini-boss
+    this.drawEliteIndicator(ctx);
+  }
+
+  /**
+   * Draw elite crown indicator above enemy
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  drawEliteIndicator(ctx) {
+    const crownX = this.x + this.width / 2;
+    const crownY = this.y - 20;
+    
+    if (this.isMiniBoss) {
+      // Larger crown for mini-boss
+      ctx.fillStyle = '#ff00ff';
+      // Crown base
+      ctx.fillRect(crownX - 8, crownY + 4, 16, 4);
+      // Crown points
+      ctx.fillRect(crownX - 8, crownY, 4, 4);
+      ctx.fillRect(crownX - 2, crownY - 3, 4, 7);
+      ctx.fillRect(crownX + 4, crownY, 4, 4);
+      // Gem
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(crownX - 1, crownY - 2, 2, 2);
+    } else if (this.isElite) {
+      // Small crown for elite
+      ctx.fillStyle = '#ffdd00';
+      // Crown base
+      ctx.fillRect(crownX - 5, crownY + 3, 10, 3);
+      // Crown points
+      ctx.fillRect(crownX - 5, crownY, 3, 3);
+      ctx.fillRect(crownX - 1, crownY - 2, 2, 5);
+      ctx.fillRect(crownX + 2, crownY, 3, 3);
+    }
+  }
+
+  /**
+   * Apply golden tint to a color (for elite enemies)
+   * @param {string} color - Original color
+   * @returns {string} Tinted color
+   */
+  applyGoldenTint(color) {
+    // Parse the color
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    // Apply golden tint (increase red and green, decrease blue)
+    const newR = Math.min(255, Math.floor(r * 1.2 + 30));
+    const newG = Math.min(255, Math.floor(g * 1.1 + 20));
+    const newB = Math.max(0, Math.floor(b * 0.6));
+    
+    return '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0');
+  }
+
+  /**
+   * Apply red/purple tint to a color (for mini-bosses)
+   * @param {string} color - Original color
+   * @returns {string} Tinted color
+   */
+  applyMiniBossTint(color) {
+    // Parse the color
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    // Apply red/purple tint
+    const newR = Math.min(255, Math.floor(r * 1.3 + 40));
+    const newG = Math.max(0, Math.floor(g * 0.5));
+    const newB = Math.min(255, Math.floor(b * 0.8 + 30));
+    
+    return '#' + ((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0');
+  }
+
+  /**
+   * Render the medic enemy with green cross
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   * @param {string} bodyColor - Body color
+   * @param {string} bodyLight - Light shade
+   * @param {string} bodyDark - Dark shade
+   */
+  renderMedic(ctx, bodyColor, bodyLight, bodyDark) {
+    // Draw green cross symbol on chest
+    const crossX = this.x + this.width / 2;
+    const crossY = this.y + 25;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(crossX - 1, crossY - 4, 2, 8);
+    ctx.fillRect(crossX - 4, crossY - 1, 8, 2);
+    
+    // Draw heal beam if healing
+    if (this.currentHealTarget && this.currentHealTarget.active) {
+      ctx.strokeStyle = '#44ff44';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(this.x + this.width / 2, this.y + this.height / 2);
+      ctx.lineTo(
+        this.currentHealTarget.x + this.currentHealTarget.width / 2,
+        this.currentHealTarget.y + this.currentHealTarget.height / 2
+      );
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /**
+   * Render the engineer enemy with wrench
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  renderEngineer(ctx) {
+    // Draw wrench icon on belt
+    const wrenchX = this.x + this.width / 2 - 3;
+    const wrenchY = this.y + 38;
+    
+    ctx.fillStyle = '#888888';
+    ctx.fillRect(wrenchX, wrenchY, 6, 2);
+    ctx.fillRect(wrenchX - 1, wrenchY - 2, 2, 2);
+    ctx.fillRect(wrenchX + 5, wrenchY - 2, 2, 2);
+  }
+
+  /**
+   * Render the flamethrower enemy with flame effect
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  renderFlamethrower(ctx) {
+    // Draw fuel tank on back
+    const tankX = this.x + (this.facing > 0 ? 2 : this.width - 10);
+    const tankY = this.y + 20;
+    
+    ctx.fillStyle = '#663300';
+    ctx.fillRect(tankX, tankY, 8, 20);
+    ctx.fillStyle = '#884400';
+    ctx.fillRect(tankX + 1, tankY + 1, 6, 18);
+    
+    // Draw flamethrower nozzle
+    if (this.isFiring) {
+      const nozzleX = this.x + this.width / 2 + (this.facing * 20);
+      const nozzleY = this.y + this.height / 2;
+      
+      // Draw flame cone
+      ctx.globalAlpha = 0.7;
+      const gradient = ctx.createRadialGradient(
+        nozzleX, nozzleY, 5,
+        nozzleX + this.facing * 60, nozzleY, 80
+      );
+      gradient.addColorStop(0, '#ffff00');
+      gradient.addColorStop(0.3, '#ff6600');
+      gradient.addColorStop(0.7, '#ff3300');
+      gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(nozzleX, nozzleY - 10);
+      ctx.lineTo(nozzleX + this.facing * this.attackRange * 0.8, nozzleY - 40);
+      ctx.lineTo(nozzleX + this.facing * this.attackRange * 0.8, nozzleY + 40);
+      ctx.lineTo(nozzleX, nozzleY + 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw reload indicator
+    if (this.isReloading) {
+      const reloadProgress = this.reloadingTime / this.flameReloadTime;
+      ctx.fillStyle = '#333333';
+      ctx.fillRect(this.x, this.y - 18, this.width, 4);
+      ctx.fillStyle = '#ff6600';
+      ctx.fillRect(this.x, this.y - 18, this.width * reloadProgress, 4);
+    }
   }
 }

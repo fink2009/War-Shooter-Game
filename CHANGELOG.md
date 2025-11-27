@@ -5,6 +5,50 @@ All notable changes to War Shooter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2024 (Phase 1 Expansion)
+
+### Added
+- **Environmental Hazards System**: 6 new hazard types
+  - **Turrets**: Auto-targeting stationary weapons with 400px range, 50 HP, laser sight
+  - **Explosive Barrels**: 100px explosion radius, chain reaction, warning glow
+  - **Spike Traps**: Floor hazards with 2-second cycle, 30 damage, visual warning
+  - **Laser Grids**: Continuous beams with static/moving/pulsing patterns
+  - **Toxic Zones**: Poison areas with 5 DPS and 30% movement slow
+  - **Lava Zones**: High-damage fire areas with 40 DPS
+  
+- **Elite Enemy System**: Enhanced enemy variants
+  - 2x health, 1.5x damage, 1.2x movement speed
+  - Golden aura and crown indicator
+  - 10% spawn chance starting wave 3
+  - Guaranteed power-up drop on death
+  - 2x score value
+  
+- **Mini-Boss System**: Mid-level challenge encounters
+  - Spawn every 3 waves (starting wave 6)
+  - 6x health, 4.5x damage multipliers
+  - Red/purple color scheme with aura
+  - Special abilities based on enemy type
+  - Warning notification and dramatic spawn
+  
+- **New Enemy Types**: 3 new specialized enemies
+  - **Medic**: 80 HP, heals allies 15 HP every 3s within 200px, green cross symbol
+  - **Engineer**: 100 HP, deploys up to 2 mini-turrets (30 HP, 10 damage)
+  - **Flamethrower**: 150 HP, fire cone attack 150px range, 90° arc, immune to fire
+  
+- **Interactive Elements**: New level mechanics
+  - **Moving Platforms**: Horizontal/vertical/circular paths, carries entities
+  - **Destructible Cover**: Barriers with health that can be destroyed
+  - **Switches & Doors**: Toggle switches control door states
+  - **Jump Pads**: Launch entities 300px upward with 0.5s cooldown
+  
+- **HazardManager**: Centralized hazard coordination system
+- **Config Updates**: New HAZARDS, ELITE, MINIBOSS, and ENEMIES config sections
+
+### Changed
+- Enhanced enemy spawn system with new enemy types at higher waves
+- Updated rendering pipeline to include hazards and interactive elements
+- Improved collision detection for new element types
+
 ## [1.0.0] - 2024
 
 ### Added
