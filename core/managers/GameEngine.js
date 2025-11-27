@@ -481,6 +481,9 @@ class GameEngine {
    * @param {Function} onComplete - Callback when cutscene ends
    */
   playStoryCutscene(cutsceneId, onComplete) {
+    // Store previous state to restore if cutscene fails
+    const previousState = this.state;
+    
     // Get cutscene data from StoryCutsceneData
     if (typeof window.getStoryCutsceneById !== 'function') {
       console.warn('StoryCutsceneData not loaded');
@@ -501,16 +504,28 @@ class GameEngine {
     // Change game state to cutscene
     this.state = 'cutscene';
     
+    // Create wrapper callbacks that ensure state is properly managed after cutscene ends
+    const wrappedCallback = () => {
+      // After the callback executes, check if we're still in cutscene state
+      // but the cutscene manager is idle (meaning no new cutscene was started)
+      const stateBeforeCallback = this.state;
+      
+      if (onComplete) onComplete();
+      
+      // If the callback didn't start a new cutscene, ensure we exit cutscene state
+      if (this.state === 'cutscene' && !this.cutsceneManager.isActive()) {
+        // Reset to playing state as a safe default
+        // (callbacks should set specific states if needed)
+        this.state = 'playing';
+      }
+    };
+    
     // Start playing the cutscene
     this.cutsceneManager.play(
       // On complete callback
-      () => {
-        if (onComplete) onComplete();
-      },
+      wrappedCallback,
       // On skip callback
-      () => {
-        if (onComplete) onComplete();
-      }
+      wrappedCallback
     );
   }
   
@@ -1941,6 +1956,13 @@ class GameEngine {
     // Handle cutscene state
     if (this.state === 'cutscene') {
       this.cutsceneManager.update(deltaTime);
+      
+      // Safety check: if cutscene manager is idle but game state is still 'cutscene',
+      // it means a callback didn't properly transition the state - fix it
+      if (!this.cutsceneManager.isActive() && this.state === 'cutscene') {
+        console.warn('Cutscene ended but state was not properly transitioned, resetting to playing');
+        this.state = 'playing';
+      }
       return;
     }
     
