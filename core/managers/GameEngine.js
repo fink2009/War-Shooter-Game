@@ -33,6 +33,9 @@ class GameEngine {
     this.multiplayerManager = new MultiplayerManager();
     this.ui = new GameUI(canvas);
     
+    // Phase 1: Hazard Manager
+    this.hazardManager = new HazardManager();
+    
     // Fullscreen state
     this.isFullscreen = false;
     this.originalCanvasWidth = canvas.width;
@@ -52,6 +55,12 @@ class GameEngine {
     // Level terrain (platforms, slopes, etc.)
     this.platforms = [];
     this.slopes = [];
+    
+    // Phase 1: Interactive Elements
+    this.movingPlatforms = [];
+    this.switches = [];
+    this.doors = [];
+    this.jumpPads = [];
     
     // Game objects
     this.player = null;
@@ -420,11 +429,21 @@ class GameEngine {
     this.collisionSystem.clear();
     this.particleSystem.clear();
     
+    // Phase 1: Clear hazards and interactive elements
+    this.hazardManager.clear();
+    this.movingPlatforms = [];
+    this.switches = [];
+    this.doors = [];
+    this.jumpPads = [];
+    
     // Spawn cover objects
     this.spawnCovers();
     
     // Spawn level terrain (platforms, slopes)
     this.spawnLevelTerrain();
+    
+    // Phase 1: Spawn hazards
+    this.hazardManager.spawnHazards(mode, this.currentLevel, this.wave, this.groundLevel, this.worldWidth);
     
     // For campaign mode, check if we should play prologue cutscene
     if (mode === 'campaign' && this.currentLevel === 1) {
@@ -629,6 +648,20 @@ class GameEngine {
     if (this.wave >= 7) {
       types.push('heavy', 'sniper'); // More elite units
     }
+    // Phase 1: Add new enemy types at higher waves
+    if (this.wave >= 4) {
+      types.push('medic');
+    }
+    if (this.wave >= 6) {
+      types.push('engineer');
+    }
+    if (this.wave >= 8) {
+      types.push('flamethrower');
+    }
+    
+    // Phase 1: Get elite spawn config
+    const eliteConfig = typeof GameConfig !== 'undefined' && GameConfig.ELITE ? 
+      GameConfig.ELITE : { spawnChance: 0.1, startWave: 3 };
     
     for (let i = 0; i < enemyCount; i++) {
       const x = this.player.x + 400 + Math.random() * 1000;
@@ -636,8 +669,52 @@ class GameEngine {
       
       const enemy = new EnemyUnit(x, this.groundLevel - 48, type);
       enemy.applyDifficulty(difficultyMultiplier);
+      
+      // Phase 1: Elite enemy spawn chance
+      if (this.wave >= eliteConfig.startWave && Math.random() < eliteConfig.spawnChance) {
+        enemy.makeElite();
+        
+        // Show elite spawn notification
+        this.particleSystem.createTextPopup(
+          enemy.x + enemy.width / 2,
+          enemy.y - 30,
+          'ELITE!',
+          '#ffdd00'
+        );
+      }
+      
       this.enemies.push(enemy);
       this.collisionSystem.add(enemy);
+    }
+    
+    // Phase 1: Spawn mini-boss every 3 waves (starting wave 6)
+    const miniBossConfig = typeof GameConfig !== 'undefined' && GameConfig.MINIBOSS ? 
+      GameConfig.MINIBOSS : { spawnInterval: 3 };
+    
+    if (this.wave >= 6 && this.wave % miniBossConfig.spawnInterval === 0) {
+      const miniBossX = this.player.x + 600;
+      const miniBossTypes = ['heavy', 'berserker', 'sniper', 'bomber'];
+      const miniBossType = miniBossTypes[Math.floor(Math.random() * miniBossTypes.length)];
+      
+      const miniBoss = new EnemyUnit(miniBossX, this.groundLevel - 60, miniBossType);
+      miniBoss.applyDifficulty(difficultyMultiplier);
+      miniBoss.makeMiniBoss();
+      
+      this.enemies.push(miniBoss);
+      this.collisionSystem.add(miniBoss);
+      this.enemiesRemaining++;
+      
+      // Show mini-boss warning
+      this.particleSystem.createTextPopup(
+        this.canvas.width / 2,
+        100,
+        'MINI-BOSS APPROACHING!',
+        '#ff00ff'
+      );
+      
+      // Camera shake and sound for dramatic effect
+      this.camera.shake(8, 500);
+      this.audioManager.playSound('ability_airstrike', 0.6);
     }
     
     // Spawn boss every 5 waves
@@ -2038,6 +2115,22 @@ class GameEngine {
     // Update pickups
     this.pickups.forEach(p => p.update(deltaTime));
     
+    // Phase 1: Update hazards
+    this.hazardManager.update(deltaTime, this.currentTime, this.player, this.enemies);
+    
+    // Add hazard projectiles to main projectiles array
+    this.hazardManager.hazardProjectiles.forEach(proj => {
+      if (!this.projectiles.includes(proj)) {
+        this.projectiles.push(proj);
+      }
+    });
+    
+    // Phase 1: Update interactive elements
+    this.movingPlatforms.forEach(p => p.update(deltaTime));
+    this.switches.forEach(s => s.update(deltaTime));
+    this.doors.forEach(d => d.update(deltaTime));
+    this.jumpPads.forEach(j => j.update(deltaTime));
+    
     // Update particles
     this.particleSystem.update(deltaTime);
     
@@ -2088,6 +2181,9 @@ class GameEngine {
         this.spawnWave();
         this.spawnPickups();
         this.spawnCovers(); // Respawn covers for new wave
+        
+        // Phase 1: Spawn new hazards for new wave
+        this.hazardManager.spawnHazards(this.mode, this.currentLevel, this.wave, this.groundLevel, this.worldWidth);
         
         // Add spawn protection when starting new wave
         if (this.player && this.player.active) {
@@ -2532,12 +2628,29 @@ class GameEngine {
               // Screen shake on enemy kill
               this.camera.shake(3, 150);
               
+              // Phase 1: Apply elite/mini-boss score multiplier
+              let scoreMultiplier = 1;
+              let extraPopupText = '';
+              if (enemy.isMiniBoss) {
+                scoreMultiplier = enemy.scoreMultiplier || 5;
+                extraPopupText = ' MINI-BOSS!';
+              } else if (enemy.isElite) {
+                scoreMultiplier = enemy.scoreMultiplier || 2;
+                extraPopupText = ' ELITE!';
+              }
+              const finalPoints = totalPoints * scoreMultiplier;
+              this.score += (finalPoints - totalPoints); // Add extra points (base already added)
+              
               // Show score popup
-              let popupText = `+${totalPoints}`;
+              let popupText = `+${finalPoints}`;
               let popupColor = '#ffff00';
               if (this.combo > 1) {
                 popupText += ` (${this.combo}x)`;
                 popupColor = '#ff6600';
+              }
+              if (extraPopupText) {
+                popupText += extraPopupText;
+                popupColor = enemy.isMiniBoss ? '#ff00ff' : '#ffdd00';
               }
               this.particleSystem.createTextPopup(
                 enemy.x + enemy.width / 2,
@@ -2555,10 +2668,21 @@ class GameEngine {
                 pickupTypes = ['powerup_multi_shot', 'powerup_invincibility', 'powerup_shield', 'damage_boost'];
               }
               
+              // Phase 1: Guaranteed power-up for elite enemies
+              if (enemy.guaranteedDrop || enemy.isElite) {
+                pickupTypes = ['powerup_multi_shot', 'powerup_invincibility', 'powerup_shield', 'damage_boost', 'powerup_rapid_fire'];
+              }
+              
               // Rare weapon drops for elite enemies (20% chance)
               if ((enemy.enemyType === 'heavy' || enemy.enemyType === 'sniper') && Math.random() < 0.2) {
                 const weaponDrops = ['weapon_rifle', 'weapon_shotgun', 'weapon_machinegun', 'weapon_sniper'];
                 pickupTypes = weaponDrops;
+              }
+              
+              // Phase 1: Mini-boss guaranteed epic weapon
+              if (enemy.isMiniBoss) {
+                const epicWeapons = ['weapon_grenade', 'weapon_laser', 'weapon_machinegun', 'weapon_sniper'];
+                pickupTypes = epicWeapons;
               }
               
               // Epic weapon drops for bosses (guaranteed)
@@ -2660,6 +2784,122 @@ class GameEngine {
               '#654321'
             );
           }
+        }
+      });
+      
+      // Phase 1: Projectiles hitting hazards (destructible ones)
+      this.hazardManager.handleProjectileHit(proj);
+    });
+    
+    // Phase 1: Handle jump pad collisions
+    this.jumpPads.forEach(jumpPad => {
+      if (!jumpPad.active) return;
+      
+      // Check player collision
+      if (this.player && this.player.active && this.player.collidesWith(jumpPad)) {
+        jumpPad.activate(this.player, this.currentTime);
+      }
+      
+      // Check enemy collisions
+      this.enemies.forEach(enemy => {
+        if (enemy.active && enemy.collidesWith(jumpPad)) {
+          jumpPad.activate(enemy, this.currentTime);
+        }
+      });
+    });
+    
+    // Phase 1: Handle switch interactions (player pressing E near switch)
+    if (this.player && this.player.active) {
+      this.switches.forEach(switchObj => {
+        if (!switchObj.active) return;
+        
+        // Check if player is near switch and pressing interaction key
+        const dist = Math.sqrt(
+          Math.pow((this.player.x + this.player.width / 2) - (switchObj.x + switchObj.width / 2), 2) +
+          Math.pow((this.player.y + this.player.height / 2) - (switchObj.y + switchObj.height / 2), 2)
+        );
+        
+        if (dist < 50 && (this.inputManager.wasKeyPressed('e') || this.inputManager.wasKeyPressed('E'))) {
+          switchObj.toggle(this.currentTime);
+        }
+      });
+    }
+    
+    // Phase 1: Handle door collisions (block movement when closed)
+    this.doors.forEach(door => {
+      if (!door.active || door.openProgress >= 0.95) return;
+      
+      // Block player
+      if (this.player && this.player.active && this.player.collidesWith(door)) {
+        const doorBounds = door.getBounds();
+        const playerBounds = this.player.getBounds();
+        
+        // Push player out
+        if (playerBounds.right > doorBounds.left && playerBounds.left < doorBounds.right) {
+          if (this.player.dx > 0) {
+            this.player.x = doorBounds.left - this.player.width;
+          } else if (this.player.dx < 0) {
+            this.player.x = doorBounds.right;
+          }
+          this.player.dx = 0;
+        }
+      }
+      
+      // Block enemies
+      this.enemies.forEach(enemy => {
+        if (enemy.active && enemy.collidesWith(door)) {
+          const doorBounds = door.getBounds();
+          if (enemy.dx > 0) {
+            enemy.x = doorBounds.left - enemy.width;
+          } else if (enemy.dx < 0) {
+            enemy.x = doorBounds.right;
+          }
+          enemy.dx = 0;
+        }
+      });
+    });
+    
+    // Phase 1: Handle moving platform collisions
+    this.movingPlatforms.forEach(platform => {
+      if (!platform.active) return;
+      
+      // Check player
+      if (this.player && this.player.active) {
+        const playerBounds = this.player.getBounds();
+        const platformBounds = platform.getBounds();
+        
+        // Check if player is landing on platform
+        if (this.player.dy >= 0 &&
+            playerBounds.bottom >= platformBounds.top - 5 &&
+            playerBounds.bottom <= platformBounds.top + 15 &&
+            playerBounds.right > platformBounds.left + 5 &&
+            playerBounds.left < platformBounds.right - 5) {
+          this.player.y = platformBounds.top - this.player.height;
+          this.player.dy = 0;
+          this.player.onGround = true;
+          platform.addPassenger(this.player);
+        } else {
+          platform.removePassenger(this.player);
+        }
+      }
+      
+      // Check enemies
+      this.enemies.forEach(enemy => {
+        if (!enemy.active || enemy.isFlying) return;
+        
+        const enemyBounds = enemy.getBounds();
+        const platformBounds = platform.getBounds();
+        
+        if (enemy.dy >= 0 &&
+            enemyBounds.bottom >= platformBounds.top - 5 &&
+            enemyBounds.bottom <= platformBounds.top + 15 &&
+            enemyBounds.right > platformBounds.left + 5 &&
+            enemyBounds.left < platformBounds.right - 5) {
+          enemy.y = platformBounds.top - enemy.height;
+          enemy.dy = 0;
+          platform.addPassenger(enemy);
+        } else {
+          platform.removePassenger(enemy);
         }
       });
     });
@@ -2766,8 +3006,17 @@ class GameEngine {
     // Draw platforms
     this.platforms.forEach(p => p.render(this.ctx));
     
+    // Phase 1: Draw interactive elements
+    this.movingPlatforms.forEach(p => p.render(this.ctx));
+    this.doors.forEach(d => d.render(this.ctx));
+    this.switches.forEach(s => s.render(this.ctx));
+    this.jumpPads.forEach(j => j.render(this.ctx));
+    
     // Draw cover objects (now as entities)
     this.covers.forEach(c => c.render(this.ctx));
+    
+    // Phase 1: Draw hazards
+    this.hazardManager.render(this.ctx);
     
     // Draw pickups
     this.pickups.forEach(p => p.render(this.ctx));

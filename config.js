@@ -588,6 +588,76 @@ const GameConfig = {
     KEYBOARD_SHORTCUT: 'F11',
     ALTERNATE_SHORTCUT: '`',
     MAINTAIN_ASPECT_RATIO: true
+  },
+
+  // Phase 1: Environmental Hazards Configuration
+  HAZARDS: {
+    TURRET: {
+      health: 50,
+      damage: 25,
+      range: 400,
+      fireRate: 1.5 // seconds between shots
+    },
+    BARREL: {
+      damage: 50,
+      radius: 100
+    },
+    SPIKE: {
+      damage: 30,
+      cycle: 2, // seconds per cycle
+      warning: 0.5 // seconds of warning before activation
+    },
+    LASER: {
+      damage: 15 // damage per second
+    },
+    TOXIC: {
+      damage: 5, // damage per second
+      slowdown: 0.3 // 30% speed reduction
+    },
+    LAVA: {
+      damage: 40 // damage per second
+    }
+  },
+
+  // Phase 1: Elite Enemy System Configuration
+  ELITE: {
+    healthMultiplier: 2,
+    damageMultiplier: 1.5,
+    speedMultiplier: 1.2,
+    scoreMultiplier: 2,
+    spawnChance: 0.1, // 10% chance
+    startWave: 3 // Elites start spawning at wave 3
+  },
+
+  // Phase 1: Mini-Boss Configuration
+  MINIBOSS: {
+    healthMultiplier: 6,
+    damageMultiplier: 4.5,
+    spawnInterval: 3 // Every 3 waves in survival
+  },
+
+  // Phase 1: New Enemy Types Configuration
+  ENEMIES: {
+    MEDIC: {
+      health: 80,
+      healAmount: 15,
+      healRate: 3, // seconds between heals
+      healRange: 200
+    },
+    ENGINEER: {
+      health: 100,
+      turretHealth: 30,
+      turretDamage: 10,
+      maxTurrets: 2,
+      deployCooldown: 8 // seconds
+    },
+    FLAMETHROWER: {
+      health: 150,
+      damage: 12, // damage per tick
+      range: 150,
+      arc: 90, // degrees
+      duration: 5 // seconds of firing before reload
+    }
   }
 };
 
@@ -609,3 +679,7 @@ Object.freeze(GameConfig.UI);
 Object.freeze(GameConfig.SCORING);
 Object.freeze(GameConfig.COMBO);
 Object.freeze(GameConfig.FULLSCREEN);
+Object.freeze(GameConfig.HAZARDS);
+Object.freeze(GameConfig.ELITE);
+Object.freeze(GameConfig.MINIBOSS);
+Object.freeze(GameConfig.ENEMIES);

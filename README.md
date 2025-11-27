@@ -51,7 +51,22 @@ A browser-based 16-bit arcade side-scrolling shooter game built with vanilla Jav
 - **Berserker**: Melee rusher, high damage
 - **Bomber**: Explodes on contact or death
 - **Riot**: Front-facing shield defense
+- **Medic**: Heals nearby allies every 3 seconds (NEW)
+- **Engineer**: Deploys mini-turrets for defense (NEW)
+- **Flamethrower**: Continuous fire cone attack (NEW)
 - **Boss**: Unique mechanics per encounter
+
+### Elite & Mini-Boss System (NEW)
+- **Elite Enemies**: 10% spawn chance (wave 3+), 2x health, 1.5x damage, golden aura, guaranteed power-up drop
+- **Mini-Bosses**: Spawn every 3 waves (wave 6+), 6x health, special abilities, epic weapon drops
+
+### Environmental Hazards (NEW)
+- **Turrets**: Auto-targeting stationary weapons (400px range)
+- **Explosive Barrels**: Chain-reaction explosions (100px radius)
+- **Spike Traps**: Floor hazards with warning cycles
+- **Laser Grids**: Static, moving, or pulsing beam patterns
+- **Toxic Zones**: Poison damage with movement slow
+- **Lava Zones**: High fire damage areas
 
 ### Boss Encounters
 1. **The Warlord** (Level 3): Rage mode below 50% HP
