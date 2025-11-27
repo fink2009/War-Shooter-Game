@@ -481,9 +481,6 @@ class GameEngine {
    * @param {Function} onComplete - Callback when cutscene ends
    */
   playStoryCutscene(cutsceneId, onComplete) {
-    // Store previous state to restore if cutscene fails
-    const previousState = this.state;
-    
     // Get cutscene data from StoryCutsceneData
     if (typeof window.getStoryCutsceneById !== 'function') {
       console.warn('StoryCutsceneData not loaded');

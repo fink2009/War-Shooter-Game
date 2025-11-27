@@ -159,7 +159,7 @@ class CutsceneManager {
     if (this.state !== 'playing' && this.state !== 'paused') return;
     
     // Check for single key press (wasKeyPressed) for immediate skip
-    const skipPressedOnce = inputManager.wasKeyPressed('Escape') || inputManager.wasKeyPressed('Space') || inputManager.wasKeyPressed(' ');
+    const skipPressedOnce = inputManager.wasKeyPressed('Escape') || inputManager.wasKeyPressed('Space');
     
     if (skipPressedOnce) {
       // Immediate skip on single key press
@@ -168,7 +168,7 @@ class CutsceneManager {
     }
     
     // Also support hold-to-skip for those who prefer it
-    const skipHeld = inputManager.isKeyPressed('Escape') || inputManager.isKeyPressed('Space') || inputManager.isKeyPressed(' ');
+    const skipHeld = inputManager.isKeyPressed('Escape') || inputManager.isKeyPressed('Space');
     
     if (skipHeld) {
       if (this.skipKeyPressed) {
