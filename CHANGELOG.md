@@ -5,6 +5,68 @@ All notable changes to War Shooter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2024 (Phase 2 Expansion)
+
+### Added
+- **Upgrade System**: Permanent character upgrades
+  - 6 upgrade categories: Health, Damage, Speed, Reload, Cooldown, Armor
+  - 5 levels each with increasing costs and bonuses
+  - Skill tree UI with progress bars and icons
+  - Reset button with 50% refund
+  - Accessible from main menu and between waves (U key)
+  
+- **Currency System**: In-game economy
+  - Coin drops from all enemies (scaled by type)
+  - Wave completion bonuses (50 × wave number)
+  - Auto-pickup within 50px range
+  - Persistent coin counter in HUD
+  - Sparkle effects on pickup
+  
+- **Shop System**: Vendor NPC every 5 waves
+  - Health Refill (100 coins)
+  - Ammo Pack (50 coins)
+  - Mystery Box / Random Power-up (150 coins)
+  - Damage Boost (200 coins, 1 wave)
+  - Weapon Crate (500 coins)
+  - Revive Token (300 coins)
+  
+- **Weapon Attachments**: Customization system
+  - 3 attachment slots per weapon
+  - Ranged: Scope, Extended Mag, Suppressor, Laser Sight, Rapid Bolt, Bayonet
+  - Melee: Sharpening Stone, Lightweight Grip
+  - Stat preview before/after
+  - Drop from elite enemies (5% chance)
+  
+- **Stealth System**: Tactical combat options
+  - Crouch (CTRL/S): 50% speed, 50% detection range
+  - Backstab: 3x damage from behind, instant kill under 100 HP
+  - Noise propagation system
+  - Enemy awareness states (Unaware, Suspicious, Alert, Combat)
+  - Visual indicators (colored outlines, exclamation marks)
+  
+- **Formation System**: Coordinated enemy groups
+  - 6 formation types: Line, V-Shape, Circle, Pincer, Firing Line, Scatter
+  - Leader designation (strongest enemy)
+  - Formation breaks if leader dies, reforms after 5 seconds
+  
+- **Tactical AI Foundation**: Enhanced enemy behaviors
+  - Cover seeking when health < 30%
+  - Flanking coordination
+  - Retreat and regroup
+  - Investigation of noise sources
+  
+- **Phase 2 UI Components**:
+  - UpgradeMenu with skill tree layout
+  - ShopMenu for vendor interaction
+  - AttachmentMenu for weapon customization
+  - Coin counter in HUD (top-right)
+
+### Changed
+- Updated PlayerCharacter with armor reduction, revive token support
+- Enhanced EnemyUnit with awareness states and formation roles
+- Extended SaveSystem with Phase 2 stats tracking
+- Added Phase 2 config sections (UPGRADES, CURRENCY, SHOP, ATTACHMENTS, STEALTH, FORMATIONS, TACTICAL_AI)
+
 ## [1.1.0] - 2024 (Phase 1 Expansion)
 
 ### Added

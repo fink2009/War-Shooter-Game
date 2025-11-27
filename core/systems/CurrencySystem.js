@@ -215,6 +215,7 @@ class CoinPickup extends Entity {
     this.sparkleTimer = 0;
     this.magnetRange = 50;
     this.magnetSpeed = 8;
+    this.collectionDistance = 20; // Distance at which coin is collected
     this.beingCollected = false;
     this.collectTarget = null;
     this.lifetime = 30000; // 30 seconds before despawn
@@ -265,7 +266,7 @@ class CoinPickup extends Entity {
         }
         
         // Collect when touching player
-        if (dist < 20 && currencySystem) {
+        if (dist < this.collectionDistance && currencySystem) {
           this.collect(currencySystem);
         }
       }

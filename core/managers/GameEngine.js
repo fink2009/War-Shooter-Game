@@ -2276,7 +2276,11 @@ class GameEngine {
         
         // Phase 2: Spawn shop vendor every 5 waves
         if (shouldSpawnShop(this.wave)) {
-          this.shopVendor = new ShopVendor(this.player.x + 100, this.groundLevel - 60);
+          const shopSpawnOffset = { x: 100, y: 60 }; // Offset from player position
+          this.shopVendor = new ShopVendor(
+            this.player.x + shopSpawnOffset.x, 
+            this.groundLevel - shopSpawnOffset.y
+          );
           this.particleSystem.createTextPopup(
             this.shopVendor.x + this.shopVendor.width / 2,
             this.shopVendor.y - 40,

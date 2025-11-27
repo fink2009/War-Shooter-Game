@@ -84,6 +84,63 @@ A browser-based 16-bit arcade side-scrolling shooter game built with vanilla Jav
 - Invincibility: Brief invulnerability
 - Shield: Absorbs damage
 
+### Phase 2 Features (NEW)
+
+#### Permanent Upgrade System
+Spend coins to permanently improve your character:
+- **Health**: +20/40/60/80/100 HP
+- **Damage**: +10/20/30/45/60% damage
+- **Speed**: +15/30/45/60/75% movement
+- **Reload**: -10/20/30/40/50% reload time
+- **Cooldown**: -10/20/30/40/50% ability cooldown
+- **Armor**: 5/10/15/22/30% damage reduction
+
+#### Currency System
+- Collect coins from defeated enemies
+- Normal enemies: 5-10 coins
+- Elite enemies: 20-30 coins
+- Mini-bosses: 50-100 coins
+- Bosses: 200-500 coins
+- Wave bonus: 50 × wave number
+
+#### Shop System
+A merchant appears every 5 waves with items for sale:
+- Health Refill: 100 coins
+- Ammo Pack: 50 coins
+- Mystery Box: 150 coins (random power-up)
+- Damage Boost: 200 coins (1 wave)
+- Weapon Crate: 500 coins
+- Revive Token: 300 coins
+
+#### Weapon Attachments
+Customize weapons with attachments (3 slots per weapon):
+- **Scope**: +50% range, 1.5x zoom
+- **Extended Mag**: +50% ammo capacity
+- **Suppressor**: Silent shots, -10% damage
+- **Laser Sight**: +15% accuracy
+- **Rapid Bolt**: +25% fire rate
+- **Bayonet**: +15 melee damage
+- **Sharpening Stone**: +30% melee damage
+- **Lightweight Grip**: +20% swing speed
+
+#### Stealth System
+- **Crouch**: Hold CTRL for 50% speed, 50% detection
+- **Backstab**: 3x damage from behind (instant kill under 100 HP)
+- **Enemy Awareness States**:
+  - White (Unaware): Can be backstabbed
+  - Yellow (Suspicious): Investigating
+  - Orange (Alert): Searching for player
+  - Red (Combat): Active engagement
+
+#### Enemy Formation System
+Enemies coordinate in tactical formations:
+- Line: Horizontal advance
+- V-Shape: Point leads with flankers
+- Circle: Surrounds player
+- Pincer: Two-pronged attack
+- Firing Line: Melee front, ranged back
+- Scatter: Chaotic random positions
+
 ## 🎯 How to Play
 
 ### Controls
@@ -107,6 +164,8 @@ See [CONTROLS.md](CONTROLS.md) for detailed control information.
 #### System
 - **ESC**: Pause menu
 - **I**: Inventory
+- **U**: Upgrade menu (NEW)
+- **E**: Interact with shop vendor (NEW)
 - **H**: Help overlay
 - **F / F11**: Toggle fullscreen
 - **M**: Return to main menu

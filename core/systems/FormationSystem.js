@@ -212,13 +212,17 @@ class FormationSystem {
         // Leader died - formation breaks
         this.disbandFormation(formation.id);
         
-        // Try to reform after delay
-        setTimeout(() => {
-          const remainingMembers = formation.members.filter(m => m.active);
-          if (remainingMembers.length >= 2) {
-            this.createFormation(remainingMembers, formation.type, formation.target);
-          }
-        }, config.reformTime * 1000);
+        // Schedule reform using a pending reform queue instead of setTimeout
+        // This avoids memory leaks and stale references
+        if (!this.pendingReforms) {
+          this.pendingReforms = [];
+        }
+        this.pendingReforms.push({
+          members: formation.members.filter(m => m.active),
+          type: formation.type,
+          target: formation.target,
+          reformTime: performance.now() + (config.reformTime * 1000)
+        });
         
         return;
       }
@@ -259,6 +263,21 @@ class FormationSystem {
     
     // Clean up inactive formations
     this.formations = this.formations.filter(f => f.active);
+    
+    // Process pending reforms
+    if (this.pendingReforms && this.pendingReforms.length > 0) {
+      const currentTime = performance.now();
+      this.pendingReforms = this.pendingReforms.filter(reform => {
+        if (currentTime >= reform.reformTime) {
+          const remainingMembers = reform.members.filter(m => m.active);
+          if (remainingMembers.length >= 2) {
+            this.createFormation(remainingMembers, reform.type, reform.target);
+          }
+          return false; // Remove from pending
+        }
+        return true; // Keep in pending
+      });
+    }
   }
 
   /**
@@ -388,6 +407,7 @@ class FormationSystem {
   clear() {
     this.formations.forEach(f => this.disbandFormation(f.id));
     this.formations = [];
+    this.pendingReforms = [];
   }
 
   /**

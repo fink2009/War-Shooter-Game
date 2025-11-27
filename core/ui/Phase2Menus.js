@@ -540,10 +540,11 @@ class AttachmentMenu {
       return true;
     }
     if (inputManager.wasKeyPressed('ArrowDown') || inputManager.wasKeyPressed('s') || inputManager.wasKeyPressed('S')) {
+      const weapon = this.getSelectedWeapon();
       const maxAttachments = this.selectedTab === 0 ? 
-        this.attachmentSystem.getEquippedAttachments(this.getSelectedWeapon()?.name).length :
+        (weapon ? this.attachmentSystem.getEquippedAttachments(weapon.name).length : 0) :
         this.attachmentSystem.getInventory().length;
-      this.selectedAttachment = Math.min(maxAttachments - 1, this.selectedAttachment + 1);
+      this.selectedAttachment = Math.min(Math.max(0, maxAttachments - 1), this.selectedAttachment + 1);
       return true;
     }
     
