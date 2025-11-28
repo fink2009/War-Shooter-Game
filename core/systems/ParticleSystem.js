@@ -212,7 +212,7 @@ class ParticleSystem {
    * @param {number} x - X position
    * @param {number} y - Y position
    */
-  createJumpEffect(x, y) {
+  createDoubleJumpEffect(x, y) {
     // Create particles in a downward semicircle
     for (let i = 0; i < 10; i++) {
       const angle = Math.PI * (i / 9); // Spread from 0 to PI (downward semicircle)

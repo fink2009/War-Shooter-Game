@@ -503,6 +503,15 @@ class GameEngine {
     // Phase 1: Spawn hazards
     this.hazardManager.spawnHazards(mode, this.currentLevel, this.wave, this.groundLevel, this.worldWidth);
     
+    // Phase 3: Spawn vehicles
+    this.spawnVehicles(mode, this.currentLevel);
+    
+    // Phase 3: Spawn mounted weapons
+    this.spawnMountedWeapons(mode, this.currentLevel);
+    
+    // Phase 3: Spawn interactive elements
+    this.spawnInteractiveElements(mode, this.currentLevel);
+    
     // For campaign mode, check if we should play prologue cutscene
     if (mode === 'campaign' && this.currentLevel === 1) {
       // Play prologue cutscene before Level 1
@@ -524,6 +533,8 @@ class GameEngine {
     // Spawn initial enemies based on game mode
     if (mode === 'survival') {
       this.spawnWave();
+      // Start dynamic event system for survival mode
+      this.dynamicEventSystem.start();
     } else if (mode === 'campaign') {
       this.spawnCampaignEnemies();
     } else if (mode === 'timeattack') {
@@ -538,6 +549,8 @@ class GameEngine {
       // Horde Mode: Start endless wave mode
       this.hordeMode.start();
       this.spawnHordeWave();
+      // Start dynamic event system for horde mode too
+      this.dynamicEventSystem.start();
     } else if (mode === 'onehit') {
       // One-Hit Mode: Apply one-hit rules and spawn campaign enemies
       this.oneHitMode.start(1);
@@ -648,6 +661,123 @@ class GameEngine {
     const starterKnife = new Pickup(200, this.groundLevel - 50, 'weapon_knife');
     this.pickups.push(starterKnife);
     this.collisionSystem.add(starterKnife);
+  }
+  
+  /**
+   * Spawn vehicles for a level
+   * @param {string} mode - Game mode
+   * @param {number} level - Current level
+   */
+  spawnVehicles(mode, level) {
+    this.vehicles = [];
+    
+    // Vehicles spawn in campaign mode starting from level 3
+    if (mode === 'campaign' && level >= 3) {
+      // Spawn a Jeep on some levels
+      if (level % 2 === 0) {
+        const jeep = new Jeep(500 + Math.random() * 400, this.groundLevel - 40);
+        this.vehicles.push(jeep);
+      }
+      
+      // Spawn a Tank on boss levels and late levels
+      if (level >= 6 || level % 3 === 0) {
+        const tank = new Tank(800 + Math.random() * 600, this.groundLevel - 50);
+        this.vehicles.push(tank);
+      }
+    }
+    
+    // Survival mode gets vehicles every 5 waves
+    if (mode === 'survival' && this.wave >= 5 && this.wave % 5 === 0) {
+      const jeep = new Jeep(this.player.x + 300, this.groundLevel - 40);
+      this.vehicles.push(jeep);
+    }
+  }
+  
+  /**
+   * Spawn mounted weapons for a level
+   * @param {string} mode - Game mode
+   * @param {number} level - Current level
+   */
+  spawnMountedWeapons(mode, level) {
+    this.mountedWeapons = [];
+    
+    // Mounted weapons in campaign mode
+    if (mode === 'campaign') {
+      // HMG placement on certain levels
+      if (level >= 2) {
+        const hmg = new MountedWeapon(600 + Math.random() * 200, this.groundLevel - 50, 'HMG');
+        this.mountedWeapons.push(hmg);
+      }
+      
+      // Sniper position on sniper-themed levels
+      if (level === 5 || level === 8) {
+        const sniper = new MountedWeapon(900 + Math.random() * 300, this.groundLevel - 250, 'SNIPER');
+        this.mountedWeapons.push(sniper);
+      }
+      
+      // Rocket launcher on boss levels
+      if (level === 3 || level === 6 || level === 9 || level === 10) {
+        const rocket = new MountedWeapon(400 + Math.random() * 200, this.groundLevel - 50, 'ROCKET');
+        this.mountedWeapons.push(rocket);
+      }
+    }
+    
+    // Survival mode mounted weapons
+    if (mode === 'survival' && this.wave >= 3 && this.wave % 3 === 0) {
+      const hmg = new MountedWeapon(this.player.x + 200, this.groundLevel - 50, 'HMG');
+      this.mountedWeapons.push(hmg);
+    }
+  }
+  
+  /**
+   * Spawn interactive elements for a level
+   * @param {string} mode - Game mode
+   * @param {number} level - Current level
+   */
+  spawnInteractiveElements(mode, level) {
+    this.movingPlatforms = [];
+    this.switches = [];
+    this.doors = [];
+    this.jumpPads = [];
+    
+    if (mode === 'campaign') {
+      // Level-specific interactive elements
+      if (level >= 4) {
+        // Jump pads for vertical gameplay
+        const jumpPad1 = new JumpPad(350, this.groundLevel - 16, 300);
+        this.jumpPads.push(jumpPad1);
+        
+        if (level >= 6) {
+          const jumpPad2 = new JumpPad(750, this.groundLevel - 16, 350);
+          this.jumpPads.push(jumpPad2);
+        }
+      }
+      
+      // Moving platforms on levels with verticality
+      if (level >= 5) {
+        const movingPlatform = new MovingPlatform(
+          500, this.groundLevel - 150, 128, 24,
+          [
+            { x: 500, y: this.groundLevel - 150 },
+            { x: 800, y: this.groundLevel - 150 },
+            { x: 800, y: this.groundLevel - 250 },
+            { x: 500, y: this.groundLevel - 250 }
+          ],
+          2
+        );
+        this.movingPlatforms.push(movingPlatform);
+      }
+      
+      // Door and switch puzzle on later levels
+      if (level >= 7) {
+        const door = new Door(1200, this.groundLevel - 80, 20, 80);
+        const switchObj = new Switch(400, this.groundLevel - 32, door);
+        door.isOpen = false;
+        
+        this.doors.push(door);
+        this.switches.push(switchObj);
+      }
+    }
   }
   
   /**
@@ -2044,21 +2174,30 @@ class GameEngine {
           this.audioManager.playSound('reload', 0.4);
         }
         
-        // Jump (including double jump)
-        if (this.inputManager.wasKeyPressed('ArrowUp') || this.inputManager.wasKeyPressed('w') || this.inputManager.wasKeyPressed(' ')) {
-          if (this.player.onGround) {
-            this.player.dy = this.player.jumpStrength;
-            this.player.onGround = false;
-          } else if (this.player.hasDoubleJump && this.player.doubleJumpAvailable) {
-            // Perform double jump
-            this.player.performDoubleJump();
-            this.audioManager.playSound('jump', 0.4);
-            // Create visual effect
-            this.particleSystem.createJumpEffect(
-              this.player.x + this.player.width / 2,
-              this.player.y + this.player.height
-            );
-          }
+        // Ground jump: allow holding the key (isKeyPressed)
+        if (this.player.onGround && (
+              this.inputManager.isKeyPressed('ArrowUp') ||
+              this.inputManager.isKeyPressed('w') ||
+              this.inputManager.isKeyPressed(' ')
+            )) {
+          this.player.dy = this.player.jumpStrength;
+          this.player.onGround = false;
+        }
+        // Double jump: only on fresh key press (wasKeyPressed)
+        else if (!this.player.onGround &&
+                 this.player.hasDoubleJump &&
+                 this.player.doubleJumpAvailable &&
+                 (this.inputManager.wasKeyPressed('ArrowUp') ||
+                  this.inputManager.wasKeyPressed('w') ||
+                  this.inputManager.wasKeyPressed(' '))) {
+          // Perform double jump
+          this.player.performDoubleJump();
+          this.audioManager.playSound('menu_select', 0.4);
+          // Create visual effect
+          this.particleSystem.createDoubleJumpEffect(
+            this.player.x + this.player.width / 2,
+            this.player.y + this.player.height
+          );
         }
         
         // Grappling Hook (T key when power-up is active, uses different key to avoid conflict with God Mode)
@@ -2075,7 +2214,7 @@ class GameEngine {
           }
           
           if (this.player.useGrapplingHook(targetX, targetY)) {
-            this.audioManager.playSound('grapple', 0.5);
+            this.audioManager.playSound('dash', 0.5); // Use dash sound for grapple
           }
         }
         
@@ -2127,6 +2266,89 @@ class GameEngine {
         // Play weapon switch sound if weapon changed
         if (oldWeaponIndex !== this.player.currentRangedWeaponIndex) {
           this.audioManager.playSound('weapon_switch', 0.3);
+        }
+        
+        // Phase 3: Vehicle enter/exit (F key)
+        if (this.inputManager.wasKeyPressed('f') || this.inputManager.wasKeyPressed('F')) {
+          // Check if player is in a vehicle
+          if (this.player.isInVehicle && this.player.currentVehicle) {
+            // Exit vehicle
+            this.player.currentVehicle.exit(this.player);
+            this.audioManager.playSound('menu_select', 0.4);
+          } else {
+            // Check for nearby vehicle to enter
+            for (const vehicle of this.vehicles) {
+              if (vehicle.active && !vehicle.isDestroyed && vehicle.canEnter()) {
+                if (vehicle.isInRange(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, 60)) {
+                  vehicle.enter(this.player);
+                  this.audioManager.playSound('menu_select', 0.4);
+                  this.particleSystem.createTextPopup(
+                    this.player.x + this.player.width / 2,
+                    this.player.y - 30,
+                    'ENTERED VEHICLE',
+                    '#00ff00'
+                  );
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        // Phase 3: Mounted weapon mount/dismount (E key when near mounted weapon)
+        if (this.inputManager.wasKeyPressed('e') || this.inputManager.wasKeyPressed('E')) {
+          // Check if player is mounted
+          if (this.player.isMounted && this.player.currentMountedWeapon) {
+            // Dismount
+            this.player.currentMountedWeapon.dismount(this.player);
+            this.audioManager.playSound('menu_select', 0.4);
+          } else if (!this.player.isInVehicle) {
+            // Check for nearby mounted weapon
+            for (const mw of this.mountedWeapons) {
+              if (mw.active && mw.canMount()) {
+                if (mw.isInRange(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, 60)) {
+                  mw.mount(this.player);
+                  this.audioManager.playSound('menu_select', 0.4);
+                  this.particleSystem.createTextPopup(
+                    this.player.x + this.player.width / 2,
+                    this.player.y - 30,
+                    'MOUNTED ' + mw.weaponType,
+                    '#00ff00'
+                  );
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        // Phase 3: Vehicle/Mounted weapon firing
+        if (this.player.isInVehicle && this.player.currentVehicle) {
+          if (this.inputManager.isMouseButtonPressed(0)) {
+            const mousePos = this.inputManager.getMousePosition();
+            const targetX = mousePos.x + this.camera.x;
+            const targetY = mousePos.y + this.camera.y;
+            const projectile = this.player.currentVehicle.fire(this.currentTime, targetX, targetY);
+            if (projectile) {
+              this.projectiles.push(projectile);
+              this.collisionSystem.add(projectile);
+            }
+          }
+        } else if (this.player.isMounted && this.player.currentMountedWeapon) {
+          // Aim mounted weapon
+          const mousePos = this.inputManager.getMousePosition();
+          const targetX = mousePos.x + this.camera.x;
+          const targetY = mousePos.y + this.camera.y;
+          this.player.currentMountedWeapon.aim(targetX, targetY);
+          
+          if (this.inputManager.isMouseButtonPressed(0)) {
+            const projectile = this.player.currentMountedWeapon.fire(this.currentTime);
+            if (projectile) {
+              projectile.owner = this.player.currentMountedWeapon;
+              this.projectiles.push(projectile);
+              this.collisionSystem.add(projectile);
+            }
+          }
         }
       }
       
@@ -2456,6 +2678,11 @@ class GameEngine {
       }
     });
     
+    // Phase 3: Update dynamic event system
+    if (this.dynamicEventSystem && this.dynamicEventSystem.active) {
+      this.dynamicEventSystem.update(deltaTime, this);
+    }
+    
     // Update particles
     this.particleSystem.update(deltaTime);
     
@@ -2515,12 +2742,33 @@ class GameEngine {
         this.autoSave(0);
         
         this.wave++;
+        
+        // Phase 3: Trigger dynamic events on wave start
+        if (this.dynamicEventSystem) {
+          const event = this.dynamicEventSystem.onWaveStart(this.wave, this);
+          if (event) {
+            // Event was triggered - show notification
+            this.particleSystem.createTextPopup(
+              this.player.x + this.player.width / 2,
+              this.player.y - 70,
+              event.announcement,
+              event.type === 'positive' ? '#00ff00' : '#ff4444'
+            );
+          }
+        }
+        
         this.spawnWave();
         this.spawnPickups();
         this.spawnCovers(); // Respawn covers for new wave
         
         // Phase 1: Spawn new hazards for new wave
         this.hazardManager.spawnHazards(this.mode, this.currentLevel, this.wave, this.groundLevel, this.worldWidth);
+        
+        // Phase 3: Spawn vehicles periodically
+        this.spawnVehicles(this.mode, this.currentLevel);
+        
+        // Phase 3: Spawn mounted weapons periodically
+        this.spawnMountedWeapons(this.mode, this.currentLevel);
         
         // Phase 2: Spawn shop vendor every 5 waves
         if (shouldSpawnShop(this.wave)) {
@@ -2740,6 +2988,11 @@ class GameEngine {
     this.covers = [];
     this.platforms = [];
     this.slopes = [];
+    
+    // Clear collision system
+    if (this.collisionSystem && typeof this.collisionSystem.clear === 'function') {
+      this.collisionSystem.clear();
+    }
     
     // Reset player position
     this.player.x = 100;
@@ -3588,6 +3841,11 @@ class GameEngine {
       // Phase 2: Draw coin counter in HUD
       if (this.currencySystem) {
         this.drawCoinCounter(this.ctx);
+      }
+      
+      // Phase 3: Draw dynamic event system HUD
+      if (this.dynamicEventSystem && this.dynamicEventSystem.active) {
+        this.dynamicEventSystem.render(this.ctx, this.canvas.width, this.canvas.height);
       }
     }
   }
