@@ -266,6 +266,44 @@ class GameUI {
       powerupY -= 20;
     }
     
+    // Phase 3 Power-ups
+    if (player.hasTimeSlow && player.timeSlowEndTime) {
+      const timeLeft = Math.ceil((player.timeSlowEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#9933ff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`⏱️ TIME SLOW (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasDoubleJump && player.doubleJumpEndTime) {
+      const timeLeft = Math.ceil((player.doubleJumpEndTime - currentTime) / 1000);
+      const jumpStatus = player.doubleJumpAvailable ? 'READY' : 'USED';
+      ctx.fillStyle = '#66ccff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`🦘 DOUBLE JUMP [${jumpStatus}] (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasGrapplingHook && player.grapplingHookEndTime) {
+      const timeLeft = Math.ceil((player.grapplingHookEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#996633';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`🪝 GRAPPLE x${player.grapplingHookUses} (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasGhostMode && player.ghostModeEndTime) {
+      const timeLeft = Math.ceil((player.ghostModeEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`👻 GHOST MODE (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasMagnet && player.magnetEndTime) {
+      const timeLeft = Math.ceil((player.magnetEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#ff3366';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`🧲 MAGNET (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    
     // Melee combo indicator
     if (player.meleeCombo > 0 && player.getCurrentMeleeWeapon()) {
       ctx.fillStyle = '#ffaa00';

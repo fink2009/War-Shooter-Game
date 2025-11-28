@@ -521,11 +521,30 @@ class GameEngine {
       return; // Exit early, cutscene will handle rest
     }
     
-    // Spawn initial enemies
+    // Spawn initial enemies based on game mode
     if (mode === 'survival') {
       this.spawnWave();
     } else if (mode === 'campaign') {
       this.spawnCampaignEnemies();
+    } else if (mode === 'timeattack') {
+      // Time Attack Mode: Start the timer and spawn campaign enemies
+      this.timeAttackMode.start(this.currentLevel);
+      this.spawnCampaignEnemies();
+    } else if (mode === 'bossrush') {
+      // Boss Rush Mode: Start boss rush and spawn first boss
+      this.bossRushMode.start(0, 0, false);
+      this.spawnBossRushBoss();
+    } else if (mode === 'horde') {
+      // Horde Mode: Start endless wave mode
+      this.hordeMode.start();
+      this.spawnHordeWave();
+    } else if (mode === 'onehit') {
+      // One-Hit Mode: Apply one-hit rules and spawn campaign enemies
+      this.oneHitMode.start(1);
+      this.oneHitMode.applyToPlayer(this.player);
+      this.spawnCampaignEnemies();
+      // Apply one-hit mode to all enemies
+      this.enemies.forEach(enemy => this.oneHitMode.applyToEnemy(enemy));
     }
     
     // Add some pickups
@@ -541,6 +560,85 @@ class GameEngine {
       this.audioManager.stopMusic();
       this.audioManager.playMusic('gameplay');
     }
+  }
+  
+  /**
+   * Spawn boss for Boss Rush mode
+   */
+  spawnBossRushBoss() {
+    const bossId = this.bossRushMode.getCurrentBossId();
+    if (bossId === null) return;
+    
+    const bossX = this.player.x + 800;
+    const boss = new EnemyUnit(bossX, this.groundLevel - 70, 'boss');
+    
+    // Apply boss rush difficulty
+    this.bossRushMode.applyDifficultyToBoss(boss);
+    
+    // Set boss properties
+    boss.isBoss = true;
+    boss.bossId = bossId;
+    boss.bossName = this.bossRushMode.getBossName(bossId);
+    
+    // Apply standard boss enhancements
+    boss.maxHealth *= 9;
+    boss.health = boss.maxHealth;
+    boss.damage *= 3;
+    boss.speed *= 1.8;
+    boss.shootCooldown *= 0.4;
+    boss.aggroRange = 9999;
+    boss.attackRange = 1000;
+    
+    this.enemies.push(boss);
+    this.collisionSystem.add(boss);
+    this.enemiesRemaining = 1;
+    
+    // Start boss cutscene
+    this.startBossCutscene(boss);
+  }
+  
+  /**
+   * Spawn wave for Horde mode
+   */
+  spawnHordeWave() {
+    const waveConfig = this.hordeMode.startNextWave();
+    
+    waveConfig.enemies.forEach((enemyData, index) => {
+      const x = this.player.x + 400 + index * 150 + Math.random() * 100;
+      
+      let enemy;
+      if (enemyData.type === 'boss') {
+        enemy = new EnemyUnit(x, this.groundLevel - 70, 'boss');
+        enemy.isBoss = true;
+        enemy.bossId = enemyData.bossId;
+        enemy.bossName = this.getBossName(enemyData.bossId);
+      } else {
+        enemy = new EnemyUnit(x, this.groundLevel - 48, enemyData.type);
+      }
+      
+      // Apply horde mode scaling
+      enemy.maxHealth = Math.floor(enemy.maxHealth * enemyData.healthMultiplier);
+      enemy.health = enemy.maxHealth;
+      enemy.damage = Math.floor(enemy.damage * enemyData.damageMultiplier);
+      
+      // Apply elite status
+      if (enemyData.isElite) {
+        enemy.makeElite();
+      }
+      
+      // Apply mini-boss status
+      if (enemyData.isMiniBoss) {
+        enemy.makeMiniBoss();
+      }
+      
+      this.enemies.push(enemy);
+      this.collisionSystem.add(enemy);
+    });
+    
+    this.enemiesRemaining = this.enemies.length;
+    
+    // Apply horde mode modifiers
+    this.hordeMode.applyModifiers(this);
   }
   
   /**
@@ -1946,10 +2044,39 @@ class GameEngine {
           this.audioManager.playSound('reload', 0.4);
         }
         
-        // Jump
-        if ((this.inputManager.isKeyPressed('ArrowUp') || this.inputManager.isKeyPressed('w') || this.inputManager.isKeyPressed(' ')) && this.player.onGround) {
-          this.player.dy = this.player.jumpStrength;
-          this.player.onGround = false;
+        // Jump (including double jump)
+        if (this.inputManager.wasKeyPressed('ArrowUp') || this.inputManager.wasKeyPressed('w') || this.inputManager.wasKeyPressed(' ')) {
+          if (this.player.onGround) {
+            this.player.dy = this.player.jumpStrength;
+            this.player.onGround = false;
+          } else if (this.player.hasDoubleJump && this.player.doubleJumpAvailable) {
+            // Perform double jump
+            this.player.performDoubleJump();
+            this.audioManager.playSound('jump', 0.4);
+            // Create visual effect
+            this.particleSystem.createJumpEffect(
+              this.player.x + this.player.width / 2,
+              this.player.y + this.player.height
+            );
+          }
+        }
+        
+        // Grappling Hook (T key when power-up is active, uses different key to avoid conflict with God Mode)
+        if (this.inputManager.wasKeyPressed('t') && this.player.hasGrapplingHook && this.player.grapplingHookUses > 0) {
+          // Grapple towards mouse position or in facing direction
+          let targetX, targetY;
+          if (this.mouseAiming) {
+            const mousePos = this.inputManager.getMousePosition();
+            targetX = mousePos.x + this.camera.x;
+            targetY = mousePos.y + this.camera.y;
+          } else {
+            targetX = this.player.x + this.player.facing * this.player.grapplingHookRange;
+            targetY = this.player.y - 100; // Aim slightly upward
+          }
+          
+          if (this.player.useGrapplingHook(targetX, targetY)) {
+            this.audioManager.playSound('grapple', 0.5);
+          }
         }
         
         // Block/Parry (Hold V key - only with melee weapon)
@@ -2207,10 +2334,19 @@ class GameEngine {
       return;
     }
     
+    // Calculate time slow multiplier
+    let timeSlowMultiplier = 1.0;
+    if (this.player && this.player.hasTimeSlow) {
+      timeSlowMultiplier = 0.5; // Enemies move at 50% speed during time slow
+    }
+    
     // Update enemies
     this.enemies.forEach(enemy => {
+      // Apply time slow to enemies
+      const adjustedDeltaTime = deltaTime * timeSlowMultiplier;
+      
       // enemy.update now returns projectiles from AI (especially for bosses)
-      const aiProjectiles = enemy.update(deltaTime, this.player, this.groundLevel, this.currentTime, this.worldWidth);
+      const aiProjectiles = enemy.update(adjustedDeltaTime, this.player, this.groundLevel, this.currentTime, this.worldWidth);
       
       // Enemy shooting - bosses shoot via their AI, non-bosses need explicit attack call
       let result = null;
@@ -2235,8 +2371,14 @@ class GameEngine {
       }
     });
     
-    // Update projectiles
-    this.projectiles.forEach(p => p.update(deltaTime));
+    // Update enemy projectiles with time slow
+    this.projectiles.forEach(p => {
+      if (p.isEnemyProjectile && this.player && this.player.hasTimeSlow) {
+        p.update(deltaTime * timeSlowMultiplier);
+      } else {
+        p.update(deltaTime);
+      }
+    });
     
     // Update pickups
     this.pickups.forEach(p => p.update(deltaTime));
@@ -2450,7 +2592,180 @@ class GameEngine {
           }
         }, 2000);
       }
+    } else if (this.mode === 'timeattack') {
+      // Update Time Attack mode timer
+      if (this.timeAttackMode.active) {
+        this.timeAttackMode.update(deltaTime, {
+          x: this.player.x,
+          y: this.player.y,
+          facing: this.player.facing
+        });
+      }
+      
+      // Check level completion
+      if (this.enemiesRemaining === 0 && this.timeAttackMode.active) {
+        const result = this.timeAttackMode.stop(true);
+        
+        // Show time attack result
+        this.particleSystem.createTextPopup(
+          this.player.x + this.player.width / 2,
+          this.player.y - 50,
+          result.medal ? `${result.medal.toUpperCase()} MEDAL!` : 'LEVEL COMPLETE!',
+          result.medal === 'gold' ? '#ffd700' : result.medal === 'silver' ? '#c0c0c0' : '#cd7f32'
+        );
+        
+        // Add score bonus
+        this.score += Math.floor(1000 - result.time * 10);
+        
+        // Progress to next level
+        if (this.currentLevel < this.maxLevel) {
+          this.currentLevel++;
+          this.setupTimeAttackLevel();
+        } else {
+          this.showVictoryScreen();
+        }
+      }
+    } else if (this.mode === 'bossrush') {
+      // Check boss defeated
+      if (this.enemiesRemaining === 0 && this.bossRushMode.active) {
+        const boss = this.enemies.find(e => e.isBoss);
+        const bossId = boss ? boss.bossId : this.bossRushMode.getCurrentBossId();
+        const result = this.bossRushMode.bossDefeated(bossId);
+        
+        if (result.completed) {
+          // All bosses defeated
+          this.score += Math.floor(10000 - result.totalTime * 10);
+          this.showVictoryScreen();
+        } else {
+          // Spawn next boss after delay
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            'BOSS DEFEATED!',
+            '#00ff00'
+          );
+          
+          // Heal player
+          this.player.heal(Math.floor(this.player.maxHealth * result.healthRefill));
+          
+          // Spawn power-up if awarded
+          if (result.powerUp) {
+            const pickup = new Pickup(this.player.x + 100, this.groundLevel - 30, result.powerUp);
+            this.pickups.push(pickup);
+            this.collisionSystem.add(pickup);
+          }
+          
+          // Spawn next boss after delay
+          setTimeout(() => {
+            if (this.state === 'playing' && this.bossRushMode.active) {
+              this.enemies = [];
+              this.spawnBossRushBoss();
+            }
+          }, 2000);
+        }
+      }
+    } else if (this.mode === 'horde') {
+      // Check wave completion
+      if (this.enemiesRemaining === 0 && this.hordeMode.active) {
+        const result = this.hordeMode.enemyKilled();
+        
+        if (result && result.waveComplete) {
+          // Wave complete
+          this.score += this.hordeMode.wave * 500;
+          
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            `WAVE ${result.wave} COMPLETE!`,
+            '#ff00ff'
+          );
+          
+          // Heal player between waves
+          this.player.heal(30);
+          
+          // Spawn next wave after delay
+          setTimeout(() => {
+            if (this.state === 'playing' && this.hordeMode.active) {
+              this.enemies = [];
+              this.spawnHordeWave();
+              this.spawnPickups();
+            }
+          }, 2000);
+        }
+      }
+    } else if (this.mode === 'onehit') {
+      // Check level completion
+      if (this.enemiesRemaining === 0 && this.oneHitMode.active) {
+        const result = this.oneHitMode.levelCompleted();
+        
+        this.score += 2000; // Bonus for surviving one-hit mode level
+        
+        if (result.hasNextLevel) {
+          // Progress to next level
+          this.currentLevel++;
+          
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            'LEVEL SURVIVED!',
+            '#00ff00'
+          );
+          
+          // Setup next level after delay
+          setTimeout(() => {
+            if (this.state === 'playing' && this.oneHitMode.active) {
+              this.enemies = [];
+              this.spawnCampaignEnemies();
+              this.spawnPickups();
+              // Apply one-hit mode to new enemies
+              this.enemies.forEach(enemy => this.oneHitMode.applyToEnemy(enemy));
+            }
+          }, 2000);
+        } else {
+          // All levels complete
+          this.showVictoryScreen();
+        }
+      }
     }
+  }
+  
+  /**
+   * Set up the next time attack level
+   */
+  setupTimeAttackLevel() {
+    // Clear old level entities
+    this.enemies = [];
+    this.projectiles = [];
+    this.pickups = [];
+    this.covers = [];
+    this.platforms = [];
+    this.slopes = [];
+    
+    // Reset player position
+    this.player.x = 100;
+    this.player.y = this.groundLevel - 50;
+    
+    // Spawn terrain
+    this.spawnCovers();
+    this.spawnLevelTerrain();
+    
+    // Spawn enemies
+    this.spawnCampaignEnemies();
+    this.spawnPickups();
+    
+    // Start time attack timer
+    this.timeAttackMode.start(this.currentLevel);
+    
+    // Heal player
+    this.player.heal(30);
+    
+    // Add spawn protection
+    this.player.invulnerable = true;
+    setTimeout(() => {
+      if (this.player && this.player.active) {
+        this.player.invulnerable = false;
+      }
+    }, 1500);
   }
   
   /**
@@ -3235,6 +3550,17 @@ class GameEngine {
         mode: this.mode,
         combo: this.combo
       });
+      
+      // Draw challenge mode HUD elements
+      if (this.mode === 'timeattack' && this.timeAttackMode.active) {
+        this.timeAttackMode.render(this.ctx, this.canvas.width);
+      } else if (this.mode === 'bossrush' && this.bossRushMode.active) {
+        this.bossRushMode.render(this.ctx, this.canvas.width);
+      } else if (this.mode === 'horde' && this.hordeMode.active) {
+        this.hordeMode.render(this.ctx, this.canvas.width);
+      } else if (this.mode === 'onehit' && this.oneHitMode.active) {
+        this.oneHitMode.render(this.ctx, this.canvas.width);
+      }
       
       // Draw achievement notifications (without camera transform)
       this.achievementSystem.render(this.ctx, 10, 60);

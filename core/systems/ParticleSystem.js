@@ -207,6 +207,33 @@ class ParticleSystem {
     }
   }
 
+  /**
+   * Create a visual effect for double jump
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   */
+  createJumpEffect(x, y) {
+    // Create particles in a downward semicircle
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.PI * (i / 9); // Spread from 0 to PI (downward semicircle)
+      const speed = 3 + Math.random() * 3;
+      const dx = Math.cos(angle) * speed - speed / 2;
+      const dy = Math.abs(Math.sin(angle)) * speed;
+      const particle = new Particle(x, y, dx, dy, '#66ccff', 300 + Math.random() * 200);
+      particle.size = 3 + Math.random() * 2;
+      this.particles.push(particle);
+    }
+    
+    // Add some sparkle particles
+    for (let i = 0; i < 5; i++) {
+      const dx = (Math.random() - 0.5) * 6;
+      const dy = Math.random() * 2;
+      const particle = new Particle(x, y, dx, dy, '#ffffff', 200);
+      particle.size = 2;
+      this.particles.push(particle);
+    }
+  }
+
   update(deltaTime) {
     this.particles = this.particles.filter(p => {
       p.update(deltaTime);
