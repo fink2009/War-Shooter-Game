@@ -5,6 +5,82 @@ All notable changes to War Shooter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2024 (Phase 4 Expansion)
+
+### Added
+- **Challenge Modes**: 4 new competitive game modes
+  - **Time Attack Mode**: Complete campaign levels as fast as possible
+    - Timer displayed prominently with millisecond precision
+    - Medal system: Gold (<3 min), Silver (<5 min), Bronze (<8 min)
+    - Ghost replay of personal best
+    - Style bonuses for no damage, melee only, and high combos
+    - Speedrun-friendly: skip cutscenes, instant respawn
+  - **Boss Rush Mode**: Fight all 4 bosses back-to-back
+    - Health refills to 50% between bosses
+    - Random power-up rewards after each boss
+    - Difficulty multipliers: 1x, 1.5x, 2x, 3x
+    - Individual and total time tracking
+    - Option to start from any unlocked boss
+  - **Horde Mode**: Endless waves of increasing difficulty
+    - Wave scaling: +10% enemy HP/damage per wave
+    - Elite spawn rate increases (10% → 50% by wave 20)
+    - Mini-boss every 5 waves, full boss every 10 waves
+    - Special modifiers unlock at wave milestones
+    - Shop between waves
+  - **One-Hit Mode**: Extreme difficulty mode
+    - Player has 1 HP (dies to any damage)
+    - All weapons one-shot enemies too
+    - Stealth heavily encouraged
+    - Ghost mode power-up spawns more frequently
+    - Unlockable rewards for completing levels
+
+- **Character Customization System**
+  - 8 skins per character with unique colors and particle trails
+    - Default: Original colors (always unlocked)
+    - Elite: Gold/yellow (unlock: beat campaign)
+    - Shadow: Black/purple (unlock: 50 stealth kills)
+    - Crimson: Red/black (unlock: 1000 kills)
+    - Arctic: White/blue (unlock: survive 20 waves)
+    - Desert: Tan/brown (unlock: beat time attack)
+    - Forest: Green/camo (unlock: beat boss rush)
+    - Neon: Bright colors (unlock: 10,000 coins)
+  - Custom player names (max 16 characters)
+  - Skin unlock progress tracking
+  - Unlock notification popups
+
+- **Dynamic Events System**: 8 random mid-game events
+  - **Supply Drop** (Positive): Parachute drops health/ammo/weapons
+  - **Enemy Reinforcements** (Negative): Extra wave of enemies spawns
+  - **Allied Support** (Positive): AI soldier assists for 60 seconds
+  - **Ambush** (Negative): Enemies spawn behind player in circle formation
+  - **Equipment Malfunction** (Negative): Random weapon jams for 15 seconds
+  - **Lucky Strike** (Positive): Next 10 kills guaranteed power-up drops
+  - **Heavy Assault** (Negative): All spawning enemies are Heavy type for 2 waves
+  - **Fog of War** (Negative): Minimap disabled for 45 seconds
+  - 15% chance per wave (starts wave 3), minimum 3 wave cooldown
+  - Visual/audio announcements for all events
+
+- **Statistics Tracking System**: Comprehensive stat tracking
+  - Combat stats: kills by enemy/weapon type, accuracy, combos
+  - Survival stats: deaths, waves survived, damage dealt/taken
+  - Progression stats: playtime, coins, upgrades, achievements
+  - Efficiency stats: favorite weapon/character, best times
+  - Milestone counters with achievement triggers
+  - Statistics menu with 4 category tabs
+  - Export stats as text file
+
+- **Leaderboard System**: Local leaderboards for all modes
+  - Top 10 scores per mode/level
+  - Player name, score, time, and date tracking
+  - Medal indicators for top 3 positions
+  - Mode-specific sorting (score, time, wave)
+
+### Changed
+- Updated main menu with Challenge Modes option
+- Added Statistics menu accessible from main menu
+- Extended config.js with Phase 4 configurations
+- Updated GameEngine with Phase 4 system integration
+
 ## [1.3.0] - 2024 (Phase 3 Expansion)
 
 ### Added

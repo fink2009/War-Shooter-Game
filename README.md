@@ -2,7 +2,7 @@
 
 A browser-based 16-bit arcade side-scrolling shooter game built with vanilla JavaScript and HTML5 Canvas. Features pixel-art style graphics, multiple game modes, and comprehensive gameplay systems.
 
-![War Shooter](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![War Shooter](https://img.shields.io/badge/version-1.4.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Chromebook-orange.svg)
 
@@ -11,6 +11,11 @@ A browser-based 16-bit arcade side-scrolling shooter game built with vanilla Jav
 ### Game Modes
 - **Campaign Mode**: 10-level story-driven campaign with 4 unique boss battles
 - **Survival Mode**: Endless wave-based survival with increasing difficulty
+- **Challenge Modes** (NEW in v1.4):
+  - **Time Attack**: Speedrun levels for medals (Gold <3min, Silver <5min, Bronze <8min)
+  - **Boss Rush**: Fight all 4 bosses back-to-back with health refills
+  - **Horde Mode**: Endless waves with scaling difficulty and modifiers
+  - **One-Hit Mode**: Extreme difficulty - one shot kills all
 - **Multiplayer Mode**: WebRTC-based peer-to-peer co-op and versus modes (Coming Soon)
 
 ### Characters
@@ -177,6 +182,51 @@ Five additional power-ups:
 - **Grappling Hook**: 20s/10 uses, 300px range, swing physics (brown)
 - **Ghost Mode**: 4s duration, pass through enemies/bullets (white)
 - **Magnet**: 10s duration, 200px auto-collect, 1.5x coins (pink)
+
+### Phase 4 Features (NEW)
+
+#### Challenge Modes
+Four new competitive game modes:
+- **Time Attack**: Complete levels as fast as possible
+  - Medals: Gold (<3 min), Silver (<5 min), Bronze (<8 min)
+  - Ghost replay of personal best
+  - Style bonuses for no damage, melee only, high combos
+- **Boss Rush**: Fight all 4 bosses back-to-back
+  - Health refills to 50% between bosses
+  - Random power-up rewards
+  - Difficulty multipliers: 1x, 1.5x, 2x, 3x
+- **Horde Mode**: Endless waves with increasing difficulty
+  - Wave scaling: +10% per wave
+  - Mini-boss every 5 waves, boss every 10 waves
+  - Special modifiers unlock at milestones
+- **One-Hit Mode**: Extreme difficulty
+  - Player has 1 HP
+  - All enemies also die in one hit
+  - Stealth gameplay encouraged
+
+#### Character Customization
+- 8 skins per character with unlock requirements
+  - Default, Elite (gold), Shadow (purple), Crimson (red)
+  - Arctic (white), Desert (tan), Forest (green), Neon (bright)
+- Custom player names (max 16 characters)
+- Skin-specific particle trails
+
+#### Dynamic Events
+Random mid-game events that change gameplay:
+- Supply Drop: Health/ammo/weapon drops
+- Enemy Reinforcements: Extra enemies spawn
+- Allied Support: AI soldier assists for 60s
+- Ambush: Enemies spawn behind player
+- Equipment Malfunction: Random weapon jams
+- Lucky Strike: Guaranteed power-up drops
+- Heavy Assault: All enemies are Heavy type
+- Fog of War: Minimap disabled
+
+#### Statistics & Leaderboards
+- Comprehensive stat tracking across all modes
+- Combat, survival, progression, and efficiency stats
+- Local leaderboards for all modes
+- Statistics menu with 4 category tabs
 
 ## 🎯 How to Play
 
