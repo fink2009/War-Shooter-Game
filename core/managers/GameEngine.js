@@ -499,14 +499,19 @@ class GameEngine {
     this.mountedWeapons = [];
     
     // Phase 5: Initialize biome system based on current level
-    const levelConfig = GameConfig.CAMPAIGN_LEVELS[this.currentLevel - 1];
+    const levelIndex = Math.min(this.currentLevel - 1, GameConfig.CAMPAIGN_LEVELS.length - 1);
+    const levelConfig = levelIndex >= 0 ? GameConfig.CAMPAIGN_LEVELS[levelIndex] : null;
     const biome = levelConfig && levelConfig.biome ? levelConfig.biome : 'DEFAULT';
-    this.biomeSystem.init(biome);
+    if (this.biomeSystem) {
+      this.biomeSystem.init(biome);
+    }
     
     // Set weather based on biome
-    const recommendedWeather = this.biomeSystem.getRecommendedWeather();
-    if (recommendedWeather !== 'CLEAR') {
-      this.weatherSystem.setWeather(recommendedWeather);
+    if (this.biomeSystem && this.weatherSystem) {
+      const recommendedWeather = this.biomeSystem.getRecommendedWeather();
+      if (recommendedWeather !== 'CLEAR') {
+        this.weatherSystem.setWeather(recommendedWeather);
+      }
     }
     
     // Spawn cover objects
@@ -2363,9 +2368,12 @@ class GameEngine {
     }
     
     // Update enemies
+    // Phase 5 bosses start at bossId 4 (Sandworm=4, FrostTitan=5, MechCommander=6, HellKnight=7)
+    const PHASE_5_BOSS_START_ID = 4;
+    
     this.enemies.forEach(enemy => {
       // Phase 5: Handle new boss types with different update signatures
-      if (enemy.bossId >= 4 && enemy.isBoss) {
+      if (enemy.bossId >= PHASE_5_BOSS_START_ID && enemy.isBoss) {
         // Phase 5 bosses (Sandworm, FrostTitan, MechCommander, HellKnight)
         // They have update(deltaTime, player, enemies, projectiles) signature
         enemy.update(deltaTime, this.player, this.enemies, this.projectiles);
