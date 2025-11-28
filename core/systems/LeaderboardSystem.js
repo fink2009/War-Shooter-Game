@@ -98,22 +98,35 @@ class LeaderboardSystem {
    * @returns {Array} Leaderboard entries
    */
   getLeaderboard(mode, category) {
-    if (!this.leaderboards[mode]) return [];
-    
-    // Handle nested categories (e.g., byLevel.1)
-    if (category.includes('.')) {
-      const parts = category.split('.');
-      let current = this.leaderboards[mode];
-      for (const part of parts) {
-        if (!current[part]) {
-          current[part] = [];
-        }
-        current = current[part];
-      }
-      return Array.isArray(current) ? current : [];
+    // Protect against prototype pollution
+    if (!this.isSafePropertyName(mode) || !this.isSafePropertyName(category)) {
+      return [];
     }
     
-    return this.leaderboards[mode][category] || [];
+    if (!Object.prototype.hasOwnProperty.call(this.leaderboards, mode)) {
+      return [];
+    }
+    
+    const modeBoard = this.leaderboards[mode];
+    if (!modeBoard || !Object.prototype.hasOwnProperty.call(modeBoard, category)) {
+      return [];
+    }
+    
+    const result = modeBoard[category];
+    return Array.isArray(result) ? result : [];
+  }
+
+  /**
+   * Check if a property name is safe (not a prototype pollution vector)
+   * @param {string} name - Property name to check
+   * @returns {boolean} Whether the property name is safe
+   */
+  isSafePropertyName(name) {
+    return name !== '__proto__' && 
+           name !== 'constructor' && 
+           name !== 'prototype' &&
+           typeof name === 'string' &&
+           name.length > 0;
   }
 
   /**
@@ -123,23 +136,25 @@ class LeaderboardSystem {
    * @param {Array} data - Leaderboard data
    */
   setLeaderboard(mode, category, data) {
-    if (!this.leaderboards[mode]) {
-      this.leaderboards[mode] = {};
+    // Protect against prototype pollution
+    if (!this.isSafePropertyName(mode)) {
+      return;
     }
     
-    // Handle nested categories
-    if (category.includes('.')) {
-      const parts = category.split('.');
-      let current = this.leaderboards[mode];
-      for (let i = 0; i < parts.length - 1; i++) {
-        if (!current[parts[i]]) {
-          current[parts[i]] = {};
-        }
-        current = current[parts[i]];
-      }
-      current[parts[parts.length - 1]] = data;
-    } else {
-      this.leaderboards[mode][category] = data;
+    if (!Object.prototype.hasOwnProperty.call(this.leaderboards, mode)) {
+      this.leaderboards[mode] = Object.create(null);
+    }
+    
+    // Handle nested categories - for simplicity, we don't support nested categories
+    // to avoid prototype pollution risks. Use flat category names instead.
+    if (!this.isSafePropertyName(category)) {
+      return;
+    }
+    
+    // Use a safe assignment pattern
+    const modeBoard = this.leaderboards[mode];
+    if (modeBoard && typeof modeBoard === 'object') {
+      modeBoard[category] = data;
     }
   }
 
