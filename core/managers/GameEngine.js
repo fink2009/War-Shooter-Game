@@ -547,6 +547,10 @@ class GameEngine {
       this.dynamicEventSystem.start();
     } else if (mode === 'campaign') {
       this.spawnCampaignEnemies();
+      // Start story briefing for campaign levels
+      if (this.storyManager && this.currentLevel > 1) {
+        this.storyManager.startBriefing(this.currentLevel);
+      }
     } else if (mode === 'timeattack') {
       // Time Attack Mode: Start the timer and spawn campaign enemies
       this.timeAttackMode.start(this.currentLevel);
@@ -2113,6 +2117,10 @@ class GameEngine {
               });
             } else {
               this.shotsFired++;
+              // Track shot in statistics system
+              if (this.statisticsSystem) {
+                this.statisticsSystem.trackShotFired();
+              }
               this.projectiles.push(result);
               this.collisionSystem.add(result);
             }
@@ -2679,6 +2687,14 @@ class GameEngine {
     this.noiseSystem.update(deltaTime, this.enemies);
     this.formationSystem.update(deltaTime);
     
+    // Auto-assign formations to groups of enemies periodically (every 5 seconds)
+    if (this.player && this.player.active && this.enemies.length >= 3) {
+      if (!this.lastFormationCheck || this.currentTime - this.lastFormationCheck > 5000) {
+        this.formationSystem.autoAssignFormations(this.enemies, this.player);
+        this.lastFormationCheck = this.currentTime;
+      }
+    }
+    
     // Phase 3: Update weather system
     if (this.weatherSystem) {
       this.weatherSystem.update(deltaTime, this.worldWidth, this.player, this.camera);
@@ -2747,6 +2763,38 @@ class GameEngine {
     // Check achievements
     this.achievementSystem.update(this);
     
+    // Check skin unlocks based on statistics
+    if (this.skinSystem && this.statisticsSystem) {
+      const stats = this.statisticsSystem.getStatsSummary();
+      if (stats) {
+        const newUnlocks = this.skinSystem.checkUnlocks({
+          campaignCompleted: stats.progression.campaignCompleted,
+          stealthKills: stats.combat.stealthKills,
+          totalKills: stats.combat.totalKills,
+          highestHordeWave: stats.survival.highestWave,
+          timeAttackCompleted: this.timeAttackMode && this.timeAttackMode.completed,
+          bossRushCompleted: this.bossRushMode && this.bossRushMode.completed,
+          totalCoinsEarned: stats.progression.coinsEarned
+        });
+        // Show unlock notifications for any newly unlocked skins
+        if (newUnlocks && newUnlocks.length > 0) {
+          newUnlocks.forEach(skin => {
+            this.particleSystem.createTextPopup(
+              this.player.x + this.player.width / 2,
+              this.player.y - 80,
+              `SKIN UNLOCKED: ${skin.name}!`,
+              skin.colors.accent
+            );
+          });
+        }
+      }
+    }
+    
+    // Render particle trail for skin effects
+    if (this.skinSystem && this.player && this.player.active) {
+      this.skinSystem.renderParticleTrail(this.particleSystem, this.player, deltaTime);
+    }
+    
     // Update camera
     this.camera.update();
     
@@ -2777,6 +2825,12 @@ class GameEngine {
         if (this.currencySystem) {
           const coinBonus = this.currencySystem.calculateWaveBonus(this.wave);
           this.currencySystem.addCoins(coinBonus);
+          
+          // Track coins earned in statistics
+          if (this.statisticsSystem) {
+            this.statisticsSystem.trackCoinsEarned(coinBonus);
+          }
+          
           this.particleSystem.createTextPopup(
             this.player.x + this.player.width / 2,
             this.player.y - 50,
@@ -2793,6 +2847,11 @@ class GameEngine {
         
         // Auto-save after wave completion
         this.autoSave(0);
+        
+        // Track wave completion in statistics
+        if (this.statisticsSystem) {
+          this.statisticsSystem.trackWaveComplete(this.wave, this.kills);
+        }
         
         this.wave++;
         
@@ -3457,6 +3516,12 @@ class GameEngine {
             this.shotsHit++;
             this.totalDamageDealt += proj.damage;
             
+            // Track damage in statistics system
+            if (this.statisticsSystem) {
+              this.statisticsSystem.trackDamageDealt(proj.damage);
+              this.statisticsSystem.trackShotHit();
+            }
+            
             if (killed) {
               this.kills++;
               
@@ -3612,6 +3677,11 @@ class GameEngine {
             const actualDamage = this.player.isBlocking ? Math.floor(proj.damage * 0.25) : proj.damage;
             this.totalDamageTaken += actualDamage;
             this.damageTakenThisWave += actualDamage;
+            
+            // Track damage taken in statistics
+            if (this.statisticsSystem) {
+              this.statisticsSystem.trackDamageTaken(actualDamage);
+            }
             
             if (this.player.isBlocking) {
               // Blocked hit
@@ -3910,6 +3980,11 @@ class GameEngine {
       // Draw tutorial overlay when active
       if (this.tutorialManager && this.tutorialManager.isActive) {
         this.tutorialManager.render(this.ctx);
+      }
+      
+      // Draw story dialogue in campaign mode
+      if (this.mode === 'campaign' && this.storyManager && this.storyManager.isShowingDialogue) {
+        this.storyManager.render(this.ctx);
       }
     }
   }
