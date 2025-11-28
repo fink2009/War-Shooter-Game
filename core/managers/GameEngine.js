@@ -49,6 +49,16 @@ class GameEngine {
     this.vehicles = [];
     this.mountedWeapons = [];
     
+    // Phase 4: Challenge Modes & Systems
+    this.timeAttackMode = new TimeAttackMode();
+    this.bossRushMode = new BossRushMode();
+    this.hordeMode = new HordeMode();
+    this.oneHitMode = new OneHitMode();
+    this.skinSystem = new SkinSystem();
+    this.dynamicEventSystem = new DynamicEventSystem();
+    this.statisticsSystem = new StatisticsSystem();
+    this.leaderboardSystem = new LeaderboardSystem();
+    
     // Phase 2: UI Menus
     this.upgradeMenu = new UpgradeMenu(canvas);
     this.shopMenu = new ShopMenu(canvas);

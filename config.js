@@ -920,6 +920,82 @@ const GameConfig = {
       coinMultiplier: 1.5,
       color: '#ff3366' // pink/magenta
     }
+  },
+
+  // Phase 4: Challenge Modes Configuration
+  CHALLENGE_MODES: {
+    TIME_ATTACK: {
+      medals: { gold: 180, silver: 300, bronze: 480 }, // seconds
+      skipCutscenes: true,
+      instantRespawn: false,
+      ghostReplay: true
+    },
+    BOSS_RUSH: {
+      healthRefillPercent: 0.5,
+      difficultyMultipliers: [1.0, 1.5, 2.0, 3.0],
+      totalBosses: 4,
+      randomPowerUp: true
+    },
+    HORDE: {
+      waveScaling: 0.1, // +10% per wave
+      eliteRampup: { start: 0.1, max: 0.5, reachAtWave: 20 },
+      miniBossInterval: 5,
+      bossInterval: 10,
+      shopBetweenWaves: true
+    },
+    ONE_HIT: {
+      playerHP: 1,
+      enemyHealthMultiplier: 0.01, // one-shot enemies
+      ghostModeSpawnRate: 0.2,
+      noCheckpoints: true,
+      noRevives: true
+    }
+  },
+
+  // Phase 4: Character Skins Configuration
+  SKINS: {
+    DEFAULT: { id: 'default', color: 'original', unlocked: true, requirement: null },
+    ELITE: { id: 'elite', color: 'gold', unlocked: false, requirement: 'beatCampaign' },
+    SHADOW: { id: 'shadow', color: 'purple', unlocked: false, requirement: 'stealth50' },
+    CRIMSON: { id: 'crimson', color: 'red', unlocked: false, requirement: 'kills1000' },
+    ARCTIC: { id: 'arctic', color: 'white', unlocked: false, requirement: 'wave20' },
+    DESERT: { id: 'desert', color: 'tan', unlocked: false, requirement: 'timeAttack' },
+    FOREST: { id: 'forest', color: 'green', unlocked: false, requirement: 'bossRush' },
+    NEON: { id: 'neon', color: 'bright', unlocked: false, requirement: 'coins10000' }
+  },
+
+  // Phase 4: Dynamic Events Configuration
+  DYNAMIC_EVENTS: {
+    chance: 0.15, // 15% per wave
+    cooldown: 3, // minimum waves between events
+    minWave: 3, // no events before wave 3
+    positiveWeight: 0.4, // 40% positive, 60% negative
+    SUPPLY_DROP: { type: 'positive', duration: 60, warningTime: 10 },
+    REINFORCEMENTS: { type: 'negative', multiplier: 2 },
+    ALLY_SUPPORT: { type: 'positive', duration: 60, allyHP: 150, allyDamage: 15 },
+    AMBUSH: { type: 'negative', enemyCount: 8, warningTime: 3 },
+    MALFUNCTION: { type: 'negative', duration: 15 },
+    LUCKY_STRIKE: { type: 'positive', duration: 30, kills: 10 },
+    HEAVY_ASSAULT: { type: 'negative', waves: 2 },
+    FOG_OF_WAR: { type: 'negative', duration: 45 }
+  },
+
+  // Phase 4: Statistics Tracking Configuration
+  STATISTICS: {
+    saveInterval: 5, // seconds
+    milestones: {
+      kills: [100, 500, 1000, 5000, 10000],
+      waves: [10, 25, 50, 100],
+      playtime: [1, 5, 10, 50, 100] // hours
+    },
+    trackingEnabled: true
+  },
+
+  // Phase 4: Leaderboard Configuration
+  LEADERBOARDS: {
+    maxEntries: 10,
+    localStorageKey: 'gameLeaderboards',
+    categories: ['survival', 'campaign', 'timeAttack', 'bossRush', 'horde', 'oneHit']
   }
 };
 
@@ -958,3 +1034,8 @@ Object.freeze(GameConfig.FLASHLIGHT);
 Object.freeze(GameConfig.VEHICLES);
 Object.freeze(GameConfig.MOUNTED_WEAPONS);
 Object.freeze(GameConfig.POWERUPS);
+Object.freeze(GameConfig.CHALLENGE_MODES);
+Object.freeze(GameConfig.SKINS);
+Object.freeze(GameConfig.DYNAMIC_EVENTS);
+Object.freeze(GameConfig.STATISTICS);
+Object.freeze(GameConfig.LEADERBOARDS);
