@@ -2472,8 +2472,8 @@ class GameEngine {
           }
         }
         
-        // Phase 3: Mounted weapon mount/dismount (R key - changed from E to avoid conflict with special ability)
-        if (this.inputManager.wasKeyPressed('r') || this.inputManager.wasKeyPressed('R')) {
+        // Phase 3: Mounted weapon mount/dismount (X key - changed to avoid conflict with block)
+        if (this.inputManager.wasKeyPressed('x') || this.inputManager.wasKeyPressed('X')) {
           // Check if player is mounted
           if (this.player.isMounted && this.player.currentMountedWeapon) {
             // Dismount
@@ -2539,8 +2539,8 @@ class GameEngine {
         this.devToolInstantKillAll();
       }
       
-      // Dev Tool: Toggle Invincibility (G key for God mode)
-      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G'))) {
+      // Dev Tool: Toggle Invincibility (P key for God mode - changed from G to avoid conflict with vehicle entry)
+      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('p') || this.inputManager.wasKeyPressed('P'))) {
         this.devToolToggleInvincibility();
       }
       
