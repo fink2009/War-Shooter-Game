@@ -2,9 +2,9 @@
 
 A browser-based 16-bit arcade side-scrolling shooter game built with vanilla JavaScript and HTML5 Canvas. Features pixel-art style graphics, multiple game modes, and comprehensive gameplay systems.
 
-![War Shooter](https://img.shields.io/badge/version-1.5.0-blue.svg)
+![War Shooter](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Chromebook-orange.svg)
+![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Mobile%20%7C%20Chromebook-orange.svg)
 
 ## 🎮 Features
 
@@ -244,6 +244,65 @@ Random mid-game events that change gameplay:
 - Combat, survival, progression, and efficiency stats
 - Local leaderboards for all modes
 - Statistics menu with 4 category tabs
+
+### Phase 6 Features (NEW - v2.0.0)
+
+#### Mobile Touch Controls
+Full touch-screen support for mobile devices:
+- **Virtual Joystick**: 150px radius, 360-degree movement
+- **Action Buttons**: Fire, Jump, Dodge, Ability, Reload, Weapon Switch
+- **Dual-Stick Mode**: Optional right joystick for aiming
+- **Auto-Aim Assist**: Sticky targeting for touch players
+- **Gesture Controls**: Pinch to zoom, long-press for interact
+- **Responsive UI**: Scales to screen size, adjustable button size and opacity
+
+#### Photo Mode
+Freeze gameplay and capture screenshots:
+- Press **P** to enter photo mode
+- **Free Camera**: WASD to move, Q/E to zoom, Z/X to tilt
+- **8 Visual Filters**: None, Black & White, Sepia, High Contrast, Vintage, Neon, Pixel Art, Vignette
+- **Camera Tools**: FOV slider (60°-120°), grid overlay (rule of thirds), depth of field
+- **Screenshot System**: Auto-filename with timestamp, multiple resolution options
+- **HUD Toggle**: Show/hide UI elements individually
+
+#### Daily Challenge System
+Procedurally generated daily missions:
+- **Challenge Types**: Kill, Survival, Speedrun, Skill challenges
+- **Seed-Based**: Same challenge for all players each day
+- **3 Difficulty Tiers**: Bronze (500 coins), Silver (1000 coins), Gold (2000 coins)
+- **Progress Tracking**: Real-time progress display with tier markers
+- **Challenge History**: View last 7 days of completed challenges
+
+#### Companion AI System
+AI teammates that assist in battle:
+- **Soldier Companion**: 200 HP, uses rifle, can revive player (60s cooldown)
+- **Medic Companion**: 150 HP, heals player 20 HP every 10 seconds
+- **Heavy Companion**: 300 HP, draws enemy fire, retreats when low HP
+- **Scout Companion**: 100 HP, fast movement, marks enemies on minimap
+- **Command Wheel**: Follow/Stay/Attack commands
+- **XP System**: Companions level up and gain stat boosts
+
+#### Dual-Wielding System
+Hold two pistols for double firepower:
+- Press **Z** to toggle dual-wield (pistols only)
+- **2x Fire Rate**: Alternating shots from each gun
+- **Penalties**: -30% accuracy, -50% reload speed
+- **Restrictions**: Cannot aim down sights or use melee
+
+#### Weapon Crafting System
+Combine parts to create custom weapons:
+- **4 Part Types**: Barrel, Receiver, Stock, Magazine
+- **5 Rarity Tiers**: Common (+5%), Uncommon (+10%), Rare (+15%), Epic (+25%), Legendary (+40%)
+- **Special Effects** (Legendary): Fire, Explosive, Piercing, Vampire, Lightning rounds
+- **Crafting Station**: Combine parts, name weapons, save up to 5 customs
+- **Share Codes**: 6-digit codes to share weapon designs
+
+#### 5 New Weapons
+- **SMG**: High fire rate (80ms), 40 rounds, 12 damage
+- **Crossbow**: Silent, high damage (80), retrievable bolts
+- **Chainsaw**: Continuous melee damage (30), fuel system
+- **Freeze Ray**: Slows enemies, freezes at max slow
+- **Lightning Gun**: Chain lightning between 3 enemies
 
 ## 🎯 How to Play
 
