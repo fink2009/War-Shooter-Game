@@ -2731,6 +2731,11 @@ class GameEngine {
       this.tutorialManager.update(deltaTime, this.inputManager);
     }
     
+    // Update story manager dialogue system (campaign mode)
+    if (this.mode === 'campaign' && this.storyManager && this.storyManager.isShowingDialogue) {
+      this.storyManager.update(deltaTime, this.inputManager);
+    }
+    
     // Update particles
     this.particleSystem.update(deltaTime);
     
