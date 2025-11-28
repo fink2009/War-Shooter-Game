@@ -458,9 +458,9 @@ class DynamicEventSystem {
       if (drop.landed && !drop.collected && gameEngine.player) {
         const dx = (drop.x + drop.width / 2) - (gameEngine.player.x + gameEngine.player.width / 2);
         const dy = (drop.y + drop.height / 2) - (gameEngine.player.y + gameEngine.player.height / 2);
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const distSquared = dx * dx + dy * dy;
         
-        if (dist < 50) {
+        if (distSquared < 2500) { // 50 * 50 = 2500
           this.collectSupplyDrop(drop, gameEngine);
         }
       }

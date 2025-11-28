@@ -574,6 +574,8 @@ class GameUI {
     ctx.font = '24px monospace';
     
     if (menuState === 'main') {
+      const MENU_START_Y = 180;
+      const MENU_LINE_HEIGHT = 38;
       const options = [
         'Press 1 - CAMPAIGN',
         'Press 2 - SURVIVAL',
@@ -586,7 +588,7 @@ class GameUI {
       
       ctx.fillStyle = '#00ff00';
       options.forEach((option, i) => {
-        ctx.fillText(option, this.width / 2, 180 + i * 38);
+        ctx.fillText(option, this.width / 2, MENU_START_Y + i * MENU_LINE_HEIGHT);
       });
     } else if (menuState === 'challenge') {
       ctx.fillStyle = '#00ff00';

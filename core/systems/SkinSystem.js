@@ -308,11 +308,14 @@ class SkinSystem {
 
   /**
    * Basic profanity filter
+   * Note: This is a minimal filter for the game. For production use,
+   * consider using a more comprehensive filtering library.
    * @param {string} text - Text to filter
    * @returns {string} Filtered text
    */
   filterProfanity(text) {
-    // Very basic filter - replace common bad words
+    // Basic filter - replace common inappropriate words
+    // This is intentionally minimal for a game context
     const badWords = ['damn', 'hell', 'crap'];
     let filtered = text;
     

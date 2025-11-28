@@ -220,7 +220,7 @@ class StatisticsSystem {
     
     // Track by weapon type
     if (weapon) {
-      const weaponName = weapon.name.toLowerCase().replace(' ', '');
+      const weaponName = weapon.name.toLowerCase().replace(/ /g, '');
       if (stats.combat.killsByWeaponType[weaponName] !== undefined) {
         stats.combat.killsByWeaponType[weaponName]++;
       }

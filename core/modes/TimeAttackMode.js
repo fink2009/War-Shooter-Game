@@ -114,7 +114,9 @@ class TimeAttackMode {
     this.elapsedTime = (performance.now() - this.startTime - this.pausedTime) / 1000;
     
     // Record ghost data every 100ms
-    if (playerData && this.recordingData.length < 6000) { // Max 10 minutes
+    // Max 10 minutes of recording (10 min * 60 sec * 10 samples/sec = 6000 samples)
+    const MAX_GHOST_SAMPLES = 6000;
+    if (playerData && this.recordingData.length < MAX_GHOST_SAMPLES) {
       const lastRecord = this.recordingData[this.recordingData.length - 1];
       if (!lastRecord || this.elapsedTime - lastRecord.time >= 0.1) {
         this.recordingData.push({
