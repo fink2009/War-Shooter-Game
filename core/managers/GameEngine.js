@@ -693,7 +693,14 @@ class GameEngine {
    * @param {number} level - Current level
    */
   spawnVehicles(mode, level) {
+    // Preserve the player's current vehicle if they're in one
+    const playerVehicle = this.player && this.player.isInVehicle ? this.player.currentVehicle : null;
     this.vehicles = [];
+    
+    // Re-add player's vehicle to the array if they're still using it
+    if (playerVehicle && !playerVehicle.isDestroyed) {
+      this.vehicles.push(playerVehicle);
+    }
     
     // Vehicles spawn in campaign mode starting from level 3
     if (mode === 'campaign' && level >= 3) {
@@ -723,7 +730,14 @@ class GameEngine {
    * @param {number} level - Current level
    */
   spawnMountedWeapons(mode, level) {
+    // Preserve the player's current mounted weapon if they're mounted
+    const playerMountedWeapon = this.player && this.player.isMounted ? this.player.currentMountedWeapon : null;
     this.mountedWeapons = [];
+    
+    // Re-add player's mounted weapon to the array if they're still using it
+    if (playerMountedWeapon && playerMountedWeapon.active) {
+      this.mountedWeapons.push(playerMountedWeapon);
+    }
     
     // Mounted weapons in campaign mode
     if (mode === 'campaign') {
@@ -2431,8 +2445,8 @@ class GameEngine {
           this.audioManager.playSound('weapon_switch', 0.3);
         }
         
-        // Phase 3: Vehicle enter/exit (F key)
-        if (this.inputManager.wasKeyPressed('f') || this.inputManager.wasKeyPressed('F')) {
+        // Phase 3: Vehicle enter/exit (G key - changed from F to avoid conflict with melee)
+        if (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G')) {
           // Check if player is in a vehicle
           if (this.player.isInVehicle && this.player.currentVehicle) {
             // Exit vehicle
@@ -2458,8 +2472,8 @@ class GameEngine {
           }
         }
         
-        // Phase 3: Mounted weapon mount/dismount (E key when near mounted weapon)
-        if (this.inputManager.wasKeyPressed('e') || this.inputManager.wasKeyPressed('E')) {
+        // Phase 3: Mounted weapon mount/dismount (R key - changed from E to avoid conflict with special ability)
+        if (this.inputManager.wasKeyPressed('r') || this.inputManager.wasKeyPressed('R')) {
           // Check if player is mounted
           if (this.player.isMounted && this.player.currentMountedWeapon) {
             // Dismount
