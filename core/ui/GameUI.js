@@ -613,7 +613,7 @@ class GameUI {
     
     if (menuState === 'main') {
       const MENU_START_Y = 180;
-      const MENU_LINE_HEIGHT = 38;
+      const MENU_LINE_HEIGHT = 34;
       const options = [
         'Press 1 - CAMPAIGN',
         'Press 2 - SURVIVAL',
@@ -621,13 +621,17 @@ class GameUI {
         'Press 4 - SETTINGS',
         'Press 5 - CONTROLS',
         'Press 6 - STATISTICS',
-        'Press 7 - HIGH SCORES'
+        'Press 7 - HIGH SCORES',
+        'Press 8 - TUTORIAL',
+        'Press 9 - SKINS'
       ];
       
       ctx.fillStyle = '#00ff00';
       options.forEach((option, i) => {
         ctx.fillText(option, this.width / 2, MENU_START_Y + i * MENU_LINE_HEIGHT);
       });
+    } else if (menuState === 'skins') {
+      this.drawSkinsMenu(ctx);
     } else if (menuState === 'challenge') {
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 32px monospace';
@@ -1204,6 +1208,86 @@ class GameUI {
         y += 30;
         ctx.fillText(`Most Kills in Wave: ${stats.efficiency.mostKillsInWave}`, leftX, y);
       }
+    }
+    
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#888';
+    ctx.font = '16px monospace';
+    ctx.fillText('Press ESC to go back', this.width / 2, this.height - 50);
+  }
+
+  /**
+   * Draw the skins customization menu
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  drawSkinsMenu(ctx) {
+    ctx.fillStyle = '#00ff00';
+    ctx.font = 'bold 32px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CHARACTER SKINS', this.width / 2, 80);
+    
+    const skinSystem = window.game ? window.game.skinSystem : null;
+    
+    if (!skinSystem) {
+      ctx.fillStyle = '#888';
+      ctx.font = '18px monospace';
+      ctx.fillText('Skin system not available', this.width / 2, 200);
+    } else {
+      const allSkins = skinSystem.getAllSkins();
+      const startY = 130;
+      const skinHeight = 60;
+      const columns = 2;
+      const columnWidth = 400;
+      
+      allSkins.forEach((skin, index) => {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const x = (this.width / 2 - columnWidth) + col * columnWidth;
+        const y = startY + row * skinHeight;
+        
+        // Skin box
+        ctx.fillStyle = skin.unlocked ? 'rgba(0, 100, 0, 0.3)' : 'rgba(50, 50, 50, 0.3)';
+        ctx.fillRect(x, y, columnWidth - 20, skinHeight - 10);
+        
+        // Skin name
+        ctx.fillStyle = skin.unlocked ? skin.colors.accent : '#666666';
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(skin.name.toUpperCase(), x + 10, y + 20);
+        
+        // Skin description
+        ctx.fillStyle = skin.unlocked ? '#ffffff' : '#888888';
+        ctx.font = '12px monospace';
+        ctx.fillText(skin.description, x + 10, y + 38);
+        
+        // Unlock status / requirement
+        if (!skin.unlocked && skin.requirement) {
+          ctx.fillStyle = '#ffaa00';
+          ctx.font = '11px monospace';
+          ctx.fillText(`🔒 ${skin.requirement.description}`, x + 10, y + 52);
+          
+          // Progress if available
+          if (skin.progress) {
+            const progressText = `${skin.progress.current}/${skin.progress.target}`;
+            ctx.fillStyle = '#888';
+            ctx.fillText(progressText, x + columnWidth - 80, y + 52);
+          }
+        } else if (skin.unlocked) {
+          ctx.fillStyle = '#00ff00';
+          ctx.font = '11px monospace';
+          ctx.fillText('✓ UNLOCKED', x + 10, y + 52);
+        }
+        
+        // Color preview
+        const previewX = x + columnWidth - 60;
+        const previewY = y + 10;
+        ctx.fillStyle = skin.colors.primary;
+        ctx.fillRect(previewX, previewY, 15, 30);
+        ctx.fillStyle = skin.colors.secondary;
+        ctx.fillRect(previewX + 15, previewY, 15, 30);
+        ctx.fillStyle = skin.colors.accent;
+        ctx.fillRect(previewX + 30, previewY, 10, 30);
+      });
     }
     
     ctx.textAlign = 'center';

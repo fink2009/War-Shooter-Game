@@ -440,6 +440,16 @@ class GameEngine {
     // Create player with difficulty modifiers
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
     
+    // Apply skin system customization to player
+    if (this.skinSystem) {
+      this.skinSystem.applySkinToPlayer(this.player, character);
+    }
+    
+    // Start statistics tracking session
+    if (this.statisticsSystem) {
+      this.statisticsSystem.startSession();
+    }
+    
     // Apply difficulty modifiers to player
     if (this.difficulty === 'baby') {
       this.player.maxHealth = Math.floor(this.player.maxHealth * 5); // Very high health for baby mode
@@ -2040,6 +2050,19 @@ class GameEngine {
       } else if (this.inputManager.wasKeyPressed('7')) {
         this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'highscores';
+      } else if (this.inputManager.wasKeyPressed('8')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        // Start tutorial
+        this.tutorialManager.start();
+      } else if (this.inputManager.wasKeyPressed('9')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'skins';
+      }
+    } else if (this.menuState === 'skins') {
+      // Handle skins menu
+      if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_back', 0.5);
+        this.menuState = 'main';
       }
     } else if (this.state === 'playing') {
       // Player controls
@@ -2550,6 +2573,24 @@ class GameEngine {
       this.audioManager.stopMusic();
       this.audioManager.playMusic('gameover');
       
+      // Track death in statistics system
+      if (this.statisticsSystem) {
+        this.statisticsSystem.trackDeath();
+        this.statisticsSystem.endSession();
+      }
+      
+      // Submit score to leaderboard
+      if (this.leaderboardSystem) {
+        this.leaderboardSystem.submitScore(this.mode, 'byScore', {
+          name: this.player.displayName || 'Player',
+          score: this.score,
+          wave: this.wave,
+          level: this.currentLevel,
+          character: this.player.characterType,
+          difficulty: this.difficulty
+        });
+      }
+      
       this.state = 'gameover';
       this.menuState = 'gameover';
       this.ui.setLastScore(this.score);
@@ -2681,6 +2722,11 @@ class GameEngine {
     // Phase 3: Update dynamic event system
     if (this.dynamicEventSystem && this.dynamicEventSystem.active) {
       this.dynamicEventSystem.update(deltaTime, this);
+    }
+    
+    // Update tutorial system
+    if (this.tutorialManager && this.tutorialManager.isActive) {
+      this.tutorialManager.update(deltaTime, this.inputManager);
     }
     
     // Update particles
@@ -3407,6 +3453,12 @@ class GameEngine {
             if (killed) {
               this.kills++;
               
+              // Track kill in statistics system
+              if (this.statisticsSystem) {
+                const weapon = this.player.getCurrentWeapon();
+                this.statisticsSystem.trackKill(enemy, weapon, false);
+              }
+              
               // Play kill sound
               this.audioManager.playSound('enemy_killed', 0.6);
               
@@ -3758,7 +3810,7 @@ class GameEngine {
       return;
     }
     
-    if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.state === 'levelcomplete' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls') {
+    if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.state === 'levelcomplete' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls' || this.menuState === 'skins') {
       // Draw game in background if paused or level complete
       if (this.state === 'paused' || this.state === 'levelcomplete') {
         this.renderGame();
@@ -3846,6 +3898,11 @@ class GameEngine {
       // Phase 3: Draw dynamic event system HUD
       if (this.dynamicEventSystem && this.dynamicEventSystem.active) {
         this.dynamicEventSystem.render(this.ctx, this.canvas.width, this.canvas.height);
+      }
+      
+      // Draw tutorial overlay when active
+      if (this.tutorialManager && this.tutorialManager.isActive) {
+        this.tutorialManager.render(this.ctx);
       }
     }
   }
