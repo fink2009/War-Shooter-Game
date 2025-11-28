@@ -304,6 +304,27 @@ class GameUI {
       powerupY -= 20;
     }
     
+    // Flashlight battery indicator (when flashlight is available)
+    if (window.game && window.game.flashlightMaxBattery > 0) {
+      const batteryPercent = window.game.flashlightBattery / window.game.flashlightMaxBattery;
+      const flashlightStatus = window.game.flashlightOn ? 'ON' : 'OFF';
+      const batteryColor = batteryPercent > 0.5 ? '#00ff00' : 
+                          batteryPercent > 0.25 ? '#ffff00' : '#ff4444';
+      ctx.fillStyle = batteryColor;
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(`🔦 FLASHLIGHT [L]: ${flashlightStatus} (${Math.floor(batteryPercent * 100)}%)`, 
+                  this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    
+    // Crouch indicator
+    if (player.isCrouching) {
+      ctx.fillStyle = '#888888';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(`🦵 CROUCHING - Stealth +50%`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    
     // Melee combo indicator
     if (player.meleeCombo > 0 && player.getCurrentMeleeWeapon()) {
       ctx.fillStyle = '#ffaa00';

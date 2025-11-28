@@ -78,6 +78,16 @@ class GameEngine {
     this.cutsceneData = {}; // Loaded cutscene data files
     this.pendingCutscene = null; // Cutscene to play when boss spawns
     
+    // Phase 3: Flashlight system
+    const flashlightConfig = typeof GameConfig !== 'undefined' && GameConfig.FLASHLIGHT ? 
+      GameConfig.FLASHLIGHT : { range: 200, coneAngle: 45, battery: 30, rechargeRate: 0.5 };
+    this.flashlightOn = false;
+    this.flashlightBattery = flashlightConfig.battery;
+    this.flashlightMaxBattery = flashlightConfig.battery;
+    this.flashlightRange = flashlightConfig.range;
+    this.flashlightConeAngle = flashlightConfig.coneAngle * Math.PI / 180;
+    this.flashlightRechargeRate = flashlightConfig.rechargeRate;
+    
     // World settings
     this.worldWidth = 3000;
     this.worldHeight = canvas.height;
@@ -792,6 +802,110 @@ class GameEngine {
         this.switches.push(switchObj);
       }
     }
+  }
+  
+  /**
+   * Toggle flashlight on/off
+   */
+  toggleFlashlight() {
+    if (this.flashlightBattery > 0 || this.flashlightOn) {
+      this.flashlightOn = !this.flashlightOn;
+      this.audioManager.playSound('pickup_weapon', 0.3);
+    }
+  }
+  
+  /**
+   * Update flashlight battery
+   * @param {number} deltaTime - Time since last update
+   */
+  updateFlashlight(deltaTime) {
+    const dt = deltaTime / 1000; // Convert to seconds
+    
+    if (this.flashlightOn) {
+      this.flashlightBattery -= dt;
+      if (this.flashlightBattery <= 0) {
+        this.flashlightBattery = 0;
+        this.flashlightOn = false;
+      }
+    } else {
+      // Recharge when off
+      this.flashlightBattery = Math.min(
+        this.flashlightMaxBattery,
+        this.flashlightBattery + this.flashlightRechargeRate * dt
+      );
+    }
+  }
+  
+  /**
+   * Render flashlight effect
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  renderFlashlight(ctx) {
+    if (!this.flashlightOn || !this.player || !this.player.active) return;
+    
+    const playerCenterX = this.player.x + this.player.width / 2;
+    const playerCenterY = this.player.y + this.player.height / 2;
+    
+    // Get facing direction
+    const facingRight = this.player.direction === 1;
+    const angle = facingRight ? 0 : Math.PI;
+    
+    ctx.save();
+    
+    // Create flashlight cone
+    const gradient = ctx.createRadialGradient(
+      playerCenterX, playerCenterY, 0,
+      playerCenterX, playerCenterY, this.flashlightRange
+    );
+    gradient.addColorStop(0, 'rgba(255, 255, 200, 0.4)');
+    gradient.addColorStop(0.5, 'rgba(255, 255, 200, 0.2)');
+    gradient.addColorStop(1, 'rgba(255, 255, 200, 0)');
+    
+    ctx.beginPath();
+    ctx.moveTo(playerCenterX, playerCenterY);
+    ctx.arc(
+      playerCenterX, playerCenterY,
+      this.flashlightRange,
+      angle - this.flashlightConeAngle / 2,
+      angle + this.flashlightConeAngle / 2
+    );
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    ctx.restore();
+  }
+  
+  /**
+   * Render ghost replay in Time Attack mode
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  renderTimeAttackGhost(ctx) {
+    const ghostPos = this.timeAttackMode.getGhostPosition(this.timeAttackMode.elapsedTime);
+    if (!ghostPos || !this.player) return;
+    
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    
+    // Draw ghost player silhouette
+    const playerWidth = this.player.width;
+    const playerHeight = this.player.height;
+    
+    ctx.fillStyle = '#88aaff';
+    ctx.fillRect(ghostPos.x, ghostPos.y, playerWidth, playerHeight);
+    
+    // Draw ghost outline
+    ctx.strokeStyle = '#4488ff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(ghostPos.x, ghostPos.y, playerWidth, playerHeight);
+    
+    // Draw "GHOST" label
+    ctx.fillStyle = '#4488ff';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('BEST', ghostPos.x + playerWidth / 2, ghostPos.y - 5);
+    
+    ctx.restore();
   }
   
   /**
@@ -2263,6 +2377,20 @@ class GameEngine {
           this.player.roll(this.currentTime);
         }
         
+        // Crouch/Stealth (S key when not moving or Ctrl key)
+        if ((this.inputManager.isKeyPressed('s') || this.inputManager.isKeyPressed('S')) &&
+            !this.inputManager.isKeyPressed('a') && !this.inputManager.isKeyPressed('d') &&
+            !this.inputManager.isKeyPressed('ArrowLeft') && !this.inputManager.isKeyPressed('ArrowRight')) {
+          this.player.crouch();
+        } else {
+          this.player.standUp();
+        }
+        
+        // Flashlight toggle (L key) - for night phases
+        if (this.inputManager.wasKeyPressed('l') || this.inputManager.wasKeyPressed('L')) {
+          this.toggleFlashlight();
+        }
+        
         // Special Ability (E key or Q key)
         if (this.inputManager.wasKeyPressed('e') || this.inputManager.wasKeyPressed('E') ||
             this.inputManager.wasKeyPressed('q') || this.inputManager.wasKeyPressed('Q')) {
@@ -2721,6 +2849,9 @@ class GameEngine {
         }
       });
     }
+    
+    // Phase 3: Update flashlight battery
+    this.updateFlashlight(deltaTime);
     
     // Phase 3: Update vehicles
     this.vehicles.forEach(vehicle => {
@@ -4079,6 +4210,11 @@ class GameEngine {
       this.player.render(this.ctx);
     }
     
+    // Phase 4: Draw ghost replay in Time Attack mode
+    if (this.mode === 'timeattack' && this.timeAttackMode && this.timeAttackMode.active) {
+      this.renderTimeAttackGhost(this.ctx);
+    }
+    
     // Draw enemies
     this.enemies.forEach(e => e.render(this.ctx));
     
@@ -4099,6 +4235,14 @@ class GameEngine {
     // Phase 3: Draw time of day overlay (after camera reset, affects whole screen)
     if (this.timeOfDaySystem) {
       this.timeOfDaySystem.render(this.ctx, this.player, this.camera);
+    }
+    
+    // Phase 3: Render flashlight cone (when night and flashlight on)
+    if (this.flashlightOn && this.player && this.player.active) {
+      this.ctx.save();
+      this.camera.apply(this.ctx);
+      this.renderFlashlight(this.ctx);
+      this.ctx.restore();
     }
   }
   
