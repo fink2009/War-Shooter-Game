@@ -5,6 +5,71 @@ All notable changes to War Shooter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2024 (Phase 5 Content Expansion)
+
+### Added
+- **10 New Campaign Levels (11-20)**
+  - Level 11: Desert Outpost - Navigate the harsh desert environment
+  - Level 12: Sandworm Boss - Face the burrowing desert beast
+  - Level 13: Tundra Expedition - Survive the frozen wastes
+  - Level 14: Frost Titan Boss - Defeat the ice-armored giant
+  - Level 15: City Assault - Fight through urban warfare
+  - Level 16: Rooftop Escape - Escape the city rooftops
+  - Level 17: Lab Infiltration - Sneak through the research facility
+  - Level 18: Reactor Survival (Mech Commander Boss) - Survive the reactor meltdown
+  - Level 19: Forest Ambush - Navigate the fog-covered forest
+  - Level 20: Hell Knight Boss - The ultimate final boss battle
+
+- **6 New Biomes with Unique Visuals**
+  - **Desert**: Sand dunes, cacti, sandstorms, quicksand hazards
+  - **Snow**: Ice crystals, frozen trees, blizzards, thin ice
+  - **Urban**: Buildings, streets, vehicles, falling debris
+  - **Facility**: Labs, tech panels, machinery, electrical hazards
+  - **Forest**: Dense trees, undergrowth, fog, bear traps
+  - **Hell**: Lava pools, fire pillars, brimstone, red sky
+
+- **4 New Boss Fights**
+  - **Sandworm** (2000 HP): Burrows underground, emerges with slam attack, fires sand projectiles
+  - **Frost Titan** (2500 HP): Ice armor damage reduction, freeze beam, summons blizzards
+  - **Mech Commander** (3000+500 HP): Two-phase boss - mech with minigun/missiles, then pilot phase
+  - **Hell Knight** (4000 HP): Four-phase final boss with fire sword, meteors, lava pools, inferno mode
+
+- **Base Defense Mode**
+  - Protect your objective (1000 HP) from 20 waves of enemies
+  - Building system with 5 buildable types:
+    - Barricade: Block enemies and projectiles
+    - Auto Turret: Automatic enemy targeting
+    - Land Mine: Explosive trap
+    - Heal Station: Area healing for player
+    - Ammo Station: Replenishes ammunition
+  - Resource economy: Earn resources from kills, spend on buildings
+  - Boss waves every 5 waves
+  - Wave breaks for building between waves
+
+- **Secret Content Configuration**
+  - 3 secret levels (Vault, Arena, Dev Room)
+  - Branching paths in levels 16 and 18
+  - 20 collectible lore documents across all levels
+  - Unlock requirements for secret content
+
+- **BiomeSystem** (`core/systems/BiomeSystem.js`)
+  - Visual theme management for each biome
+  - Biome-specific decorative elements
+  - Color interpolation for smooth transitions
+  - Environmental hazard integration
+
+### Changed
+- Campaign now includes 20 levels (up from 10)
+- Boss Rush mode updated to include all 8 bosses
+- Updated weather system integration with biomes
+- Expanded enemy variety for higher levels
+
+### Technical
+- Added `core/entities/bosses/` directory with new boss classes
+- Added `core/modes/BaseDefenseMode.js` for base defense gameplay
+- Updated `GameEngine.js` with biome and boss integration
+- Extended configuration in `config.js` for all new content
+
 ## [1.4.0] - 2024 (Phase 4 Expansion)
 
 ### Added
