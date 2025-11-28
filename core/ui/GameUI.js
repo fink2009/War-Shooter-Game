@@ -564,7 +564,7 @@ class GameUI {
     ctx.fillRect(0, 0, this.width, this.height);
     
     // Title - only show on main menu, character select, paused, gameover, and victory screens
-    if (['main', 'character', 'paused', 'gameover', 'victory', 'challenge', 'statistics'].includes(menuState)) {
+    if (['main', 'character', 'paused', 'gameover', 'victory'].includes(menuState)) {
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 48px monospace';
       ctx.textAlign = 'center';
