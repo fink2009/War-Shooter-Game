@@ -516,12 +516,12 @@ class GameEngine {
       
       // Set weather based on level visual profile (overrides biome default)
       if (this.weatherSystem && envSettings.weather) {
-        this.weatherSystem.init(envSettings.weather);
+        this.weatherSystem.setWeather(envSettings.weather);
       }
       
       // Set time of day based on level visual profile
       if (this.timeOfDaySystem && envSettings.timeOfDay) {
-        this.timeOfDaySystem.init(envSettings.timeOfDay);
+        this.timeOfDaySystem.setPhase(envSettings.timeOfDay);
       }
     } else {
       // Fallback: Set weather based on biome
