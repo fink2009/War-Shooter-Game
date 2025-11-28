@@ -753,6 +753,173 @@ const GameConfig = {
     grenadeTossChance: 0.1,
     grenadeFuseTime: 3,
     coverEvaluationRadius: 300
+  },
+
+  // Phase 3: Weather System Configuration
+  WEATHER: {
+    CLEAR: {
+      visibilityMultiplier: 1.0,
+      speedPenalty: 0,
+      stealthBonus: 0,
+      damage: 0
+    },
+    RAIN: {
+      visibilityMultiplier: 0.8,
+      speedPenalty: 0,
+      slideChance: 0.1,
+      stealthBonus: 0.2,
+      particleCount: 500,
+      particleSpeed: 8,
+      puddleFrequency: 200 // pixels between puddles
+    },
+    FOG: {
+      visibilityMultiplier: 0.5,
+      speedPenalty: 0,
+      stealthBonus: 0.7,
+      cloudDriftSpeed: 0.5,
+      cloudCount: 8
+    },
+    SNOW: {
+      visibilityMultiplier: 0.7,
+      speedPenalty: 0.15,
+      stealthBonus: 0.3,
+      coldDamage: 1, // damage per 5 seconds
+      footprintDuration: 5000, // ms
+      particleCount: 300
+    },
+    SANDSTORM: {
+      visibilityMultiplier: 0.4,
+      speedPenalty: 0.2,
+      damage: 2, // damage per second
+      shakeIntensity: 2,
+      particleCount: 400
+    },
+    transitionDuration: 3000 // ms to transition between weather states
+  },
+
+  // Phase 3: Time of Day System Configuration
+  TIME_OF_DAY: {
+    DAY: {
+      brightness: 1.0,
+      enemyVisionMultiplier: 1.0,
+      stealthBonus: 0,
+      tint: null
+    },
+    DUSK: {
+      brightness: 0.7,
+      enemyVisionMultiplier: 0.8,
+      stealthBonus: 0.2,
+      tint: { r: 255, g: 150, b: 100 },
+      transitionDuration: 60000 // 60 seconds transition
+    },
+    NIGHT: {
+      brightness: 0.4,
+      enemyVisionMultiplier: 0.5,
+      stealthBonus: 0.5,
+      tint: { r: 50, g: 50, b: 100 }
+    },
+    cycleDuration: 300000 // 5 minutes per full cycle
+  },
+
+  // Phase 3: Flashlight Configuration
+  FLASHLIGHT: {
+    range: 200, // pixels
+    coneAngle: 45, // degrees
+    battery: 30, // seconds of use
+    rechargeRate: 0.5, // battery per second when off
+    toggleKey: 'f'
+  },
+
+  // Phase 3: Vehicle Configuration
+  VEHICLES: {
+    TANK: {
+      health: 500,
+      speed: 100, // pixels per second
+      mainDamage: 100, // cannon damage
+      mgDamage: 15, // machine gun damage
+      armorReduction: 0.75, // 75% damage reduction
+      crushDamage: 200, // damage to enemies when run over
+      cannonCooldown: 2000, // ms
+      mgCooldown: 100, // ms
+      fuelCapacity: 100,
+      fuelConsumption: 2 // per second
+    },
+    JEEP: {
+      health: 200,
+      speed: 300, // pixels per second
+      mountedGunDamage: 20,
+      armorReduction: 0.25, // 25% damage reduction
+      seats: 2,
+      mountedGunCooldown: 150, // ms
+      fuelCapacity: 80,
+      fuelConsumption: 3 // per second
+    },
+    enterExitKey: 'e',
+    explosionRadius: 150,
+    explosionDamage: 100
+  },
+
+  // Phase 3: Mounted Weapons Configuration
+  MOUNTED_WEAPONS: {
+    HMG: {
+      damage: 25,
+      fireRate: 0.1, // seconds between shots
+      range: 500,
+      rotationSpeed: 180, // degrees per second
+      maxRotation: 360, // degrees
+      overheatShots: 50,
+      cooldownTime: 3000, // ms to cool down
+      shieldHealth: 100
+    },
+    SNIPER: {
+      damage: 100,
+      fireRate: 2, // seconds between shots
+      range: 800,
+      rotationSpeed: 45, // degrees per second
+      maxRotation: 180, // degrees arc
+      zoomLevel: 2.0
+    },
+    ROCKET: {
+      damage: 150, // explosion damage
+      fireRate: 4, // seconds between shots
+      range: 600,
+      rotationSpeed: 90, // degrees per second
+      maxRotation: 270, // degrees
+      ammoCapacity: 10,
+      explosionRadius: 100
+    },
+    mountKey: 'e',
+    vulnerableAngle: 120 // degrees of vulnerability from behind
+  },
+
+  // Phase 3: New Power-Ups Configuration
+  POWERUPS: {
+    TIME_SLOW: {
+      duration: 5000, // 5 seconds
+      slowdown: 0.7, // enemies move at 70% of their speed (30% slowdown)
+      color: '#9933ff' // purple
+    },
+    DOUBLE_JUMP: {
+      duration: 15000, // 15 seconds
+      color: '#66ccff' // light blue
+    },
+    GRAPPLING_HOOK: {
+      duration: 20000, // 20 seconds
+      uses: 10,
+      range: 300, // pixels
+      pullSpeed: 400, // pixels per second
+      color: '#996633' // brown
+    },
+    GHOST_MODE: {
+      duration: 4000, // 4 seconds
+      color: '#ffffff' // white with transparency
+    },
+    MAGNET: {
+      duration: 10000, // 10 seconds
+      range: 200, // pickup collection range
+      coinMultiplier: 1.5,
+      color: '#ff3366' // pink/magenta
+    }
   }
 };
 
@@ -785,3 +952,9 @@ Object.freeze(GameConfig.ATTACHMENTS);
 Object.freeze(GameConfig.STEALTH);
 Object.freeze(GameConfig.FORMATIONS);
 Object.freeze(GameConfig.TACTICAL_AI);
+Object.freeze(GameConfig.WEATHER);
+Object.freeze(GameConfig.TIME_OF_DAY);
+Object.freeze(GameConfig.FLASHLIGHT);
+Object.freeze(GameConfig.VEHICLES);
+Object.freeze(GameConfig.MOUNTED_WEAPONS);
+Object.freeze(GameConfig.POWERUPS);

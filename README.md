@@ -141,6 +141,43 @@ Enemies coordinate in tactical formations:
 - Firing Line: Melee front, ranged back
 - Scatter: Chaotic random positions
 
+### Phase 3 Features (NEW)
+
+#### Weather System
+Dynamic weather that affects gameplay:
+- **Clear**: Default, no effects
+- **Rain**: 80% visibility, slippery movement, puddles
+- **Fog**: 50% visibility, +70% stealth bonus, drifting clouds
+- **Snow**: 70% visibility, -15% speed, footprints, cold damage
+- **Sandstorm**: 40% visibility, -20% speed, continuous damage, screen shake
+
+#### Time of Day
+Day/night cycle with gameplay impact:
+- **Day**: 100% brightness, normal gameplay
+- **Dusk**: 70% brightness, orange tint, 60s transition
+- **Night**: 40% brightness, enemies have 50% vision, stealth bonus
+- **Flashlight**: Toggle with F key, 200px cone, 30s battery
+
+#### Vehicles
+Drivable combat vehicles:
+- **Tank**: 500 HP, cannon (100 dmg) + MG, crushes enemies, 75% armor
+- **Jeep**: 200 HP, fast movement, mounted gun, 2 seats, 25% armor
+- Enter/exit with E key, fuel system, explosive destruction
+
+#### Mounted Weapons
+Stationary weapons to mount:
+- **HMG**: 25 damage, rapid fire, 360° rotation, overheat system, shield
+- **Sniper**: 100 damage, 2s between shots, 800px range, zoom, 180° arc
+- **Rocket**: 150 explosion damage, 4s reload, 10 ammo, 270° rotation
+
+#### New Power-Ups
+Five additional power-ups:
+- **Time Slow**: 5s duration, enemies move at 70% speed (purple)
+- **Double Jump**: 15s duration, mid-air jump ability (light blue)
+- **Grappling Hook**: 20s/10 uses, 300px range, swing physics (brown)
+- **Ghost Mode**: 4s duration, pass through enemies/bullets (white)
+- **Magnet**: 10s duration, 200px auto-collect, 1.5x coins (pink)
+
 ## 🎯 How to Play
 
 ### Controls

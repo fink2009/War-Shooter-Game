@@ -43,6 +43,12 @@ class GameEngine {
     this.noiseSystem = new NoiseSystem();
     this.formationSystem = new FormationSystem();
     
+    // Phase 3: Weather, Time of Day, Vehicles & Mounted Weapons
+    this.weatherSystem = new WeatherSystem();
+    this.timeOfDaySystem = new TimeOfDaySystem();
+    this.vehicles = [];
+    this.mountedWeapons = [];
+    
     // Phase 2: UI Menus
     this.upgradeMenu = new UpgradeMenu(canvas);
     this.shopMenu = new ShopMenu(canvas);
@@ -471,6 +477,12 @@ class GameEngine {
     this.shopVendor = null;
     this.noiseSystem.clear();
     this.formationSystem.clear();
+    
+    // Phase 3: Initialize weather and time systems
+    this.weatherSystem.init('CLEAR');
+    this.timeOfDaySystem.init('DAY');
+    this.vehicles = [];
+    this.mountedWeapons = [];
     
     // Spawn cover objects
     this.spawnCovers();
@@ -2210,6 +2222,48 @@ class GameEngine {
     this.noiseSystem.update(deltaTime, this.enemies);
     this.formationSystem.update(deltaTime);
     
+    // Phase 3: Update weather system
+    if (this.weatherSystem) {
+      this.weatherSystem.update(deltaTime, this.worldWidth, this.player, this.camera);
+      
+      // Apply weather speed penalty to player
+      if (this.player && this.player.active) {
+        const speedPenalty = this.weatherSystem.getSpeedPenalty();
+        if (speedPenalty > 0 && !this.player.weatherSpeedApplied) {
+          this.player.baseSpeed = this.player.baseSpeed * (1 - speedPenalty);
+          this.player.weatherSpeedApplied = true;
+        }
+      }
+    }
+    
+    // Phase 3: Update time of day system
+    if (this.timeOfDaySystem) {
+      this.timeOfDaySystem.update(deltaTime, this.player, false);
+      
+      // Apply enemy vision multiplier from time of day
+      const visionMultiplier = this.timeOfDaySystem.getEnemyVisionMultiplier();
+      this.enemies.forEach(enemy => {
+        if (enemy.active) {
+          enemy.timeOfDayVisionMultiplier = visionMultiplier;
+        }
+      });
+    }
+    
+    // Phase 3: Update vehicles
+    this.vehicles.forEach(vehicle => {
+      if (vehicle.active) {
+        vehicle.update(deltaTime, this.inputManager, this.groundLevel, this.worldWidth, this.enemies);
+      }
+    });
+    this.vehicles = this.vehicles.filter(v => v.active || v.isDestroyed);
+    
+    // Phase 3: Update mounted weapons
+    this.mountedWeapons.forEach(weapon => {
+      if (weapon.active) {
+        weapon.update(deltaTime, this.currentTime);
+      }
+    });
+    
     // Update particles
     this.particleSystem.update(deltaTime);
     
@@ -3230,6 +3284,12 @@ class GameEngine {
     // Phase 1: Draw hazards
     this.hazardManager.render(this.ctx);
     
+    // Phase 3: Draw vehicles
+    this.vehicles.forEach(v => v.render(this.ctx));
+    
+    // Phase 3: Draw mounted weapons
+    this.mountedWeapons.forEach(mw => mw.render(this.ctx));
+    
     // Draw pickups
     this.pickups.forEach(p => p.render(this.ctx));
     
@@ -3255,8 +3315,18 @@ class GameEngine {
     // Draw particles
     this.particleSystem.render(this.ctx);
     
+    // Phase 3: Draw weather effects (over everything)
+    if (this.weatherSystem) {
+      this.weatherSystem.render(this.ctx, this.camera);
+    }
+    
     // Reset camera transform
     this.camera.reset(this.ctx);
+    
+    // Phase 3: Draw time of day overlay (after camera reset, affects whole screen)
+    if (this.timeOfDaySystem) {
+      this.timeOfDaySystem.render(this.ctx, this.player, this.camera);
+    }
   }
   
   renderCutscene() {
