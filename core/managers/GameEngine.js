@@ -847,7 +847,7 @@ class GameEngine {
     const playerCenterY = this.player.y + this.player.height / 2;
     
     // Get facing direction
-    const facingRight = this.player.direction === 1;
+    const facingRight = this.player.facing === 1;
     const angle = facingRight ? 0 : Math.PI;
     
     ctx.save();
@@ -881,6 +881,8 @@ class GameEngine {
    * @param {CanvasRenderingContext2D} ctx - Canvas context
    */
   renderTimeAttackGhost(ctx) {
+    if (!this.timeAttackMode || !this.timeAttackMode.active) return;
+    
     const ghostPos = this.timeAttackMode.getGhostPosition(this.timeAttackMode.elapsedTime);
     if (!ghostPos || !this.player) return;
     
