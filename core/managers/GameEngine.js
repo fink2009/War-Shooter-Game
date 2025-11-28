@@ -59,6 +59,10 @@ class GameEngine {
     this.statisticsSystem = new StatisticsSystem();
     this.leaderboardSystem = new LeaderboardSystem();
     
+    // Phase 5: Content Expansion Systems
+    this.biomeSystem = new BiomeSystem();
+    this.baseDefenseMode = new BaseDefenseMode();
+    
     // Phase 2: UI Menus
     this.upgradeMenu = new UpgradeMenu(canvas);
     this.shopMenu = new ShopMenu(canvas);
@@ -106,7 +110,7 @@ class GameEngine {
     this.kills = 0;
     this.wave = 1;
     this.currentLevel = 1; // Campaign level
-    this.maxLevel = 10; // Total campaign levels including boss arenas
+    this.maxLevel = 20; // Total campaign levels including boss arenas (Phase 5 expansion)
     this.enemiesRemaining = 0;
     this.waveTimer = 0;
     this.waveDuration = 30000; // 30 seconds per wave
@@ -494,6 +498,22 @@ class GameEngine {
     this.vehicles = [];
     this.mountedWeapons = [];
     
+    // Phase 5: Initialize biome system based on current level
+    const levelIndex = Math.min(this.currentLevel - 1, GameConfig.CAMPAIGN_LEVELS.length - 1);
+    const levelConfig = levelIndex >= 0 ? GameConfig.CAMPAIGN_LEVELS[levelIndex] : null;
+    const biome = levelConfig && levelConfig.biome ? levelConfig.biome : 'DEFAULT';
+    if (this.biomeSystem) {
+      this.biomeSystem.init(biome);
+    }
+    
+    // Set weather based on biome
+    if (this.biomeSystem && this.weatherSystem) {
+      const recommendedWeather = this.biomeSystem.getRecommendedWeather();
+      if (recommendedWeather !== 'CLEAR') {
+        this.weatherSystem.setWeather(recommendedWeather);
+      }
+    }
+    
     // Spawn cover objects
     this.spawnCovers();
     
@@ -875,6 +895,110 @@ class GameEngine {
           { type: 'boss', count: 1, spacing: 0, position: 2200, bossId: 3 }
         ],
         isBossLevel: true
+      },
+      // Phase 5: Level 11 - Desert Outpost
+      {
+        name: 'Desert Outpost',
+        biome: 'DESERT',
+        enemies: [
+          { type: 'infantry', count: 6, spacing: 300 },
+          { type: 'heavy', count: 3, spacing: 450 },
+          { type: 'sniper', count: 4, spacing: 550 },
+          { type: 'scout', count: 5, spacing: 280 }
+        ]
+      },
+      // Phase 5: Level 12 - Sandworm Boss
+      {
+        name: 'Boss Arena: Sandworm',
+        biome: 'DESERT',
+        enemies: [
+          { type: 'phase5boss', count: 1, spacing: 0, position: 1800, bossId: 4, bossClass: 'Sandworm' }
+        ],
+        isBossLevel: true
+      },
+      // Phase 5: Level 13 - Tundra Expedition
+      {
+        name: 'Tundra Expedition',
+        biome: 'SNOW',
+        enemies: [
+          { type: 'infantry', count: 5, spacing: 320 },
+          { type: 'heavy', count: 4, spacing: 420 },
+          { type: 'sniper', count: 5, spacing: 500 },
+          { type: 'scout', count: 4, spacing: 350 }
+        ]
+      },
+      // Phase 5: Level 14 - Frost Titan Boss
+      {
+        name: 'Boss Arena: Frost Titan',
+        biome: 'SNOW',
+        enemies: [
+          { type: 'phase5boss', count: 1, spacing: 0, position: 1900, bossId: 5, bossClass: 'FrostTitan' }
+        ],
+        isBossLevel: true
+      },
+      // Phase 5: Level 15 - City Assault
+      {
+        name: 'City Assault',
+        biome: 'URBAN',
+        enemies: [
+          { type: 'infantry', count: 7, spacing: 280 },
+          { type: 'heavy', count: 4, spacing: 400 },
+          { type: 'sniper', count: 5, spacing: 480 },
+          { type: 'scout', count: 6, spacing: 320 }
+        ]
+      },
+      // Phase 5: Level 16 - Rooftop Escape
+      {
+        name: 'Rooftop Escape',
+        biome: 'URBAN',
+        enemies: [
+          { type: 'infantry', count: 6, spacing: 300 },
+          { type: 'heavy', count: 3, spacing: 450 },
+          { type: 'sniper', count: 6, spacing: 420 },
+          { type: 'scout', count: 5, spacing: 340 }
+        ]
+      },
+      // Phase 5: Level 17 - Lab Infiltration
+      {
+        name: 'Lab Infiltration',
+        biome: 'FACILITY',
+        enemies: [
+          { type: 'infantry', count: 6, spacing: 320 },
+          { type: 'heavy', count: 5, spacing: 400 },
+          { type: 'sniper', count: 4, spacing: 500 },
+          { type: 'engineer', count: 3, spacing: 380 },
+          { type: 'scout', count: 5, spacing: 300 }
+        ]
+      },
+      // Phase 5: Level 18 - Reactor Survival (Mech Commander Boss)
+      {
+        name: 'Reactor Survival',
+        biome: 'FACILITY',
+        enemies: [
+          { type: 'phase5boss', count: 1, spacing: 0, position: 2000, bossId: 6, bossClass: 'MechCommander' }
+        ],
+        isBossLevel: true
+      },
+      // Phase 5: Level 19 - Forest Ambush
+      {
+        name: 'Forest Ambush',
+        biome: 'FOREST',
+        enemies: [
+          { type: 'infantry', count: 8, spacing: 280 },
+          { type: 'heavy', count: 5, spacing: 380 },
+          { type: 'sniper', count: 6, spacing: 450 },
+          { type: 'berserker', count: 3, spacing: 400 },
+          { type: 'scout', count: 6, spacing: 300 }
+        ]
+      },
+      // Phase 5: Level 20 - Hell Knight Final Boss
+      {
+        name: 'Boss Arena: Hell Knight',
+        biome: 'HELL',
+        enemies: [
+          { type: 'phase5boss', count: 1, spacing: 0, position: 2200, bossId: 7, bossClass: 'HellKnight' }
+        ],
+        isBossLevel: true
       }
     ];
     
@@ -907,71 +1031,103 @@ class GameEngine {
           enemyGroup.position : 
           xOffset + i * enemyGroup.spacing + Math.random() * 100;
         
-        const enemy = new EnemyUnit(x, this.groundLevel - (enemyGroup.type === 'boss' ? 70 : 48), enemyGroup.type);
-        enemy.applyDifficulty(difficultyMultiplier);
+        let enemy;
         
-        // Apply boss-specific enhancements and mechanics
-        if (enemyGroup.type === 'boss') {
-          const bossId = enemyGroup.bossId !== undefined ? enemyGroup.bossId : 0;
+        // Phase 5: Handle new boss types
+        if (enemyGroup.type === 'phase5boss') {
+          const bossY = this.groundLevel - 100;
           
-          // Base boss enhancements - Challenging but beatable
-          enemy.maxHealth *= 9; // 9x base health (reduced from 12x for slight ease)
-          enemy.health = enemy.maxHealth;
-          enemy.damage *= 3; // 3x more damage (reduced from 4x for slight ease)
-          enemy.speed *= 1.8; // 1.8x faster (reduced from 2.2x for slight ease)
-          enemy.shootCooldown *= 0.4; // Shoots 2.5x faster (reduced from 0.3x for slight ease)
-          enemy.aggroRange = 9999; // Infinite aggro - always targets player
-          enemy.attackRange = 1000; // Very long attack range
-          enemy.isBoss = true;
-          enemy.bossId = bossId;
-          enemy.bossName = this.getBossName(bossId);
-          
-          // Boss-specific unique mechanics
-          switch (bossId) {
-            case 0: // The Warlord - First boss (Level 3)
-              enemy.bossName = 'The Warlord';
-              enemy.maxHealth *= 1.1; // 10% more health (reduced from 1.2x for slight ease)
-              enemy.specialMechanic = 'rage'; // Gets faster and stronger below 50% HP
+          switch (enemyGroup.bossClass) {
+            case 'Sandworm':
+              enemy = new Sandworm(x, bossY);
               break;
-            case 1: // The Devastator - Second boss (Level 6)
-              enemy.bossName = 'The Devastator';
-              enemy.maxHealth *= 1.5; // 50% more health (reduced from 1.8x for slight ease)
-              enemy.damage *= 1.1; // 10% more damage (reduced from 1.2x for slight ease)
-              enemy.specialMechanic = 'summon'; // Can summon minions
-              enemy.summonCooldown = 15000; // Summon every 15 seconds (slower from 12s for slight ease)
-              enemy.lastSummonTime = 0;
+            case 'FrostTitan':
+              enemy = new FrostTitan(x, bossY);
               break;
-            case 2: // The Annihilator - Third boss (Level 9)
-              enemy.bossName = 'The Annihilator';
-              enemy.maxHealth *= 2.0; // 2.0x health (reduced from 2.5x for slight ease)
-              enemy.damage *= 1.2; // 20% more damage (reduced from 1.4x for slight ease)
-              enemy.speed *= 1.1; // 10% faster (reduced from 1.2x for slight ease)
-              enemy.specialMechanic = 'shield'; // Periodic shield phases
-              enemy.shieldCooldown = 20000; // Slower shield cycling (from 18s for slight ease)
-              enemy.lastShieldTime = 0;
-              enemy.shieldActive = false;
+            case 'MechCommander':
+              enemy = new MechCommander(x, bossY);
               break;
-            case 3: // The Overlord - FINAL BOSS (Level 10) - EXTREME POWER
-              enemy.bossName = 'The Overlord';
-              enemy.maxHealth *= 3.5; // 3.5x health - MASSIVE (reduced from 5.0x for slight ease)
-              enemy.damage *= 1.8; // 1.8x damage - DEVASTATING (reduced from 2.5x for slight ease)
-              enemy.speed *= 1.5; // 1.5x speed - RELENTLESS (reduced from 1.8x for slight ease)
-              enemy.shootCooldown *= 0.6; // Shoots 1.67x faster than other bosses (reduced from 0.5x for slight ease)
-              enemy.specialMechanic = 'all'; // All mechanics combined
-              enemy.isFinalBoss = true;
-              enemy.summonCooldown = 13000; // Summons every 13 seconds (slower from 10s for slight ease)
-              enemy.lastSummonTime = 0;
-              enemy.shieldCooldown = 18000; // Shield every 18 seconds (slower from 15s for slight ease)
-              enemy.lastShieldTime = 0;
-              enemy.shieldActive = false;
+            case 'HellKnight':
+              enemy = new HellKnight(x, bossY);
               break;
+            default:
+              enemy = new EnemyUnit(x, this.groundLevel - 70, 'boss');
           }
           
-          enemy.health = enemy.maxHealth;
-        }
+          enemy.applyDifficulty(difficultyMultiplier);
+          enemy.isBoss = true;
+          enemy.bossId = enemyGroup.bossId;
+          
+          this.enemies.push(enemy);
+          this.collisionSystem.add(enemy);
+        } else {
+          // Standard enemy spawning
+          enemy = new EnemyUnit(x, this.groundLevel - (enemyGroup.type === 'boss' ? 70 : 48), enemyGroup.type);
+          enemy.applyDifficulty(difficultyMultiplier);
         
-        this.enemies.push(enemy);
-        this.collisionSystem.add(enemy);
+          // Apply boss-specific enhancements and mechanics
+          if (enemyGroup.type === 'boss') {
+            const bossId = enemyGroup.bossId !== undefined ? enemyGroup.bossId : 0;
+            
+            // Base boss enhancements - Challenging but beatable
+            enemy.maxHealth *= 9; // 9x base health (reduced from 12x for slight ease)
+            enemy.health = enemy.maxHealth;
+            enemy.damage *= 3; // 3x more damage (reduced from 4x for slight ease)
+            enemy.speed *= 1.8; // 1.8x faster (reduced from 2.2x for slight ease)
+            enemy.shootCooldown *= 0.4; // Shoots 2.5x faster (reduced from 0.3x for slight ease)
+            enemy.aggroRange = 9999; // Infinite aggro - always targets player
+            enemy.attackRange = 1000; // Very long attack range
+            enemy.isBoss = true;
+            enemy.bossId = bossId;
+            enemy.bossName = this.getBossName(bossId);
+            
+            // Boss-specific unique mechanics
+            switch (bossId) {
+              case 0: // The Warlord - First boss (Level 3)
+                enemy.bossName = 'The Warlord';
+                enemy.maxHealth *= 1.1; // 10% more health (reduced from 1.2x for slight ease)
+                enemy.specialMechanic = 'rage'; // Gets faster and stronger below 50% HP
+                break;
+              case 1: // The Devastator - Second boss (Level 6)
+                enemy.bossName = 'The Devastator';
+                enemy.maxHealth *= 1.5; // 50% more health (reduced from 1.8x for slight ease)
+                enemy.damage *= 1.1; // 10% more damage (reduced from 1.2x for slight ease)
+                enemy.specialMechanic = 'summon'; // Can summon minions
+                enemy.summonCooldown = 15000; // Summon every 15 seconds (slower from 12s for slight ease)
+                enemy.lastSummonTime = 0;
+                break;
+              case 2: // The Annihilator - Third boss (Level 9)
+                enemy.bossName = 'The Annihilator';
+                enemy.maxHealth *= 2.0; // 2.0x health (reduced from 2.5x for slight ease)
+                enemy.damage *= 1.2; // 20% more damage (reduced from 1.4x for slight ease)
+                enemy.speed *= 1.1; // 10% faster (reduced from 1.2x for slight ease)
+                enemy.specialMechanic = 'shield'; // Periodic shield phases
+                enemy.shieldCooldown = 20000; // Slower shield cycling (from 18s for slight ease)
+                enemy.lastShieldTime = 0;
+                enemy.shieldActive = false;
+                break;
+              case 3: // The Overlord - FINAL BOSS (Level 10) - EXTREME POWER
+                enemy.bossName = 'The Overlord';
+                enemy.maxHealth *= 3.5; // 3.5x health - MASSIVE (reduced from 5.0x for slight ease)
+                enemy.damage *= 1.8; // 1.8x damage - DEVASTATING (reduced from 2.5x for slight ease)
+                enemy.speed *= 1.5; // 1.5x speed - RELENTLESS (reduced from 1.8x for slight ease)
+                enemy.shootCooldown *= 0.6; // Shoots 1.67x faster than other bosses (reduced from 0.5x for slight ease)
+                enemy.specialMechanic = 'all'; // All mechanics combined
+                enemy.isFinalBoss = true;
+                enemy.summonCooldown = 13000; // Summons every 13 seconds (slower from 10s for slight ease)
+                enemy.lastSummonTime = 0;
+                enemy.shieldCooldown = 18000; // Shield every 18 seconds (slower from 15s for slight ease)
+                enemy.lastShieldTime = 0;
+                enemy.shieldActive = false;
+                break;
+            }
+            
+            enemy.health = enemy.maxHealth;
+          }
+          
+          this.enemies.push(enemy);
+          this.collisionSystem.add(enemy);
+        }
       }
       
       if (enemyGroup.position === undefined) {
@@ -1060,7 +1216,11 @@ class GameEngine {
       'The Warlord',
       'The Devastator',
       'The Annihilator',
-      'The Overlord'
+      'The Overlord',
+      'Sandworm',         // Phase 5: Level 12
+      'Frost Titan',      // Phase 5: Level 14
+      'Mech Commander',   // Phase 5: Level 18
+      'Hell Knight'       // Phase 5: Level 20
     ];
     return bossNames[bossId] || 'Unknown Boss';
   }
@@ -2208,29 +2368,39 @@ class GameEngine {
     }
     
     // Update enemies
+    // Phase 5 bosses start at bossId 4 (Sandworm=4, FrostTitan=5, MechCommander=6, HellKnight=7)
+    const PHASE_5_BOSS_START_ID = 4;
+    
     this.enemies.forEach(enemy => {
-      // enemy.update now returns projectiles from AI (especially for bosses)
-      const aiProjectiles = enemy.update(deltaTime, this.player, this.groundLevel, this.currentTime, this.worldWidth);
-      
-      // Enemy shooting - bosses shoot via their AI, non-bosses need explicit attack call
-      let result = null;
-      if (!enemy.isBoss) {
-        // Non-boss enemies still use the old attack pattern
-        result = enemy.attack(this.player, this.currentTime);
+      // Phase 5: Handle new boss types with different update signatures
+      if (enemy.bossId >= PHASE_5_BOSS_START_ID && enemy.isBoss) {
+        // Phase 5 bosses (Sandworm, FrostTitan, MechCommander, HellKnight)
+        // They have update(deltaTime, player, enemies, projectiles) signature
+        enemy.update(deltaTime, this.player, this.enemies, this.projectiles);
       } else {
-        // Boss projectiles come from their AI update
-        result = aiProjectiles;
-      }
-      
-      if (result) {
-        if (Array.isArray(result)) {
-          result.forEach(p => {
-            this.projectiles.push(p);
-            this.collisionSystem.add(p);
-          });
+        // enemy.update now returns projectiles from AI (especially for bosses)
+        const aiProjectiles = enemy.update(deltaTime, this.player, this.groundLevel, this.currentTime, this.worldWidth);
+        
+        // Enemy shooting - bosses shoot via their AI, non-bosses need explicit attack call
+        let result = null;
+        if (!enemy.isBoss) {
+          // Non-boss enemies still use the old attack pattern
+          result = enemy.attack(this.player, this.currentTime);
         } else {
-          this.projectiles.push(result);
-          this.collisionSystem.add(result);
+          // Boss projectiles come from their AI update
+          result = aiProjectiles;
+        }
+        
+        if (result) {
+          if (Array.isArray(result)) {
+            result.forEach(p => {
+              this.projectiles.push(p);
+              this.collisionSystem.add(p);
+            });
+          } else {
+            this.projectiles.push(result);
+            this.collisionSystem.add(result);
+          }
         }
       }
     });
@@ -2284,6 +2454,11 @@ class GameEngine {
           this.player.weatherSpeedApplied = true;
         }
       }
+    }
+    
+    // Phase 5: Update biome system
+    if (this.biomeSystem) {
+      this.biomeSystem.update(deltaTime, this.player);
     }
     
     // Phase 3: Update time of day system
@@ -3315,6 +3490,11 @@ class GameEngine {
     
     // Layer 4: Ground with detailed tiles
     this.draw16BitGround();
+    
+    // Phase 5: Draw biome-specific elements
+    if (this.biomeSystem) {
+      this.biomeSystem.render(this.ctx, this.camera, this.groundLevel);
+    }
     
     // Draw slopes first (part of terrain)
     this.slopes.forEach(s => s.render(this.ctx));

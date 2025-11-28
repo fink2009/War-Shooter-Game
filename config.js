@@ -397,8 +397,8 @@ const GameConfig = {
   MODES: {
     CAMPAIGN: {
       name: 'Campaign',
-      maxLevels: 10,
-      description: 'Story-driven campaign with 10 levels'
+      maxLevels: 20,
+      description: 'Story-driven campaign with 20 levels across 9 acts'
     },
     SURVIVAL: {
       name: 'Survival',
@@ -409,21 +409,44 @@ const GameConfig = {
       name: 'Multiplayer',
       maxPlayers: 2,
       description: 'Online co-op or versus mode'
+    },
+    BASE_DEFENSE: {
+      name: 'Base Defense',
+      maxWaves: 20,
+      description: 'Protect your base from 20 waves of enemies'
     }
   },
 
   // Campaign levels
   CAMPAIGN_LEVELS: [
-    { name: 'Basic Training', act: 1, isBoss: false },
-    { name: 'First Contact', act: 1, isBoss: false },
-    { name: 'Boss Arena: The Warlord', act: 1, isBoss: true, bossId: 0 },
-    { name: 'Heavy Assault', act: 2, isBoss: false },
-    { name: 'Sniper Alley', act: 2, isBoss: false },
-    { name: 'Boss Arena: The Devastator', act: 2, isBoss: true, bossId: 1 },
-    { name: 'Urban Warfare', act: 3, isBoss: false },
-    { name: 'Industrial Complex', act: 3, isBoss: false },
-    { name: 'Boss Arena: The Annihilator', act: 3, isBoss: true, bossId: 2 },
-    { name: 'Final Boss: The Overlord', act: 4, isBoss: true, bossId: 3 }
+    // Act 1: Training (Levels 1-3)
+    { name: 'Basic Training', act: 1, isBoss: false, biome: 'DEFAULT' },
+    { name: 'First Contact', act: 1, isBoss: false, biome: 'DEFAULT' },
+    { name: 'Boss Arena: The Warlord', act: 1, isBoss: true, bossId: 0, biome: 'DEFAULT' },
+    // Act 2: Escalation (Levels 4-6)
+    { name: 'Heavy Assault', act: 2, isBoss: false, biome: 'DEFAULT' },
+    { name: 'Sniper Alley', act: 2, isBoss: false, biome: 'DEFAULT' },
+    { name: 'Boss Arena: The Devastator', act: 2, isBoss: true, bossId: 1, biome: 'DEFAULT' },
+    // Act 3: Urban Conflict (Levels 7-10)
+    { name: 'Urban Warfare', act: 3, isBoss: false, biome: 'URBAN' },
+    { name: 'Industrial Complex', act: 3, isBoss: false, biome: 'FACILITY' },
+    { name: 'Boss Arena: The Annihilator', act: 3, isBoss: true, bossId: 2, biome: 'FACILITY' },
+    { name: 'Final Boss: The Overlord', act: 4, isBoss: true, bossId: 3, biome: 'DEFAULT' },
+    // Act 5: Desert Campaign (Levels 11-12)
+    { name: 'Desert Outpost', act: 5, isBoss: false, biome: 'DESERT' },
+    { name: 'Boss Arena: Sandworm', act: 5, isBoss: true, bossId: 4, biome: 'DESERT' },
+    // Act 6: Frozen Wastes (Levels 13-14)
+    { name: 'Tundra Expedition', act: 6, isBoss: false, biome: 'SNOW' },
+    { name: 'Boss Arena: Frost Titan', act: 6, isBoss: true, bossId: 5, biome: 'SNOW' },
+    // Act 7: City Assault (Levels 15-16)
+    { name: 'City Assault', act: 7, isBoss: false, biome: 'URBAN', hasSecretPath: true },
+    { name: 'Rooftop Escape', act: 7, isBoss: false, biome: 'URBAN' },
+    // Act 8: Facility Infiltration (Levels 17-18)
+    { name: 'Lab Infiltration', act: 8, isBoss: false, biome: 'FACILITY' },
+    { name: 'Reactor Survival', act: 8, isBoss: true, bossId: 6, biome: 'FACILITY', hasSecretPath: true },
+    // Act 9: Forest & Final Battle (Levels 19-20)
+    { name: 'Forest Ambush', act: 9, isBoss: false, biome: 'FOREST' },
+    { name: 'Boss Arena: Hell Knight', act: 9, isBoss: true, bossId: 7, biome: 'HELL' }
   ],
 
   // Boss configurations
@@ -467,6 +490,62 @@ const GameConfig = {
       summonCooldown: 13000,
       shieldCooldown: 18000,
       description: 'Final boss with all mechanics'
+    },
+    {
+      id: 4,
+      name: 'Sandworm',
+      health: 2000,
+      healthMultiplier: 1.0,
+      damageMultiplier: 1.3,
+      speedMultiplier: 0.8,
+      mechanic: 'burrow',
+      burrowDuration: 3000,
+      emergeDamage: 80,
+      sandProjectiles: 5,
+      description: 'Burrows underground, emerges with slam attack, fires sand projectiles'
+    },
+    {
+      id: 5,
+      name: 'Frost Titan',
+      health: 2500,
+      healthMultiplier: 1.0,
+      damageMultiplier: 1.4,
+      speedMultiplier: 0.7,
+      mechanic: 'freeze',
+      iceArmorReduction: 0.5,
+      freezeBeamDuration: 2000,
+      blizzardCooldown: 12000,
+      description: 'Has ice armor, freeze beam attack, summons blizzards'
+    },
+    {
+      id: 6,
+      name: 'Mech Commander',
+      mechHealth: 3000,
+      pilotHealth: 500,
+      healthMultiplier: 1.0,
+      damageMultiplier: 1.5,
+      speedMultiplier: 1.2,
+      mechanic: 'twophase',
+      minigunFireRate: 100,
+      missileCooldown: 5000,
+      missileCount: 4,
+      description: '2-phase boss: mech phase with minigun/missiles, then pilot phase'
+    },
+    {
+      id: 7,
+      name: 'Hell Knight',
+      health: 4000,
+      healthMultiplier: 1.0,
+      damageMultiplier: 2.0,
+      speedMultiplier: 1.5,
+      mechanic: 'fourphase',
+      phases: [
+        { name: 'Fire Sword', healthThreshold: 1.0, ability: 'firesword' },
+        { name: 'Meteor Rain', healthThreshold: 0.75, ability: 'meteors' },
+        { name: 'Lava Pool', healthThreshold: 0.5, ability: 'lava' },
+        { name: 'Inferno', healthThreshold: 0.25, ability: 'inferno' }
+      ],
+      description: '4-phase final boss: fire sword, meteors, lava pools, inferno mode'
     }
   ],
 
@@ -995,7 +1074,232 @@ const GameConfig = {
   LEADERBOARDS: {
     maxEntries: 10,
     localStorageKey: 'gameLeaderboards',
-    categories: ['survival', 'campaign', 'timeAttack', 'bossRush', 'horde', 'oneHit']
+    categories: ['survival', 'campaign', 'timeAttack', 'bossRush', 'horde', 'oneHit', 'baseDefense']
+  },
+
+  // Phase 5: Biome System Configuration
+  BIOMES: {
+    DEFAULT: {
+      name: 'Default',
+      skyTop: '#4a5f7f',
+      skyMid: '#6a7f9f',
+      skyBottom: '#8a9fbf',
+      groundBase: '#4a4a3a',
+      groundDark: '#3a3a2a',
+      groundLight: '#5a5a4a',
+      grassColor: '#4a5a3a',
+      weather: 'CLEAR',
+      hazards: []
+    },
+    DESERT: {
+      name: 'Desert',
+      skyTop: '#c4a35a',
+      skyMid: '#d4b36a',
+      skyBottom: '#e4c37a',
+      groundBase: '#c4a060',
+      groundDark: '#a48040',
+      groundLight: '#d4b070',
+      grassColor: '#8a7030',
+      weather: 'SANDSTORM',
+      ambientDamage: 1,
+      elements: ['sand', 'cacti', 'dunes'],
+      hazards: ['quicksand', 'heatwave']
+    },
+    SNOW: {
+      name: 'Snow',
+      skyTop: '#b0c4de',
+      skyMid: '#c0d4ee',
+      skyBottom: '#d0e4ff',
+      groundBase: '#e8e8f0',
+      groundDark: '#c8c8d0',
+      groundLight: '#f8f8ff',
+      grassColor: '#d0d8e0',
+      weather: 'SNOW',
+      speedPenalty: 0.15,
+      elements: ['ice', 'frozen_trees', 'snowdrifts'],
+      hazards: ['icicles', 'thin_ice', 'blizzard']
+    },
+    URBAN: {
+      name: 'Urban',
+      skyTop: '#4a5565',
+      skyMid: '#6a7585',
+      skyBottom: '#8a95a5',
+      groundBase: '#505050',
+      groundDark: '#404040',
+      groundLight: '#606060',
+      grassColor: '#405040',
+      weather: 'CLEAR',
+      elements: ['buildings', 'streets', 'vehicles', 'debris'],
+      hazards: ['falling_debris', 'gas_leaks']
+    },
+    FACILITY: {
+      name: 'Facility',
+      skyTop: '#303040',
+      skyMid: '#404050',
+      skyBottom: '#505060',
+      groundBase: '#484858',
+      groundDark: '#383848',
+      groundLight: '#585868',
+      grassColor: '#405060',
+      weather: 'CLEAR',
+      isIndoor: true,
+      elements: ['labs', 'tech', 'machinery', 'pipes'],
+      hazards: ['electrical', 'toxic_spill', 'laser_grids']
+    },
+    FOREST: {
+      name: 'Forest',
+      skyTop: '#4a6a4a',
+      skyMid: '#5a7a5a',
+      skyBottom: '#6a8a6a',
+      groundBase: '#3a4a2a',
+      groundDark: '#2a3a1a',
+      groundLight: '#4a5a3a',
+      grassColor: '#3a5a2a',
+      weather: 'FOG',
+      elements: ['trees', 'dense_cover', 'undergrowth'],
+      hazards: ['bear_traps', 'pitfalls']
+    },
+    HELL: {
+      name: 'Hell',
+      skyTop: '#4a0000',
+      skyMid: '#6a1010',
+      skyBottom: '#8a2020',
+      groundBase: '#3a2020',
+      groundDark: '#2a1010',
+      groundLight: '#5a3030',
+      grassColor: '#4a1010',
+      weather: 'CLEAR',
+      ambientDamage: 2,
+      elements: ['lava', 'fire', 'brimstone', 'skulls'],
+      hazards: ['lava_pools', 'fire_geysers', 'meteor_rain'],
+      tint: { r: 255, g: 100, b: 50 }
+    }
+  },
+
+  // Phase 5: Secret Content Configuration
+  SECRET_CONTENT: {
+    SECRET_LEVELS: [
+      {
+        id: 'vault',
+        name: 'The Vault',
+        unlockCondition: 'collect_all_documents_act5',
+        biome: 'FACILITY',
+        enemies: ['elite_guards', 'security_bots'],
+        rewards: ['legendary_weapon', 'skin_gold']
+      },
+      {
+        id: 'arena',
+        name: 'Combat Arena',
+        unlockCondition: 'beat_all_bosses_no_damage',
+        biome: 'DEFAULT',
+        mode: 'endless_waves',
+        rewards: ['skin_champion', 'title_gladiator']
+      },
+      {
+        id: 'dev_room',
+        name: 'Dev Room',
+        unlockCondition: 'collect_all_lore_documents',
+        biome: 'FACILITY',
+        features: ['developer_messages', 'debug_weapons', 'easter_eggs'],
+        rewards: ['skin_dev', 'all_weapons']
+      }
+    ],
+    BRANCHING_PATHS: {
+      level16: {
+        condition: 'find_hidden_keycard',
+        normalExit: 17,
+        secretExit: 'vault'
+      },
+      level18: {
+        condition: 'save_scientist',
+        normalExit: 19,
+        secretExit: 'arena'
+      }
+    },
+    LORE_DOCUMENTS: {
+      totalCount: 20,
+      locations: [
+        { level: 1, id: 'lore_1', name: 'Military Briefing', x: 500, y: 400 },
+        { level: 2, id: 'lore_2', name: 'Field Report Alpha', x: 800, y: 350 },
+        { level: 4, id: 'lore_3', name: 'Enemy Intel', x: 600, y: 380 },
+        { level: 5, id: 'lore_4', name: 'Sniper\'s Journal', x: 1200, y: 320 },
+        { level: 7, id: 'lore_5', name: 'Urban Warfare Manual', x: 900, y: 400 },
+        { level: 8, id: 'lore_6', name: 'Industrial Secrets', x: 1100, y: 360 },
+        { level: 11, id: 'lore_7', name: 'Desert Expedition Log', x: 700, y: 380 },
+        { level: 12, id: 'lore_8', name: 'Sandworm Research', x: 1000, y: 340 },
+        { level: 13, id: 'lore_9', name: 'Frozen Discovery', x: 800, y: 360 },
+        { level: 14, id: 'lore_10', name: 'Titan Origins', x: 1200, y: 380 },
+        { level: 15, id: 'lore_11', name: 'City Under Siege', x: 600, y: 340 },
+        { level: 16, id: 'lore_12', name: 'Rooftop Transmissions', x: 900, y: 300 },
+        { level: 17, id: 'lore_13', name: 'Lab Notes A', x: 700, y: 380 },
+        { level: 17, id: 'lore_14', name: 'Lab Notes B', x: 1100, y: 360 },
+        { level: 18, id: 'lore_15', name: 'Reactor Blueprints', x: 800, y: 340 },
+        { level: 18, id: 'lore_16', name: 'Emergency Protocol', x: 1300, y: 380 },
+        { level: 19, id: 'lore_17', name: 'Forest Recon', x: 600, y: 360 },
+        { level: 19, id: 'lore_18', name: 'Ambush Aftermath', x: 1000, y: 340 },
+        { level: 20, id: 'lore_19', name: 'Hell Gate Research', x: 800, y: 380 },
+        { level: 20, id: 'lore_20', name: 'Final Revelation', x: 1500, y: 300 }
+      ]
+    }
+  },
+
+  // Phase 5: Base Defense Mode Configuration
+  BASE_DEFENSE: {
+    objectiveHealth: 1000,
+    maxWaves: 20,
+    waveDuration: 60000,
+    waveBreakDuration: 30000,
+    startingResources: 500,
+    resourcesPerWave: 100,
+    resourcesPerKill: 10,
+    BUILDABLES: {
+      BARRICADE: {
+        name: 'Barricade',
+        cost: 50,
+        health: 200,
+        width: 60,
+        height: 80,
+        blockProjectiles: true,
+        maxCount: 10
+      },
+      TURRET: {
+        name: 'Auto Turret',
+        cost: 150,
+        health: 100,
+        damage: 15,
+        fireRate: 500,
+        range: 300,
+        maxCount: 5
+      },
+      MINE: {
+        name: 'Land Mine',
+        cost: 30,
+        damage: 100,
+        radius: 80,
+        maxCount: 15
+      },
+      HEAL_STATION: {
+        name: 'Heal Station',
+        cost: 200,
+        healRate: 5,
+        healRadius: 100,
+        maxCount: 2
+      },
+      AMMO_STATION: {
+        name: 'Ammo Station',
+        cost: 100,
+        ammoPerSecond: 2,
+        ammoRadius: 80,
+        maxCount: 3
+      }
+    },
+    WAVE_SCALING: {
+      enemyCountBase: 5,
+      enemyCountPerWave: 2,
+      healthScaling: 0.05,
+      damageScaling: 0.03,
+      bossWaves: [5, 10, 15, 20]
+    }
   }
 };
 
@@ -1039,3 +1343,6 @@ Object.freeze(GameConfig.SKINS);
 Object.freeze(GameConfig.DYNAMIC_EVENTS);
 Object.freeze(GameConfig.STATISTICS);
 Object.freeze(GameConfig.LEADERBOARDS);
+Object.freeze(GameConfig.BIOMES);
+Object.freeze(GameConfig.SECRET_CONTENT);
+Object.freeze(GameConfig.BASE_DEFENSE);

@@ -2,20 +2,21 @@
 
 A browser-based 16-bit arcade side-scrolling shooter game built with vanilla JavaScript and HTML5 Canvas. Features pixel-art style graphics, multiple game modes, and comprehensive gameplay systems.
 
-![War Shooter](https://img.shields.io/badge/version-1.4.0-blue.svg)
+![War Shooter](https://img.shields.io/badge/version-1.5.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Chromebook-orange.svg)
 
 ## 🎮 Features
 
 ### Game Modes
-- **Campaign Mode**: 10-level story-driven campaign with 4 unique boss battles
+- **Campaign Mode**: 20-level story-driven campaign with 8 unique boss battles across 6 biomes
 - **Survival Mode**: Endless wave-based survival with increasing difficulty
-- **Challenge Modes** (NEW in v1.4):
+- **Challenge Modes**:
   - **Time Attack**: Speedrun levels for medals (Gold <3min, Silver <5min, Bronze <8min)
-  - **Boss Rush**: Fight all 4 bosses back-to-back with health refills
+  - **Boss Rush**: Fight all 8 bosses back-to-back with health refills
   - **Horde Mode**: Endless waves with scaling difficulty and modifiers
   - **One-Hit Mode**: Extreme difficulty - one shot kills all
+  - **Base Defense** (NEW in v1.5): Protect your objective from 20 waves, build turrets and barricades
 - **Multiplayer Mode**: WebRTC-based peer-to-peer co-op and versus modes (Coming Soon)
 
 ### Characters
@@ -77,7 +78,23 @@ A browser-based 16-bit arcade side-scrolling shooter game built with vanilla Jav
 1. **The Warlord** (Level 3): Rage mode below 50% HP
 2. **The Devastator** (Level 6): Summons minion reinforcements
 3. **The Annihilator** (Level 9): Periodic invulnerable shield phases
-4. **The Overlord** (Level 10): All mechanics combined - final challenge
+4. **The Overlord** (Level 10): All mechanics combined
+
+#### Phase 5 Bosses (NEW)
+5. **Sandworm** (Level 12, Desert): 2000 HP - Burrows underground, emerges with slam attack, fires sand projectiles
+6. **Frost Titan** (Level 14, Snow): 2500 HP - Ice armor reduces damage, freeze beam attack, summons blizzards
+7. **Mech Commander** (Level 18, Facility): 3000+500 HP - Two-phase boss (mech then pilot), minigun and missiles
+8. **Hell Knight** (Level 20, Hell): 4000 HP - Four-phase final boss with fire sword, meteors, lava pools, and inferno mode
+
+### Biomes (NEW)
+Each biome features unique visual themes and environmental hazards:
+- **Default**: Standard military themed environment
+- **Desert**: Sand dunes, cacti, sandstorms, quicksand hazards
+- **Snow**: Ice crystals, frozen trees, blizzards, thin ice hazards
+- **Urban**: Buildings, streets, vehicles, falling debris
+- **Facility**: Labs, tech panels, machinery, electrical and toxic hazards
+- **Forest**: Trees, dense cover, fog, bear traps and pitfalls
+- **Hell**: Lava pools, fire pillars, brimstone, meteor rain
 
 ### Power-ups
 - Health Pack: Restore health
