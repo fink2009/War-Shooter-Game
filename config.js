@@ -417,36 +417,414 @@ const GameConfig = {
     }
   },
 
-  // Campaign levels
+  // Campaign levels with per-level visual profiles for dramatic variety
   CAMPAIGN_LEVELS: [
-    // Act 1: Training (Levels 1-3)
-    { name: 'Basic Training', act: 1, isBoss: false, biome: 'DEFAULT' },
-    { name: 'First Contact', act: 1, isBoss: false, biome: 'DEFAULT' },
-    { name: 'Boss Arena: The Warlord', act: 1, isBoss: true, bossId: 0, biome: 'DEFAULT' },
-    // Act 2: Escalation (Levels 4-6)
-    { name: 'Heavy Assault', act: 2, isBoss: false, biome: 'DEFAULT' },
-    { name: 'Sniper Alley', act: 2, isBoss: false, biome: 'DEFAULT' },
-    { name: 'Boss Arena: The Devastator', act: 2, isBoss: true, bossId: 1, biome: 'DEFAULT' },
-    // Act 3: Urban Conflict (Levels 7-10)
-    { name: 'Urban Warfare', act: 3, isBoss: false, biome: 'URBAN' },
-    { name: 'Industrial Complex', act: 3, isBoss: false, biome: 'FACILITY' },
-    { name: 'Boss Arena: The Annihilator', act: 3, isBoss: true, bossId: 2, biome: 'FACILITY' },
-    { name: 'Final Boss: The Overlord', act: 4, isBoss: true, bossId: 3, biome: 'DEFAULT' },
-    // Act 5: Desert Campaign (Levels 11-12)
-    { name: 'Desert Outpost', act: 5, isBoss: false, biome: 'DESERT' },
-    { name: 'Boss Arena: Sandworm', act: 5, isBoss: true, bossId: 4, biome: 'DESERT' },
-    // Act 6: Frozen Wastes (Levels 13-14)
-    { name: 'Tundra Expedition', act: 6, isBoss: false, biome: 'SNOW' },
-    { name: 'Boss Arena: Frost Titan', act: 6, isBoss: true, bossId: 5, biome: 'SNOW' },
-    // Act 7: City Assault (Levels 15-16)
-    { name: 'City Assault', act: 7, isBoss: false, biome: 'URBAN', hasSecretPath: true },
-    { name: 'Rooftop Escape', act: 7, isBoss: false, biome: 'URBAN' },
-    // Act 8: Facility Infiltration (Levels 17-18)
-    { name: 'Lab Infiltration', act: 8, isBoss: false, biome: 'FACILITY' },
-    { name: 'Reactor Survival', act: 8, isBoss: true, bossId: 6, biome: 'FACILITY', hasSecretPath: true },
-    // Act 9: Forest & Final Battle (Levels 19-20)
-    { name: 'Forest Ambush', act: 9, isBoss: false, biome: 'FOREST' },
-    { name: 'Boss Arena: Hell Knight', act: 9, isBoss: true, bossId: 7, biome: 'HELL' }
+    // Act 1: Training (Levels 1-3) - Soft morning atmosphere, gentle introduction
+    { 
+      name: 'Basic Training', 
+      act: 1, 
+      isBoss: false, 
+      biome: 'DEFAULT',
+      visualProfile: {
+        skyVariant: 'morning_hazy',
+        parallaxLayers: ['distant_hills', 'radio_towers'],
+        foregroundProps: ['sandbags', 'training_targets', 'crates'],
+        silhouetteStyle: 'soft_rolling_hills',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'flat_training_range',
+        platformDensity: 0.3,
+        landmarkCount: 2,
+        clutterDensity: 0.3,
+        colorGrading: { brightness: 1.1, warmth: 0.1 }
+      }
+    },
+    { 
+      name: 'First Contact', 
+      act: 1, 
+      isBoss: false, 
+      biome: 'DEFAULT',
+      visualProfile: {
+        skyVariant: 'noon_clear',
+        parallaxLayers: ['distant_hills', 'destroyed_vehicles', 'smoke_plumes'],
+        foregroundProps: ['sandbags', 'ammo_crates', 'barricades', 'shell_casings'],
+        silhouetteStyle: 'gentle_slopes',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'rolling_terrain',
+        platformDensity: 0.4,
+        landmarkCount: 2,
+        clutterDensity: 0.4,
+        colorGrading: { brightness: 1.0, warmth: 0.0 }
+      }
+    },
+    { 
+      name: 'Boss Arena: The Warlord', 
+      act: 1, 
+      isBoss: true, 
+      bossId: 0, 
+      biome: 'DEFAULT',
+      visualProfile: {
+        skyVariant: 'stormy_dramatic',
+        parallaxLayers: ['dark_mountains', 'war_banners', 'distant_explosions'],
+        foregroundProps: ['skull_piles', 'war_banners', 'burning_debris', 'chains'],
+        silhouetteStyle: 'jagged_peaks',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DUSK',
+        groundShapeProfile: 'arena_pit',
+        platformDensity: 0.2,
+        landmarkCount: 3,
+        clutterDensity: 0.5,
+        colorGrading: { brightness: 0.85, warmth: -0.1, contrast: 1.2 },
+        bossArenaFeatures: { dramaticLighting: true, bloodStains: true }
+      }
+    },
+    // Act 2: Escalation (Levels 4-6) - Intensifying conflict, afternoon heat
+    { 
+      name: 'Heavy Assault', 
+      act: 2, 
+      isBoss: false, 
+      biome: 'DEFAULT',
+      visualProfile: {
+        skyVariant: 'afternoon_haze',
+        parallaxLayers: ['artillery_positions', 'tank_wrecks', 'smoke_columns'],
+        foregroundProps: ['tank_traps', 'craters', 'shell_casings', 'debris_piles'],
+        silhouetteStyle: 'cratered_battlefield',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'war_torn',
+        platformDensity: 0.5,
+        landmarkCount: 3,
+        clutterDensity: 0.6,
+        colorGrading: { brightness: 0.95, warmth: 0.15 }
+      }
+    },
+    { 
+      name: 'Sniper Alley', 
+      act: 2, 
+      isBoss: false, 
+      biome: 'DEFAULT',
+      visualProfile: {
+        skyVariant: 'overcast_gray',
+        parallaxLayers: ['ruined_buildings', 'sniper_nests', 'broken_walls'],
+        foregroundProps: ['rubble', 'broken_windows', 'bullet_holes', 'warning_signs'],
+        silhouetteStyle: 'urban_ruins',
+        weatherOverride: 'FOG',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'uneven_rubble',
+        platformDensity: 0.6,
+        landmarkCount: 2,
+        clutterDensity: 0.7,
+        colorGrading: { brightness: 0.8, warmth: -0.1 }
+      }
+    },
+    { 
+      name: 'Boss Arena: The Devastator', 
+      act: 2, 
+      isBoss: true, 
+      bossId: 1, 
+      biome: 'DEFAULT',
+      visualProfile: {
+        skyVariant: 'blood_red_sunset',
+        parallaxLayers: ['destroyed_city', 'fire_columns', 'circling_vultures'],
+        foregroundProps: ['massive_chains', 'impaled_weapons', 'burning_tanks', 'skull_totems'],
+        silhouetteStyle: 'devastation_zone',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DUSK',
+        groundShapeProfile: 'destruction_crater',
+        platformDensity: 0.3,
+        landmarkCount: 4,
+        clutterDensity: 0.6,
+        colorGrading: { brightness: 0.75, warmth: 0.3, contrast: 1.3 },
+        bossArenaFeatures: { dramaticLighting: true, fireGlow: true }
+      }
+    },
+    // Act 3: Urban Conflict (Levels 7-10) - City warfare, vertical combat
+    { 
+      name: 'Urban Warfare', 
+      act: 3, 
+      isBoss: false, 
+      biome: 'URBAN',
+      visualProfile: {
+        skyVariant: 'smog_filled',
+        parallaxLayers: ['skyscrapers', 'burning_buildings', 'helicopters'],
+        foregroundProps: ['overturned_cars', 'street_barricades', 'traffic_lights', 'mailboxes'],
+        silhouetteStyle: 'city_skyline',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'city_streets',
+        platformDensity: 0.5,
+        landmarkCount: 3,
+        clutterDensity: 0.7,
+        colorGrading: { brightness: 0.9, warmth: -0.05 }
+      }
+    },
+    { 
+      name: 'Industrial Complex', 
+      act: 3, 
+      isBoss: false, 
+      biome: 'FACILITY',
+      visualProfile: {
+        skyVariant: 'industrial_pollution',
+        parallaxLayers: ['factory_towers', 'smokestacks', 'cranes'],
+        foregroundProps: ['pipes', 'control_panels', 'warning_signs', 'barrels'],
+        silhouetteStyle: 'industrial_pipes',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'factory_floor',
+        platformDensity: 0.6,
+        landmarkCount: 2,
+        clutterDensity: 0.6,
+        colorGrading: { brightness: 0.85, warmth: 0.0, tint: '#334455' }
+      }
+    },
+    { 
+      name: 'Boss Arena: The Annihilator', 
+      act: 3, 
+      isBoss: true, 
+      bossId: 2, 
+      biome: 'FACILITY',
+      visualProfile: {
+        skyVariant: 'electric_storm',
+        parallaxLayers: ['reactor_cores', 'tesla_coils', 'sparking_cables'],
+        foregroundProps: ['broken_machinery', 'electricity_arcs', 'fallen_pipes', 'hazard_signs'],
+        silhouetteStyle: 'mechanical_horror',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'NIGHT',
+        groundShapeProfile: 'platform_arena',
+        platformDensity: 0.4,
+        landmarkCount: 4,
+        clutterDensity: 0.5,
+        colorGrading: { brightness: 0.6, warmth: -0.2, contrast: 1.4 },
+        bossArenaFeatures: { electricityEffects: true, alarmLights: true }
+      }
+    },
+    { 
+      name: 'Final Boss: The Overlord', 
+      act: 4, 
+      isBoss: true, 
+      bossId: 3, 
+      biome: 'DEFAULT',
+      visualProfile: {
+        skyVariant: 'apocalyptic_red',
+        parallaxLayers: ['burning_world', 'falling_meteors', 'dark_citadel'],
+        foregroundProps: ['throne_pillars', 'war_trophies', 'enemy_banners', 'fire_braziers'],
+        silhouetteStyle: 'dark_fortress',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'NIGHT',
+        groundShapeProfile: 'throne_room',
+        platformDensity: 0.4,
+        landmarkCount: 5,
+        clutterDensity: 0.6,
+        colorGrading: { brightness: 0.5, warmth: 0.2, contrast: 1.5, saturation: 1.2 },
+        bossArenaFeatures: { dramaticLighting: true, fireGlow: true, darkVignette: true }
+      }
+    },
+    // Act 5: Desert Campaign (Levels 11-12) - Harsh sun, sand everywhere
+    { 
+      name: 'Desert Outpost', 
+      act: 5, 
+      isBoss: false, 
+      biome: 'DESERT',
+      visualProfile: {
+        skyVariant: 'scorching_sun',
+        parallaxLayers: ['sand_dunes', 'distant_oasis', 'ancient_ruins'],
+        foregroundProps: ['cacti', 'sun_bleached_bones', 'desert_rocks', 'tents'],
+        silhouetteStyle: 'rolling_dunes',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'desert_dunes',
+        platformDensity: 0.3,
+        landmarkCount: 2,
+        clutterDensity: 0.4,
+        colorGrading: { brightness: 1.15, warmth: 0.25 }
+      }
+    },
+    { 
+      name: 'Boss Arena: Sandworm', 
+      act: 5, 
+      isBoss: true, 
+      bossId: 4, 
+      biome: 'DESERT',
+      visualProfile: {
+        skyVariant: 'sandstorm_fury',
+        parallaxLayers: ['massive_dunes', 'swirling_sand', 'buried_structures'],
+        foregroundProps: ['bone_piles', 'ancient_pillars', 'sand_geysers', 'worm_tracks'],
+        silhouetteStyle: 'desert_wasteland',
+        weatherOverride: 'SANDSTORM',
+        timeOfDayOverride: 'DUSK',
+        groundShapeProfile: 'sand_arena',
+        platformDensity: 0.2,
+        landmarkCount: 3,
+        clutterDensity: 0.4,
+        colorGrading: { brightness: 0.7, warmth: 0.35, contrast: 1.2 },
+        bossArenaFeatures: { sandParticles: true, heatDistortion: true }
+      }
+    },
+    // Act 6: Frozen Wastes (Levels 13-14) - Cold, isolated, dangerous
+    { 
+      name: 'Tundra Expedition', 
+      act: 6, 
+      isBoss: false, 
+      biome: 'SNOW',
+      visualProfile: {
+        skyVariant: 'frozen_twilight',
+        parallaxLayers: ['ice_mountains', 'frozen_trees', 'aurora_borealis'],
+        foregroundProps: ['ice_crystals', 'snow_banks', 'frozen_equipment', 'icicles'],
+        silhouetteStyle: 'ice_peaks',
+        weatherOverride: 'SNOW',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'frozen_terrain',
+        platformDensity: 0.4,
+        landmarkCount: 2,
+        clutterDensity: 0.3,
+        colorGrading: { brightness: 1.1, warmth: -0.2, tint: '#aaddff' }
+      }
+    },
+    { 
+      name: 'Boss Arena: Frost Titan', 
+      act: 6, 
+      isBoss: true, 
+      bossId: 5, 
+      biome: 'SNOW',
+      visualProfile: {
+        skyVariant: 'blizzard_darkness',
+        parallaxLayers: ['ice_fortress', 'frozen_statues', 'blizzard_wall'],
+        foregroundProps: ['ice_pillars', 'frozen_victims', 'crystal_formations', 'frost_spires'],
+        silhouetteStyle: 'ice_citadel',
+        weatherOverride: 'SNOW',
+        timeOfDayOverride: 'NIGHT',
+        groundShapeProfile: 'ice_arena',
+        platformDensity: 0.3,
+        landmarkCount: 4,
+        clutterDensity: 0.5,
+        colorGrading: { brightness: 0.6, warmth: -0.3, contrast: 1.3, tint: '#8899cc' },
+        bossArenaFeatures: { blizzardParticles: true, icyGlow: true }
+      }
+    },
+    // Act 7: City Assault (Levels 15-16) - Night ops, rooftop action
+    { 
+      name: 'City Assault', 
+      act: 7, 
+      isBoss: false, 
+      biome: 'URBAN', 
+      hasSecretPath: true,
+      visualProfile: {
+        skyVariant: 'neon_night',
+        parallaxLayers: ['night_skyline', 'neon_signs', 'police_helicopters'],
+        foregroundProps: ['dumpsters', 'fire_escapes', 'streetlights', 'graffiti_walls'],
+        silhouetteStyle: 'downtown_night',
+        weatherOverride: 'RAIN',
+        timeOfDayOverride: 'NIGHT',
+        groundShapeProfile: 'wet_streets',
+        platformDensity: 0.5,
+        landmarkCount: 3,
+        clutterDensity: 0.7,
+        colorGrading: { brightness: 0.55, warmth: -0.1, tint: '#334488' }
+      }
+    },
+    { 
+      name: 'Rooftop Escape', 
+      act: 7, 
+      isBoss: false, 
+      biome: 'URBAN',
+      visualProfile: {
+        skyVariant: 'dawn_breaking',
+        parallaxLayers: ['rooftop_silhouettes', 'water_towers', 'distant_sunrise'],
+        foregroundProps: ['ac_units', 'satellite_dishes', 'pipes', 'ventilation_ducts'],
+        silhouetteStyle: 'rooftop_maze',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DUSK',
+        groundShapeProfile: 'elevated_platforms',
+        platformDensity: 0.7,
+        landmarkCount: 2,
+        clutterDensity: 0.6,
+        colorGrading: { brightness: 0.75, warmth: 0.2 }
+      }
+    },
+    // Act 8: Facility Infiltration (Levels 17-18) - High-tech, dangerous
+    { 
+      name: 'Lab Infiltration', 
+      act: 8, 
+      isBoss: false, 
+      biome: 'FACILITY',
+      visualProfile: {
+        skyVariant: 'sterile_white',
+        parallaxLayers: ['lab_equipment', 'specimen_tanks', 'data_screens'],
+        foregroundProps: ['lab_tables', 'computer_terminals', 'test_tubes', 'biohazard_signs'],
+        silhouetteStyle: 'clinical_corridors',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'DAY',
+        groundShapeProfile: 'lab_floor',
+        platformDensity: 0.5,
+        landmarkCount: 3,
+        clutterDensity: 0.5,
+        colorGrading: { brightness: 1.05, warmth: -0.15, tint: '#eeffee' }
+      }
+    },
+    { 
+      name: 'Reactor Survival', 
+      act: 8, 
+      isBoss: true, 
+      bossId: 6, 
+      biome: 'FACILITY', 
+      hasSecretPath: true,
+      visualProfile: {
+        skyVariant: 'reactor_glow',
+        parallaxLayers: ['reactor_core', 'warning_lights', 'emergency_systems'],
+        foregroundProps: ['cooling_pipes', 'radiation_signs', 'control_rods', 'hazmat_gear'],
+        silhouetteStyle: 'reactor_chamber',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'NIGHT',
+        groundShapeProfile: 'reactor_platform',
+        platformDensity: 0.4,
+        landmarkCount: 4,
+        clutterDensity: 0.5,
+        colorGrading: { brightness: 0.65, warmth: -0.1, contrast: 1.3, tint: '#00ff88' },
+        bossArenaFeatures: { radiationGlow: true, alarmLights: true, steamVents: true }
+      }
+    },
+    // Act 9: Forest & Final Battle (Levels 19-20) - Dark atmosphere, ultimate challenge
+    { 
+      name: 'Forest Ambush', 
+      act: 9, 
+      isBoss: false, 
+      biome: 'FOREST',
+      visualProfile: {
+        skyVariant: 'dense_canopy',
+        parallaxLayers: ['ancient_trees', 'hanging_vines', 'distant_mountains'],
+        foregroundProps: ['fallen_logs', 'mushrooms', 'ferns', 'moss_rocks'],
+        silhouetteStyle: 'forest_depths',
+        weatherOverride: 'FOG',
+        timeOfDayOverride: 'DUSK',
+        groundShapeProfile: 'forest_floor',
+        platformDensity: 0.6,
+        landmarkCount: 2,
+        clutterDensity: 0.8,
+        colorGrading: { brightness: 0.7, warmth: 0.05, tint: '#446644' }
+      }
+    },
+    { 
+      name: 'Boss Arena: Hell Knight', 
+      act: 9, 
+      isBoss: true, 
+      bossId: 7, 
+      biome: 'HELL',
+      visualProfile: {
+        skyVariant: 'hellfire_sky',
+        parallaxLayers: ['lava_falls', 'demon_statues', 'burning_souls'],
+        foregroundProps: ['ritual_altars', 'demonic_runes', 'bone_thrones', 'lava_cracks'],
+        silhouetteStyle: 'infernal_cathedral',
+        weatherOverride: 'CLEAR',
+        timeOfDayOverride: 'NIGHT',
+        groundShapeProfile: 'hellscape',
+        platformDensity: 0.4,
+        landmarkCount: 5,
+        clutterDensity: 0.7,
+        colorGrading: { brightness: 0.5, warmth: 0.5, contrast: 1.5, saturation: 1.3 },
+        bossArenaFeatures: { fireGlow: true, lavaParticles: true, darkVignette: true, demonicRunes: true }
+      }
+    }
   ],
 
   // Boss configurations
@@ -1176,6 +1554,282 @@ const GameConfig = {
     }
   },
 
+  // Sky variant definitions for per-level visual variety
+  SKY_VARIANTS: {
+    // Act 1: Training - Soft, welcoming
+    morning_hazy: {
+      skyTop: '#5a6a8a', skyMid: '#7a8aaa', skyBottom: '#9aaaca',
+      cloudColor: '#b0c0d0', sunGlow: true, sunPosition: 0.2
+    },
+    noon_clear: {
+      skyTop: '#4a5f7f', skyMid: '#6a7f9f', skyBottom: '#8a9fbf',
+      cloudColor: '#c0d0e0', sunGlow: false, sunPosition: 0.5
+    },
+    stormy_dramatic: {
+      skyTop: '#2a3a4a', skyMid: '#3a4a5a', skyBottom: '#5a6a7a',
+      cloudColor: '#4a5a6a', lightningFlashes: true, darkClouds: true
+    },
+    // Act 2: Escalation - Intense
+    afternoon_haze: {
+      skyTop: '#5a6070', skyMid: '#7a8090', skyBottom: '#9aa0b0',
+      cloudColor: '#a0a8b0', dustHaze: true, sunPosition: 0.7
+    },
+    overcast_gray: {
+      skyTop: '#505560', skyMid: '#606570', skyBottom: '#707580',
+      cloudColor: '#606570', heavyClouds: true, noSun: true
+    },
+    blood_red_sunset: {
+      skyTop: '#3a2020', skyMid: '#6a3030', skyBottom: '#aa4040',
+      cloudColor: '#802020', sunGlow: true, sunPosition: 0.9, sunColor: '#ff4400'
+    },
+    // Act 3: Urban - Polluted, industrial
+    smog_filled: {
+      skyTop: '#4a5055', skyMid: '#6a7075', skyBottom: '#8a9095',
+      cloudColor: '#707580', smogLayer: true
+    },
+    industrial_pollution: {
+      skyTop: '#404550', skyMid: '#505560', skyBottom: '#606570',
+      cloudColor: '#505560', smokeStacks: true, yellowTint: true
+    },
+    electric_storm: {
+      skyTop: '#202040', skyMid: '#303050', skyBottom: '#404060',
+      cloudColor: '#303050', lightningFlashes: true, electricBlue: true
+    },
+    apocalyptic_red: {
+      skyTop: '#200000', skyMid: '#400010', skyBottom: '#601020',
+      cloudColor: '#300010', fireGlow: true, fallingEmbers: true
+    },
+    // Act 5: Desert - Scorching
+    scorching_sun: {
+      skyTop: '#d4b46a', skyMid: '#e4c47a', skyBottom: '#f4d48a',
+      cloudColor: '#e8d8a0', sunGlow: true, sunPosition: 0.5, heatHaze: true
+    },
+    sandstorm_fury: {
+      skyTop: '#a08040', skyMid: '#b09050', skyBottom: '#c0a060',
+      cloudColor: '#a08050', sandParticles: true, lowVisibility: true
+    },
+    // Act 6: Snow - Cold, isolated
+    frozen_twilight: {
+      skyTop: '#8090b0', skyMid: '#a0b0d0', skyBottom: '#c0d0f0',
+      cloudColor: '#d0e0ff', auroraEffect: true, iceSparkles: true
+    },
+    blizzard_darkness: {
+      skyTop: '#404860', skyMid: '#506080', skyBottom: '#6080a0',
+      cloudColor: '#506080', heavySnow: true, windEffect: true
+    },
+    // Act 7: Urban Night - Noir atmosphere
+    neon_night: {
+      skyTop: '#101020', skyMid: '#202040', skyBottom: '#303060',
+      cloudColor: '#202030', cityLights: true, neonGlow: true
+    },
+    dawn_breaking: {
+      skyTop: '#304060', skyMid: '#506080', skyBottom: '#8090a0',
+      cloudColor: '#607090', sunGlow: true, sunPosition: 0.1, sunColor: '#ffaa66'
+    },
+    // Act 8: Facility - Clinical, dangerous
+    sterile_white: {
+      skyTop: '#c0c8d0', skyMid: '#d0d8e0', skyBottom: '#e0e8f0',
+      cloudColor: '#d8e0e8', fluorescent: true
+    },
+    reactor_glow: {
+      skyTop: '#102010', skyMid: '#203020', skyBottom: '#304030',
+      cloudColor: '#203020', greenGlow: true, radiationHaze: true
+    },
+    // Act 9: Forest & Hell - Ominous, terrifying
+    dense_canopy: {
+      skyTop: '#304020', skyMid: '#405030', skyBottom: '#506040',
+      cloudColor: '#405030', treeShadows: true, mistLayer: true
+    },
+    hellfire_sky: {
+      skyTop: '#200000', skyMid: '#400808', skyBottom: '#601010',
+      cloudColor: '#400000', fireGlow: true, ashParticles: true, lavaGlow: true
+    }
+  },
+
+  // Parallax layer definitions for background variety
+  PARALLAX_LAYERS: {
+    // Distance/speed: far = 0.1, mid = 0.3, close = 0.5
+    // Training/Default
+    distant_hills: { type: 'silhouette', speed: 0.1, color: '#3a4a5a', heightVariation: 'rolling' },
+    radio_towers: { type: 'structure', speed: 0.2, color: '#2a3a4a', elements: ['tower', 'antenna'] },
+    destroyed_vehicles: { type: 'debris', speed: 0.3, color: '#4a4a4a', elements: ['tank', 'truck'] },
+    smoke_plumes: { type: 'effect', speed: 0.15, animated: true },
+    // War/Battle
+    dark_mountains: { type: 'silhouette', speed: 0.1, color: '#1a2a3a', heightVariation: 'jagged' },
+    war_banners: { type: 'props', speed: 0.4, color: '#8a2020', elements: ['flag', 'banner'] },
+    distant_explosions: { type: 'effect', speed: 0.1, animated: true, flicker: true },
+    artillery_positions: { type: 'structure', speed: 0.2, color: '#3a3a3a', elements: ['cannon', 'bunker'] },
+    tank_wrecks: { type: 'debris', speed: 0.25, color: '#4a4a3a', elements: ['tank_hull', 'turret'] },
+    smoke_columns: { type: 'effect', speed: 0.15, animated: true, tall: true },
+    ruined_buildings: { type: 'structure', speed: 0.2, color: '#505050', elements: ['ruin', 'wall'] },
+    sniper_nests: { type: 'structure', speed: 0.25, color: '#404040', elements: ['tower', 'window'] },
+    broken_walls: { type: 'debris', speed: 0.3, color: '#606060', elements: ['wall_chunk', 'rubble'] },
+    destroyed_city: { type: 'silhouette', speed: 0.1, color: '#2a2a2a', heightVariation: 'urban_ruins' },
+    fire_columns: { type: 'effect', speed: 0.15, animated: true, fireColor: '#ff4400' },
+    circling_vultures: { type: 'effect', speed: 0.05, animated: true, flying: true },
+    // Urban
+    skyscrapers: { type: 'silhouette', speed: 0.1, color: '#3a4050', heightVariation: 'tall_buildings' },
+    burning_buildings: { type: 'structure', speed: 0.15, color: '#4a4a4a', fireEffect: true },
+    helicopters: { type: 'effect', speed: 0.08, animated: true, flying: true },
+    factory_towers: { type: 'structure', speed: 0.15, color: '#404550', elements: ['tower', 'stack'] },
+    smokestacks: { type: 'structure', speed: 0.2, color: '#505560', smokeEffect: true },
+    cranes: { type: 'structure', speed: 0.25, color: '#606060', elements: ['crane', 'jib'] },
+    reactor_cores: { type: 'structure', speed: 0.2, color: '#203030', glowEffect: true, glowColor: '#00ff88' },
+    tesla_coils: { type: 'structure', speed: 0.25, color: '#304050', electricEffect: true },
+    sparking_cables: { type: 'effect', speed: 0.3, animated: true, electricSparks: true },
+    burning_world: { type: 'silhouette', speed: 0.05, color: '#1a0000', fireEffect: true },
+    falling_meteors: { type: 'effect', speed: 0.1, animated: true, fallingParticles: true },
+    dark_citadel: { type: 'structure', speed: 0.1, color: '#0a0a0a', elements: ['fortress', 'spire'] },
+    // Desert
+    sand_dunes: { type: 'silhouette', speed: 0.1, color: '#b09050', heightVariation: 'dunes' },
+    distant_oasis: { type: 'structure', speed: 0.15, color: '#4a6a4a', elements: ['palm', 'water'] },
+    ancient_ruins: { type: 'structure', speed: 0.2, color: '#a08060', elements: ['column', 'arch'] },
+    massive_dunes: { type: 'silhouette', speed: 0.08, color: '#a08040', heightVariation: 'massive_dunes' },
+    swirling_sand: { type: 'effect', speed: 0.2, animated: true, sandParticles: true },
+    buried_structures: { type: 'structure', speed: 0.15, color: '#907050', elements: ['ruin', 'pillar'] },
+    // Snow
+    ice_mountains: { type: 'silhouette', speed: 0.1, color: '#8090a0', heightVariation: 'ice_peaks' },
+    frozen_trees: { type: 'structure', speed: 0.2, color: '#a0b0c0', elements: ['tree', 'ice'] },
+    aurora_borealis: { type: 'effect', speed: 0.02, animated: true, auroraColors: true },
+    ice_fortress: { type: 'structure', speed: 0.15, color: '#90a0b0', elements: ['wall', 'tower'] },
+    frozen_statues: { type: 'structure', speed: 0.2, color: '#a0b0c0', elements: ['statue', 'ice'] },
+    blizzard_wall: { type: 'effect', speed: 0.1, animated: true, snowWall: true },
+    // Night city
+    night_skyline: { type: 'silhouette', speed: 0.1, color: '#101820', heightVariation: 'city_night' },
+    neon_signs: { type: 'effect', speed: 0.2, animated: true, neonColors: true },
+    police_helicopters: { type: 'effect', speed: 0.08, animated: true, searchlight: true },
+    rooftop_silhouettes: { type: 'silhouette', speed: 0.15, color: '#202030', heightVariation: 'rooftops' },
+    water_towers: { type: 'structure', speed: 0.25, color: '#303040', elements: ['tower', 'tank'] },
+    distant_sunrise: { type: 'effect', speed: 0.05, sunriseGlow: true },
+    // Facility
+    lab_equipment: { type: 'structure', speed: 0.2, color: '#606880', elements: ['tank', 'monitor'] },
+    specimen_tanks: { type: 'structure', speed: 0.25, color: '#506070', glowEffect: true, glowColor: '#00ff88' },
+    data_screens: { type: 'effect', speed: 0.3, animated: true, screenFlicker: true },
+    reactor_core: { type: 'structure', speed: 0.15, color: '#204030', glowEffect: true, glowColor: '#00ff44' },
+    warning_lights: { type: 'effect', speed: 0.25, animated: true, redFlash: true },
+    emergency_systems: { type: 'effect', speed: 0.3, animated: true, alarmEffect: true },
+    // Forest
+    ancient_trees: { type: 'silhouette', speed: 0.1, color: '#2a3a2a', heightVariation: 'tall_trees' },
+    hanging_vines: { type: 'effect', speed: 0.15, animated: true, swayEffect: true },
+    distant_mountains: { type: 'silhouette', speed: 0.05, color: '#3a4a3a', heightVariation: 'forest_hills' },
+    // Hell
+    lava_falls: { type: 'effect', speed: 0.1, animated: true, lavaFlow: true, glowColor: '#ff4400' },
+    demon_statues: { type: 'structure', speed: 0.15, color: '#2a1010', elements: ['statue', 'gargoyle'] },
+    burning_souls: { type: 'effect', speed: 0.08, animated: true, ghostEffect: true, color: '#ff6600' }
+  },
+
+  // Foreground prop definitions for ground-level detail
+  FOREGROUND_PROPS: {
+    // Training
+    sandbags: { width: 40, height: 25, color: '#8a7a5a', stackable: true },
+    training_targets: { width: 20, height: 50, color: '#cc6644', animated: false },
+    crates: { width: 35, height: 30, color: '#7a6a4a' },
+    ammo_crates: { width: 30, height: 25, color: '#4a5a3a', hasIcon: true },
+    barricades: { width: 50, height: 35, color: '#6a5a4a' },
+    shell_casings: { width: 15, height: 8, color: '#aa9944', scattered: true },
+    // War/Battle
+    tank_traps: { width: 45, height: 40, color: '#5a5a5a', metal: true },
+    craters: { width: 60, height: 20, color: '#3a3a2a', inGround: true },
+    debris_piles: { width: 50, height: 30, color: '#606050' },
+    rubble: { width: 40, height: 20, color: '#707060', scattered: true },
+    broken_windows: { width: 25, height: 35, color: '#8080a0', transparent: true },
+    bullet_holes: { width: 10, height: 10, color: '#303030', scattered: true, onWalls: true },
+    warning_signs: { width: 20, height: 30, color: '#ffcc00', hasText: true },
+    // Boss arena
+    skull_piles: { width: 35, height: 25, color: '#d0c0a0', stacked: true },
+    war_banners: { width: 25, height: 60, color: '#8a2020', animated: true },
+    burning_debris: { width: 40, height: 30, color: '#ff6600', fireEffect: true },
+    chains: { width: 15, height: 50, color: '#606060', hanging: true },
+    massive_chains: { width: 25, height: 80, color: '#505050', hanging: true },
+    impaled_weapons: { width: 20, height: 45, color: '#808080', angled: true },
+    burning_tanks: { width: 60, height: 40, color: '#4a4a3a', fireEffect: true },
+    skull_totems: { width: 30, height: 55, color: '#a09080', stacked: true },
+    throne_pillars: { width: 40, height: 100, color: '#3a3040', tall: true },
+    war_trophies: { width: 35, height: 40, color: '#8a7a6a' },
+    enemy_banners: { width: 30, height: 70, color: '#6a1010', animated: true },
+    fire_braziers: { width: 25, height: 35, color: '#8a6a4a', fireEffect: true },
+    // Urban
+    overturned_cars: { width: 70, height: 35, color: '#5a5a6a', rotated: true },
+    street_barricades: { width: 55, height: 40, color: '#ff8800', striped: true },
+    traffic_lights: { width: 15, height: 45, color: '#404040', tall: true },
+    mailboxes: { width: 20, height: 35, color: '#3344aa' },
+    dumpsters: { width: 50, height: 40, color: '#446644' },
+    fire_escapes: { width: 30, height: 80, color: '#505050', climbable: true },
+    streetlights: { width: 15, height: 60, color: '#606060', tall: true },
+    graffiti_walls: { width: 60, height: 50, color: '#707070', decorated: true },
+    ac_units: { width: 35, height: 25, color: '#808080' },
+    satellite_dishes: { width: 30, height: 30, color: '#909090' },
+    ventilation_ducts: { width: 45, height: 25, color: '#707080' },
+    // Industrial
+    pipes: { width: 80, height: 20, color: '#606870', horizontal: true },
+    control_panels: { width: 40, height: 50, color: '#404860', hasLights: true },
+    barrels: { width: 25, height: 35, color: '#4a5a6a' },
+    broken_machinery: { width: 50, height: 45, color: '#505868', broken: true },
+    electricity_arcs: { width: 30, height: 40, color: '#88aaff', animated: true },
+    fallen_pipes: { width: 70, height: 15, color: '#606060', rotated: true },
+    hazard_signs: { width: 25, height: 25, color: '#ffaa00', hasIcon: true },
+    lab_tables: { width: 55, height: 35, color: '#808890' },
+    computer_terminals: { width: 35, height: 40, color: '#404050', hasScreen: true },
+    test_tubes: { width: 20, height: 30, color: '#80c0a0', glowing: true },
+    biohazard_signs: { width: 25, height: 25, color: '#ff6600', hasIcon: true },
+    cooling_pipes: { width: 50, height: 30, color: '#506060', steamEffect: true },
+    radiation_signs: { width: 25, height: 25, color: '#ffff00', hasIcon: true },
+    control_rods: { width: 20, height: 60, color: '#304040', glowing: true },
+    hazmat_gear: { width: 30, height: 40, color: '#ff8800' },
+    // Desert
+    cacti: { width: 20, height: 45, color: '#3a5a2a', prickly: true },
+    sun_bleached_bones: { width: 35, height: 20, color: '#e0d8c0', scattered: true },
+    desert_rocks: { width: 40, height: 25, color: '#a08060' },
+    tents: { width: 50, height: 40, color: '#c0a080' },
+    bone_piles: { width: 40, height: 25, color: '#d0c8b0', stacked: true },
+    ancient_pillars: { width: 30, height: 70, color: '#a09070', broken: true },
+    sand_geysers: { width: 25, height: 30, color: '#c0a060', animated: true },
+    worm_tracks: { width: 80, height: 15, color: '#a08050', inGround: true },
+    // Snow
+    ice_crystals: { width: 25, height: 40, color: '#c0e0ff', transparent: true },
+    snow_banks: { width: 50, height: 25, color: '#f0f4ff' },
+    frozen_equipment: { width: 40, height: 35, color: '#a0b0c0', iced: true },
+    icicles: { width: 15, height: 35, color: '#c0e0ff', hanging: true },
+    ice_pillars: { width: 35, height: 60, color: '#a0c0e0', transparent: true },
+    frozen_victims: { width: 30, height: 50, color: '#8090a0', iced: true },
+    crystal_formations: { width: 40, height: 50, color: '#a0d0ff', glowing: true },
+    frost_spires: { width: 25, height: 70, color: '#b0d0f0', tall: true },
+    // Forest
+    fallen_logs: { width: 70, height: 25, color: '#5a4030' },
+    mushrooms: { width: 20, height: 25, color: '#a06040', scattered: true },
+    ferns: { width: 35, height: 30, color: '#3a5a3a' },
+    moss_rocks: { width: 40, height: 30, color: '#4a5a4a', mossy: true },
+    // Hell
+    ritual_altars: { width: 50, height: 40, color: '#3a2020', bloodStains: true },
+    demonic_runes: { width: 30, height: 10, color: '#ff4400', glowing: true, inGround: true },
+    bone_thrones: { width: 60, height: 70, color: '#a09080', elaborate: true },
+    lava_cracks: { width: 40, height: 10, color: '#ff4400', glowing: true, inGround: true }
+  },
+
+  // Ground shape profiles for terrain variety
+  GROUND_SHAPE_PROFILES: {
+    flat_training_range: { slopeFrequency: 0.1, maxHeight: 20, platformChance: 0.2 },
+    rolling_terrain: { slopeFrequency: 0.3, maxHeight: 40, platformChance: 0.3 },
+    arena_pit: { slopeFrequency: 0.2, maxHeight: 30, depressed: true, wallsAtEdges: true },
+    war_torn: { slopeFrequency: 0.5, maxHeight: 50, craterChance: 0.4, platformChance: 0.3 },
+    uneven_rubble: { slopeFrequency: 0.6, maxHeight: 35, debrisClutter: true },
+    destruction_crater: { slopeFrequency: 0.3, maxHeight: 60, centralPit: true },
+    city_streets: { slopeFrequency: 0.2, maxHeight: 20, platformChance: 0.5, buildingPlatforms: true },
+    factory_floor: { slopeFrequency: 0.1, maxHeight: 15, platformChance: 0.6, metalGrating: true },
+    platform_arena: { slopeFrequency: 0.2, maxHeight: 40, platformChance: 0.7, elevated: true },
+    throne_room: { slopeFrequency: 0.2, maxHeight: 50, steppedPlatforms: true, centralRaised: true },
+    desert_dunes: { slopeFrequency: 0.4, maxHeight: 45, smoothCurves: true },
+    sand_arena: { slopeFrequency: 0.3, maxHeight: 35, shiftingSand: true },
+    frozen_terrain: { slopeFrequency: 0.3, maxHeight: 30, slippery: true, icePatches: true },
+    ice_arena: { slopeFrequency: 0.2, maxHeight: 40, icePlatforms: true, frozenGround: true },
+    wet_streets: { slopeFrequency: 0.2, maxHeight: 25, puddles: true, slippery: true },
+    elevated_platforms: { slopeFrequency: 0.1, maxHeight: 20, platformChance: 0.8, rooftopStyle: true },
+    lab_floor: { slopeFrequency: 0.1, maxHeight: 15, cleanTiles: true, platformChance: 0.4 },
+    reactor_platform: { slopeFrequency: 0.2, maxHeight: 35, metalGrating: true, hazardZones: true },
+    forest_floor: { slopeFrequency: 0.4, maxHeight: 35, rootObstacles: true, leafLitter: true },
+    hellscape: { slopeFrequency: 0.5, maxHeight: 60, lavaPools: true, jaggedRocks: true }
+  },
+
   // Phase 5: Secret Content Configuration
   SECRET_CONTENT: {
     SECRET_LEVELS: [
@@ -1344,5 +1998,9 @@ Object.freeze(GameConfig.DYNAMIC_EVENTS);
 Object.freeze(GameConfig.STATISTICS);
 Object.freeze(GameConfig.LEADERBOARDS);
 Object.freeze(GameConfig.BIOMES);
+Object.freeze(GameConfig.SKY_VARIANTS);
+Object.freeze(GameConfig.PARALLAX_LAYERS);
+Object.freeze(GameConfig.FOREGROUND_PROPS);
+Object.freeze(GameConfig.GROUND_SHAPE_PROFILES);
 Object.freeze(GameConfig.SECRET_CONTENT);
 Object.freeze(GameConfig.BASE_DEFENSE);

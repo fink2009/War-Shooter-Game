@@ -62,6 +62,7 @@ class GameEngine {
     // Phase 5: Content Expansion Systems
     this.biomeSystem = new BiomeSystem();
     this.baseDefenseMode = new BaseDefenseMode();
+    this.levelThemeSystem = new LevelThemeSystem();
     
     // Phase 2: UI Menus
     this.upgradeMenu = new UpgradeMenu(canvas);
@@ -506,11 +507,29 @@ class GameEngine {
       this.biomeSystem.init(biome);
     }
     
-    // Set weather based on biome
-    if (this.biomeSystem && this.weatherSystem) {
-      const recommendedWeather = this.biomeSystem.getRecommendedWeather();
-      if (recommendedWeather !== 'CLEAR') {
-        this.weatherSystem.setWeather(recommendedWeather);
+    // Initialize level theme system for per-level visual variety
+    if (this.levelThemeSystem) {
+      this.levelThemeSystem.init(levelIndex);
+      
+      // Get environment settings from level theme
+      const envSettings = this.levelThemeSystem.getLevelEnvironmentSettings();
+      
+      // Set weather based on level visual profile (overrides biome default)
+      if (this.weatherSystem && envSettings.weather) {
+        this.weatherSystem.setWeather(envSettings.weather);
+      }
+      
+      // Set time of day based on level visual profile
+      if (this.timeOfDaySystem && envSettings.timeOfDay) {
+        this.timeOfDaySystem.setPhase(envSettings.timeOfDay);
+      }
+    } else {
+      // Fallback: Set weather based on biome
+      if (this.biomeSystem && this.weatherSystem) {
+        const recommendedWeather = this.biomeSystem.getRecommendedWeather();
+        if (recommendedWeather !== 'CLEAR') {
+          this.weatherSystem.setWeather(recommendedWeather);
+        }
       }
     }
     
@@ -2461,6 +2480,11 @@ class GameEngine {
       this.biomeSystem.update(deltaTime, this.player);
     }
     
+    // Update level theme system (for animations)
+    if (this.levelThemeSystem) {
+      this.levelThemeSystem.update(deltaTime);
+    }
+    
     // Phase 3: Update time of day system
     if (this.timeOfDaySystem) {
       this.timeOfDaySystem.update(deltaTime, this.player, false);
@@ -2666,6 +2690,32 @@ class GameEngine {
     // Reset player position
     this.player.x = 100;
     this.player.y = this.groundLevel - 50;
+    
+    // Initialize level theme system for the new level
+    const levelIndex = this.currentLevel - 1;
+    if (this.levelThemeSystem) {
+      this.levelThemeSystem.init(levelIndex);
+      
+      // Get environment settings from level theme
+      const envSettings = this.levelThemeSystem.getLevelEnvironmentSettings();
+      
+      // Update weather based on level visual profile
+      if (this.weatherSystem && envSettings.weather) {
+        this.weatherSystem.setWeather(envSettings.weather);
+      }
+      
+      // Update time of day based on level visual profile
+      if (this.timeOfDaySystem && envSettings.timeOfDay) {
+        this.timeOfDaySystem.setPhase(envSettings.timeOfDay);
+      }
+      
+      // Update biome system
+      if (this.biomeSystem && envSettings.biome) {
+        this.biomeSystem.setBiome(envSettings.biome.name === 'Default' ? 'DEFAULT' : 
+          Object.keys(GameConfig.BIOMES).find(key => 
+            GameConfig.BIOMES[key].name === envSettings.biome.name) || 'DEFAULT');
+      }
+    }
     
     // Spawn terrain first
     this.spawnCovers();
@@ -3478,20 +3528,23 @@ class GameEngine {
     // Apply camera transform
     this.camera.apply(this.ctx);
     
-    // === 16-BIT ARCADE BACKGROUND ===
-    // Layer 1: Sky with 16-bit dithered gradient
-    this.draw16BitSky();
+    // === LEVEL THEME RENDERING (replaces basic 16-bit backgrounds when available) ===
+    if (this.levelThemeSystem && this.levelThemeSystem.getCurrentTheme()) {
+      // Use the new level theme system for rich, varied visuals
+      this.levelThemeSystem.renderSky(this.ctx, this.worldWidth, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderParallaxLayers(this.ctx, this.worldWidth, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderLandmarks(this.ctx, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderGround(this.ctx, this.worldWidth, this.worldHeight, this.groundLevel);
+      this.levelThemeSystem.renderForegroundProps(this.ctx, this.groundLevel, this.camera);
+    } else {
+      // Fallback to original 16-bit rendering
+      this.draw16BitSky();
+      this.draw16BitMountains();
+      this.draw16BitBuildings();
+      this.draw16BitGround();
+    }
     
-    // Layer 2: Distant mountains (parallax far)
-    this.draw16BitMountains();
-    
-    // Layer 3: Middle buildings/structures (parallax mid)
-    this.draw16BitBuildings();
-    
-    // Layer 4: Ground with detailed tiles
-    this.draw16BitGround();
-    
-    // Phase 5: Draw biome-specific elements
+    // Phase 5: Draw biome-specific elements (on top of level theme)
     if (this.biomeSystem) {
       this.biomeSystem.render(this.ctx, this.camera, this.groundLevel);
     }
@@ -3557,17 +3610,29 @@ class GameEngine {
     if (this.timeOfDaySystem) {
       this.timeOfDaySystem.render(this.ctx, this.player, this.camera);
     }
+    
+    // Apply level theme color grading (vignette, tint, brightness)
+    if (this.levelThemeSystem && this.levelThemeSystem.getCurrentTheme()) {
+      this.levelThemeSystem.applyColorGrading(this.ctx);
+    }
   }
   
   renderCutscene() {
     // Apply cutscene camera transform
     this.cutsceneManager.applyCameraTransform(this.ctx);
     
-    // === 16-BIT ARCADE BACKGROUND ===
-    this.draw16BitSky();
-    this.draw16BitMountains();
-    this.draw16BitBuildings();
-    this.draw16BitGround();
+    // Use level theme system if available
+    if (this.levelThemeSystem && this.levelThemeSystem.getCurrentTheme()) {
+      this.levelThemeSystem.renderSky(this.ctx, this.worldWidth, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderParallaxLayers(this.ctx, this.worldWidth, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderLandmarks(this.ctx, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderGround(this.ctx, this.worldWidth, this.worldHeight, this.groundLevel);
+    } else {
+      this.draw16BitSky();
+      this.draw16BitMountains();
+      this.draw16BitBuildings();
+      this.draw16BitGround();
+    }
     
     // Draw terrain
     this.slopes.forEach(s => s.render(this.ctx));
@@ -3598,11 +3663,18 @@ class GameEngine {
     // Apply camera transform
     this.camera.apply(this.ctx);
     
-    // === 16-BIT ARCADE BACKGROUND ===
-    this.draw16BitSky();
-    this.draw16BitMountains();
-    this.draw16BitBuildings();
-    this.draw16BitGround();
+    // Use level theme system if available
+    if (this.levelThemeSystem && this.levelThemeSystem.getCurrentTheme()) {
+      this.levelThemeSystem.renderSky(this.ctx, this.worldWidth, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderParallaxLayers(this.ctx, this.worldWidth, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderLandmarks(this.ctx, this.groundLevel, this.camera);
+      this.levelThemeSystem.renderGround(this.ctx, this.worldWidth, this.worldHeight, this.groundLevel);
+    } else {
+      this.draw16BitSky();
+      this.draw16BitMountains();
+      this.draw16BitBuildings();
+      this.draw16BitGround();
+    }
     
     // Draw terrain
     this.slopes.forEach(s => s.render(this.ctx));
