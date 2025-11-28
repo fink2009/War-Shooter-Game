@@ -564,7 +564,7 @@ class GameUI {
     ctx.fillRect(0, 0, this.width, this.height);
     
     // Title - only show on main menu, character select, paused, gameover, and victory screens
-    if (['main', 'character', 'paused', 'gameover', 'victory'].includes(menuState)) {
+    if (['main', 'character', 'paused', 'gameover', 'victory', 'challenge', 'statistics'].includes(menuState)) {
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 48px monospace';
       ctx.textAlign = 'center';
@@ -577,15 +577,45 @@ class GameUI {
       const options = [
         'Press 1 - CAMPAIGN',
         'Press 2 - SURVIVAL',
-        'Press 3 - SETTINGS',
-        'Press 4 - CONTROLS',
-        'Press 5 - HIGH SCORES'
+        'Press 3 - CHALLENGE MODES',
+        'Press 4 - SETTINGS',
+        'Press 5 - CONTROLS',
+        'Press 6 - STATISTICS',
+        'Press 7 - HIGH SCORES'
       ];
       
       ctx.fillStyle = '#00ff00';
       options.forEach((option, i) => {
-        ctx.fillText(option, this.width / 2, 200 + i * 45);
+        ctx.fillText(option, this.width / 2, 180 + i * 38);
       });
+    } else if (menuState === 'challenge') {
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 32px monospace';
+      ctx.fillText('CHALLENGE MODES', this.width / 2, 100);
+      
+      ctx.font = '20px monospace';
+      const challenges = [
+        {key: '1', name: 'TIME ATTACK', desc: 'Complete levels as fast as possible for medals'},
+        {key: '2', name: 'BOSS RUSH', desc: 'Fight all bosses back-to-back'},
+        {key: '3', name: 'HORDE MODE', desc: 'Endless waves of increasing difficulty'},
+        {key: '4', name: 'ONE-HIT MODE', desc: 'Extreme difficulty - one shot kills all'}
+      ];
+      
+      ctx.fillStyle = '#00ff00';
+      challenges.forEach((challenge, i) => {
+        ctx.fillStyle = '#ffaa00';
+        ctx.font = 'bold 18px monospace';
+        ctx.fillText(`${challenge.key} - ${challenge.name}`, this.width / 2, 180 + i * 70);
+        ctx.fillStyle = '#888';
+        ctx.font = '14px monospace';
+        ctx.fillText(challenge.desc, this.width / 2, 200 + i * 70);
+      });
+      
+      ctx.fillStyle = '#888';
+      ctx.font = '16px monospace';
+      ctx.fillText('Press ESC to go back', this.width / 2, this.height - 50);
+    } else if (menuState === 'statistics') {
+      this.drawStatisticsMenu(ctx);
     } else if (menuState === 'highscores') {
       ctx.fillStyle = '#00ff00';
       ctx.fillText('HIGH SCORES', this.width / 2, 100);
@@ -1036,6 +1066,110 @@ class GameUI {
     
     ctx.textAlign = 'left';
     ctx.restore();
+  }
+
+  drawStatisticsMenu(ctx) {
+    ctx.fillStyle = '#00ff00';
+    ctx.font = 'bold 32px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('STATISTICS', this.width / 2, 80);
+    
+    // Page indicator
+    const page = window.game ? (window.game.statisticsPage || 0) : 0;
+    ctx.fillStyle = '#888';
+    ctx.font = '16px monospace';
+    ctx.fillText(`Page ${page + 1}/4 - Use ← → to navigate`, this.width / 2, 110);
+    
+    const stats = window.game && window.game.statisticsSystem ? 
+      window.game.statisticsSystem.getStatsSummary() : null;
+    
+    if (!stats) {
+      ctx.fillStyle = '#888';
+      ctx.font = '18px monospace';
+      ctx.fillText('No statistics available', this.width / 2, 200);
+    } else {
+      ctx.textAlign = 'left';
+      const leftX = 200;
+      const rightX = 650;
+      let y = 150;
+      
+      if (page === 0) {
+        // Combat stats
+        ctx.fillStyle = '#ffaa00';
+        ctx.font = 'bold 20px monospace';
+        ctx.fillText('COMBAT STATS', this.width / 2, y);
+        ctx.textAlign = 'left';
+        y += 40;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px monospace';
+        ctx.fillText(`Total Kills: ${stats.combat.totalKills.toLocaleString()}`, leftX, y);
+        ctx.fillText(`Highest Combo: ${stats.combat.highestCombo}x`, rightX, y);
+        y += 30;
+        ctx.fillText(`Accuracy: ${stats.combat.accuracy}%`, leftX, y);
+        ctx.fillText(`Stealth Kills: ${stats.combat.stealthKills}`, rightX, y);
+        y += 30;
+        ctx.fillText(`Boss Kills: ${stats.combat.bossKills}`, leftX, y);
+        y += 50;
+        
+        // Kill breakdown by type
+        ctx.fillStyle = '#888';
+        ctx.font = '14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Kill breakdown shown in detailed view', this.width / 2, y);
+      } else if (page === 1) {
+        // Survival stats
+        ctx.fillStyle = '#ffaa00';
+        ctx.font = 'bold 20px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('SURVIVAL STATS', this.width / 2, y);
+        ctx.textAlign = 'left';
+        y += 40;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px monospace';
+        ctx.fillText(`Total Deaths: ${stats.survival.totalDeaths}`, leftX, y);
+        ctx.fillText(`Highest Wave: ${stats.survival.highestWave}`, rightX, y);
+        y += 30;
+        ctx.fillText(`Damage Dealt: ${stats.survival.damageDealt.toLocaleString()}`, leftX, y);
+        ctx.fillText(`Damage Taken: ${stats.survival.damageTaken.toLocaleString()}`, rightX, y);
+      } else if (page === 2) {
+        // Progression stats
+        ctx.fillStyle = '#ffaa00';
+        ctx.font = 'bold 20px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('PROGRESSION', this.width / 2, y);
+        ctx.textAlign = 'left';
+        y += 40;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px monospace';
+        ctx.fillText(`Total Playtime: ${stats.progression.playtime}`, leftX, y);
+        ctx.fillText(`Coins Earned: ${stats.progression.coinsEarned.toLocaleString()}`, rightX, y);
+        y += 30;
+        ctx.fillText(`Campaign Completed: ${stats.progression.campaignCompleted ? 'Yes' : 'No'}`, leftX, y);
+      } else if (page === 3) {
+        // Efficiency stats
+        ctx.fillStyle = '#ffaa00';
+        ctx.font = 'bold 20px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('EFFICIENCY', this.width / 2, y);
+        ctx.textAlign = 'left';
+        y += 40;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px monospace';
+        ctx.fillText(`Favorite Weapon: ${stats.efficiency.favoriteWeapon || 'N/A'}`, leftX, y);
+        ctx.fillText(`Favorite Character: ${stats.efficiency.favoriteCharacter || 'N/A'}`, rightX, y);
+        y += 30;
+        ctx.fillText(`Most Kills in Wave: ${stats.efficiency.mostKillsInWave}`, leftX, y);
+      }
+    }
+    
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#888';
+    ctx.font = '16px monospace';
+    ctx.fillText('Press ESC to go back', this.width / 2, this.height - 50);
   }
 
   drawLoadingScreen(ctx, progress) {

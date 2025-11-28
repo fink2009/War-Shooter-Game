@@ -3,7 +3,7 @@
 
 const GameConfig = {
   // Version info
-  VERSION: '1.0.0',
+  VERSION: '1.4.0',
   BUILD_DATE: '2024',
 
   // Display settings

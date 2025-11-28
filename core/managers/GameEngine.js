@@ -1754,6 +1754,39 @@ class GameEngine {
           this.menuState = 'main';
         }
       }
+    } else if (this.menuState === 'challenge') {
+      if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
+        this.menuState = 'main';
+      } else if (this.inputManager.wasKeyPressed('1')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'character';
+        this.mode = 'timeattack';
+      } else if (this.inputManager.wasKeyPressed('2')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'character';
+        this.mode = 'bossrush';
+      } else if (this.inputManager.wasKeyPressed('3')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'character';
+        this.mode = 'horde';
+      } else if (this.inputManager.wasKeyPressed('4')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'character';
+        this.mode = 'onehit';
+      }
+    } else if (this.menuState === 'statistics') {
+      // Page navigation for statistics
+      if (this.inputManager.wasKeyPressed('ArrowLeft')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
+        this.statisticsPage = Math.max(0, (this.statisticsPage || 0) - 1);
+      } else if (this.inputManager.wasKeyPressed('ArrowRight')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
+        this.statisticsPage = Math.min(3, (this.statisticsPage || 0) + 1);
+      } else if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
+        this.menuState = 'main';
+      }
     } else if (this.state === 'menu') {
       if (this.inputManager.wasKeyPressed('1')) {
         this.audioManager.playSound('menu_select', 0.5);
@@ -1765,11 +1798,18 @@ class GameEngine {
         this.mode = 'survival';
       } else if (this.inputManager.wasKeyPressed('3')) {
         this.audioManager.playSound('menu_select', 0.5);
-        this.menuState = 'settings';
+        this.menuState = 'challenge';
       } else if (this.inputManager.wasKeyPressed('4')) {
         this.audioManager.playSound('menu_select', 0.5);
-        this.menuState = 'controls';
+        this.menuState = 'settings';
       } else if (this.inputManager.wasKeyPressed('5')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'controls';
+      } else if (this.inputManager.wasKeyPressed('6')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'statistics';
+        this.statisticsPage = 0;
+      } else if (this.inputManager.wasKeyPressed('7')) {
         this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'highscores';
       }
