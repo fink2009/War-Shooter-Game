@@ -1954,6 +1954,182 @@ const GameConfig = {
       damageScaling: 0.03,
       bossWaves: [5, 10, 15, 20]
     }
+  },
+
+  // Phase 6: Touch Controls Configuration
+  TOUCH_CONTROLS: {
+    joystickRadius: 150,
+    stickRadius: 50,
+    buttonSize: 80,
+    opacity: 0.7,
+    autoAim: true,
+    autoAimStrength: 0.3,
+    deadzone: 0.15,
+    vibrationEnabled: true
+  },
+
+  // Phase 6: Photo Mode Configuration
+  PHOTO_MODE: {
+    minZoom: 0.5,
+    maxZoom: 3.0,
+    fovRange: { min: 60, max: 120 },
+    filters: ['none', 'bw', 'sepia', 'contrast', 'vintage', 'neon', 'pixel', 'vignette'],
+    cameraSpeed: 5,
+    tiltRange: { min: -45, max: 45 }
+  },
+
+  // Phase 6: Daily Challenges Configuration
+  DAILY_CHALLENGES: {
+    resetHour: 0, // UTC
+    rewards: { bronze: 500, silver: 1000, gold: 2000 },
+    types: ['kill', 'survival', 'speedrun', 'skill'],
+    historyDays: 7
+  },
+
+  // Phase 6: Companion AI Configuration
+  COMPANIONS: {
+    SOLDIER: { 
+      name: 'Soldier', 
+      hp: 200, 
+      damage: 20, 
+      speed: 180,
+      reviveCooldown: 60,
+      color: '#4488ff',
+      weapon: 'rifle'
+    },
+    MEDIC: { 
+      name: 'Medic', 
+      hp: 150, 
+      damage: 10, 
+      speed: 200,
+      healAmount: 20, 
+      healInterval: 10,
+      color: '#44ff88',
+      weapon: 'pistol'
+    },
+    HEAVY: { 
+      name: 'Heavy', 
+      hp: 300, 
+      damage: 25, 
+      speed: 120,
+      color: '#ff8844',
+      weapon: 'machinegun'
+    },
+    SCOUT: { 
+      name: 'Scout', 
+      hp: 100, 
+      damage: 15, 
+      speed: 250,
+      color: '#ffff44',
+      weapon: 'smg'
+    }
+  },
+
+  // Phase 6: Dual Wield Configuration
+  DUAL_WIELD: {
+    fireRateMultiplier: 2,
+    accuracyPenalty: 0.3,
+    reloadSpeedPenalty: 0.5,
+    eligibleWeapons: ['pistol']
+  },
+
+  // Phase 6: Crafting System Configuration
+  CRAFTING: {
+    partRarities: {
+      COMMON: { bonus: 0.05, color: '#ffffff', name: 'Common' },
+      UNCOMMON: { bonus: 0.10, color: '#00ff00', name: 'Uncommon' },
+      RARE: { bonus: 0.15, color: '#0088ff', name: 'Rare' },
+      EPIC: { bonus: 0.25, color: '#aa00ff', name: 'Epic' },
+      LEGENDARY: { bonus: 0.40, color: '#ffaa00', name: 'Legendary' }
+    },
+    partTypes: ['barrel', 'receiver', 'stock', 'magazine'],
+    maxCustomWeapons: 5,
+    specialEffects: {
+      FIRE: { name: 'Fire Rounds', damage: 5, duration: 3 },
+      EXPLOSIVE: { name: 'Explosive Rounds', radius: 50 },
+      PIERCING: { name: 'Piercing Rounds', penetration: 2 },
+      VAMPIRE: { name: 'Vampire Rounds', healPercent: 0.1 },
+      LIGHTNING: { name: 'Lightning Rounds', chainTargets: 2 }
+    }
+  },
+
+  // Phase 6: Accessibility Configuration
+  ACCESSIBILITY: {
+    colorblindModes: ['none', 'protanopia', 'deuteranopia', 'tritanopia', 'high_contrast'],
+    subtitleSizes: ['small', 'medium', 'large'],
+    uiScales: [0.75, 1.0, 1.25, 1.5],
+    crosshairShapes: ['cross', 'dot', 'circle', 'chevron'],
+    defaultSettings: {
+      subtitlesEnabled: true,
+      subtitleSize: 'medium',
+      subtitleBackground: 0.7,
+      soundCaptions: true,
+      reduceScreenShake: false,
+      reduceParticles: false,
+      highContrastUI: false,
+      uiScale: 1.0,
+      monoAudio: false,
+      autoAimStrength: 0.5
+    }
+  },
+
+  // Phase 6: New Weapons Configuration
+  WEAPONS_PHASE6: {
+    SMG: { 
+      name: 'SMG',
+      damage: 12, 
+      fireRate: 80, 
+      ammoCapacity: 40, 
+      reloadTime: 1800,
+      projectileSpeed: 16,
+      range: 300,
+      accuracy: 0.85,
+      type: 'ranged'
+    },
+    CROSSBOW: { 
+      name: 'Crossbow',
+      damage: 80, 
+      fireRate: 2500, 
+      ammoCapacity: 1, 
+      reloadTime: 1500,
+      projectileSpeed: 18,
+      range: 500, 
+      silent: true,
+      retrievable: true,
+      type: 'ranged'
+    },
+    CHAINSAW: { 
+      name: 'Chainsaw',
+      damage: 30, 
+      fireRate: 100,
+      fuelTime: 10, 
+      fuelCapacity: 100,
+      range: 64,
+      type: 'melee'
+    },
+    FREEZE_RAY: { 
+      name: 'Freeze Ray',
+      damage: 8,
+      slowAmount: 0.1, 
+      freezeThreshold: 0.5, 
+      ammoCapacity: 30, 
+      reloadTime: 2500,
+      projectileSpeed: 20,
+      range: 250,
+      isBeam: true,
+      type: 'energy'
+    },
+    LIGHTNING_GUN: { 
+      name: 'Lightning Gun',
+      damage: 40, 
+      chainTargets: 3, 
+      chainRange: 100,
+      ammoCapacity: 50, 
+      reloadTime: 2800,
+      projectileSpeed: 25,
+      range: 400,
+      type: 'energy'
+    }
   }
 };
 
@@ -2004,3 +2180,11 @@ Object.freeze(GameConfig.FOREGROUND_PROPS);
 Object.freeze(GameConfig.GROUND_SHAPE_PROFILES);
 Object.freeze(GameConfig.SECRET_CONTENT);
 Object.freeze(GameConfig.BASE_DEFENSE);
+Object.freeze(GameConfig.TOUCH_CONTROLS);
+Object.freeze(GameConfig.PHOTO_MODE);
+Object.freeze(GameConfig.DAILY_CHALLENGES);
+Object.freeze(GameConfig.COMPANIONS);
+Object.freeze(GameConfig.DUAL_WIELD);
+Object.freeze(GameConfig.CRAFTING);
+Object.freeze(GameConfig.ACCESSIBILITY);
+Object.freeze(GameConfig.WEAPONS_PHASE6);
