@@ -2385,7 +2385,7 @@ class GameEngine {
             !this.inputManager.isKeyPressed('ArrowLeft') && !this.inputManager.isKeyPressed('ArrowRight')) {
           this.player.crouch();
         } else {
-          this.player.standUp();
+          this.player.stand();
         }
         
         // Flashlight toggle (L key) - for night phases
