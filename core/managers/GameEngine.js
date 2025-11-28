@@ -2053,7 +2053,9 @@ class GameEngine {
       } else if (this.inputManager.wasKeyPressed('8')) {
         this.audioManager.playSound('menu_select', 0.5);
         // Start tutorial
-        this.tutorialManager.start();
+        if (this.tutorialManager) {
+          this.tutorialManager.start();
+        }
       } else if (this.inputManager.wasKeyPressed('9')) {
         this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'skins';
