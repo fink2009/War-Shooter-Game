@@ -59,6 +59,10 @@ class GameEngine {
     this.statisticsSystem = new StatisticsSystem();
     this.leaderboardSystem = new LeaderboardSystem();
     
+    // Phase 5: Content Expansion Systems
+    this.biomeSystem = new BiomeSystem();
+    this.baseDefenseMode = new BaseDefenseMode();
+    
     // Phase 2: UI Menus
     this.upgradeMenu = new UpgradeMenu(canvas);
     this.shopMenu = new ShopMenu(canvas);
