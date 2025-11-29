@@ -3706,6 +3706,11 @@ class GameEngine {
     this.ui.setLastScore(this.score);
     this.pendingLevelTransition = false;
     
+    // Track campaign completion for skin unlocks
+    if (this.mode === 'campaign' && this.statisticsSystem) {
+      this.statisticsSystem.trackCampaignComplete();
+    }
+    
     // Auto-save final progress
     this.autoSave(0);
     
