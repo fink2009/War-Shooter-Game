@@ -638,7 +638,7 @@ class PlayerCharacter extends Entity {
     const dy = targetY - (this.y + this.height / 2);
     const dist = Math.sqrt(dx * dx + dy * dy);
     
-    if (dist > this.grapplingHookRange || dist === 0) {
+    if (dist > this.grapplingHookRange || dist < 1) {
       return false;
     }
     
