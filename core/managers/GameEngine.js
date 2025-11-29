@@ -806,18 +806,24 @@ class GameEngine {
       this.vehicles.push(playerVehicle);
     }
     
-    // Vehicles spawn in campaign mode starting from level 3
-    if (mode === 'campaign' && level >= 3) {
-      // Spawn a Jeep on some levels
-      if (level % 2 === 0) {
-        const jeep = new Jeep(500 + Math.random() * 400, this.groundLevel - 40);
+    // Vehicles spawn in campaign mode starting from level 2
+    if (mode === 'campaign') {
+      // Spawn a Jeep on most levels (levels 2+)
+      if (level >= 2) {
+        const jeep = new Jeep(400 + Math.random() * 300, this.groundLevel - 40);
         this.vehicles.push(jeep);
       }
       
-      // Spawn a Tank on boss levels and late levels
-      if (level >= 6 || level % 3 === 0) {
-        const tank = new Tank(800 + Math.random() * 600, this.groundLevel - 50);
+      // Spawn a Tank on boss levels and late levels (level 4+)
+      if (level >= 4) {
+        const tank = new Tank(700 + Math.random() * 500, this.groundLevel - 50);
         this.vehicles.push(tank);
+      }
+      
+      // Spawn an extra Jeep on higher levels (level 7+)
+      if (level >= 7) {
+        const jeep2 = new Jeep(1200 + Math.random() * 400, this.groundLevel - 40);
+        this.vehicles.push(jeep2);
       }
     }
     
@@ -845,21 +851,27 @@ class GameEngine {
     
     // Mounted weapons in campaign mode
     if (mode === 'campaign') {
-      // HMG placement on certain levels
-      if (level >= 2) {
-        const hmg = new MountedWeapon(600 + Math.random() * 200, this.groundLevel - 50, 'HMG');
+      // HMG placement on all levels starting from level 1
+      if (level >= 1) {
+        const hmg = new MountedWeapon(500 + Math.random() * 200, this.groundLevel - 50, 'HMG');
         this.mountedWeapons.push(hmg);
       }
       
-      // Sniper position on sniper-themed levels
-      if (level === 5 || level === 8) {
-        const sniper = new MountedWeapon(900 + Math.random() * 300, this.groundLevel - 250, 'SNIPER');
+      // Extra HMG on levels 4+
+      if (level >= 4) {
+        const hmg2 = new MountedWeapon(1100 + Math.random() * 200, this.groundLevel - 50, 'HMG');
+        this.mountedWeapons.push(hmg2);
+      }
+      
+      // Sniper position on multiple levels (level 3+)
+      if (level >= 3) {
+        const sniper = new MountedWeapon(800 + Math.random() * 300, this.groundLevel - 200, 'SNIPER');
         this.mountedWeapons.push(sniper);
       }
       
-      // Rocket launcher on boss levels
-      if (level === 3 || level === 6 || level === 9 || level === 10) {
-        const rocket = new MountedWeapon(400 + Math.random() * 200, this.groundLevel - 50, 'ROCKET');
+      // Rocket launcher on boss levels and higher levels (level 3+)
+      if (level >= 3) {
+        const rocket = new MountedWeapon(350 + Math.random() * 150, this.groundLevel - 50, 'ROCKET');
         this.mountedWeapons.push(rocket);
       }
     }
@@ -1290,22 +1302,25 @@ class GameEngine {
         ],
         isBossLevel: true
       },
-      // Level 4: Heavy Assault - Many heavy units
+      // Level 4: Heavy Assault - Many heavy units with berserkers
       {
         name: 'Heavy Assault',
         enemies: [
           { type: 'heavy', count: 3, spacing: 400 },
           { type: 'infantry', count: 5, spacing: 250 },
-          { type: 'sniper', count: 2, spacing: 600 }
+          { type: 'sniper', count: 2, spacing: 600 },
+          { type: 'berserker', count: 2, spacing: 450 },
+          { type: 'medic', count: 1, spacing: 500 }
         ]
       },
-      // Level 5: Sniper Alley - Long range combat
+      // Level 5: Sniper Alley - Long range combat with drones
       {
         name: 'Sniper Alley',
         enemies: [
           { type: 'sniper', count: 4, spacing: 500 },
           { type: 'scout', count: 4, spacing: 300 },
-          { type: 'heavy', count: 2, spacing: 600 }
+          { type: 'heavy', count: 2, spacing: 600 },
+          { type: 'drone', count: 3, spacing: 400 }
         ]
       },
       // Level 6: Boss Arena - Elite Commander
@@ -1316,24 +1331,30 @@ class GameEngine {
         ],
         isBossLevel: true
       },
-      // Level 7: Urban Warfare - City ruins with multi-tier combat
+      // Level 7: Urban Warfare - City ruins with riot shields and bombers
       {
         name: 'Urban Warfare',
         enemies: [
           { type: 'infantry', count: 5, spacing: 280 },
           { type: 'heavy', count: 3, spacing: 450 },
           { type: 'sniper', count: 4, spacing: 550 },
-          { type: 'scout', count: 4, spacing: 320 }
+          { type: 'scout', count: 4, spacing: 320 },
+          { type: 'riot', count: 2, spacing: 400 },
+          { type: 'bomber', count: 2, spacing: 500 },
+          { type: 'medic', count: 1, spacing: 600 }
         ]
       },
-      // Level 8: Industrial Complex - Factory with moving platforms feel
+      // Level 8: Industrial Complex - Factory with engineers and flamethrowers
       {
         name: 'Industrial Complex',
         enemies: [
           { type: 'infantry', count: 6, spacing: 300 },
           { type: 'heavy', count: 4, spacing: 420 },
           { type: 'sniper', count: 3, spacing: 600 },
-          { type: 'scout', count: 5, spacing: 340 }
+          { type: 'scout', count: 5, spacing: 340 },
+          { type: 'engineer', count: 2, spacing: 450 },
+          { type: 'flamethrower', count: 2, spacing: 380 },
+          { type: 'drone', count: 2, spacing: 500 }
         ]
       },
       // Level 9: Elite Commander Boss - Toughest boss before final
