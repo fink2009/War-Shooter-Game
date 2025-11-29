@@ -439,6 +439,11 @@ class PlayerCharacter extends Entity {
       return false;
     }
     
+    // Check for ghost mode (Phase 3 power-up)
+    if (this.hasGhostMode) {
+      return false;
+    }
+    
     if (!this.invulnerable) {
       // Phase 2: Apply armor reduction from upgrades
       if (this.armorReduction && this.armorReduction > 0) {
@@ -572,6 +577,10 @@ class PlayerCharacter extends Entity {
       if (this.state === 'jumping') {
         this.state = 'idle';
       }
+      // Reset double jump when landing
+      if (this.hasDoubleJump) {
+        this.doubleJumpAvailable = true;
+      }
     } else {
       this.onGround = false;
     }
@@ -580,6 +589,67 @@ class PlayerCharacter extends Entity {
     if (this.characterType === 'medic' && this.health < this.maxHealth) {
       this.heal(0.05 * dt);
     }
+    
+    // Magnet power-up: attract nearby pickups
+    if (this.hasMagnet && this.magnetRange > 0 && window.game && window.game.pickups) {
+      window.game.pickups.forEach(pickup => {
+        if (pickup.active) {
+          const dx = (this.x + this.width / 2) - (pickup.x + pickup.width / 2);
+          const dy = (this.y + this.height / 2) - (pickup.y + pickup.height / 2);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < this.magnetRange && dist > 0) {
+            // Move pickup towards player
+            const pullSpeed = 3;
+            pickup.x += (dx / dist) * pullSpeed;
+            pickup.y += (dy / dist) * pullSpeed;
+          }
+        }
+      });
+    }
+  }
+  
+  /**
+   * Perform a double jump (requires double jump power-up)
+   * @returns {boolean} Whether the double jump was performed
+   */
+  performDoubleJump() {
+    if (this.hasDoubleJump && this.doubleJumpAvailable && !this.onGround) {
+      this.dy = this.jumpStrength * 0.85; // Slightly weaker than normal jump
+      this.doubleJumpAvailable = false;
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * Use grappling hook to move towards a target position
+   * @param {number} targetX - Target X position
+   * @param {number} targetY - Target Y position
+   * @returns {boolean} Whether the grapple was used
+   */
+  useGrapplingHook(targetX, targetY) {
+    if (!this.hasGrapplingHook || this.grapplingHookUses <= 0) {
+      return false;
+    }
+    
+    // Check if target is within range
+    const dx = targetX - (this.x + this.width / 2);
+    const dy = targetY - (this.y + this.height / 2);
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist > this.grapplingHookRange) {
+      return false;
+    }
+    
+    // Launch player towards target
+    const speed = 15;
+    this.dx = (dx / dist) * speed;
+    this.dy = (dy / dist) * speed;
+    this.grapplingHookUses--;
+    this.onGround = false;
+    
+    return true;
   }
 
   render(ctx) {
@@ -624,9 +694,66 @@ class PlayerCharacter extends Entity {
       ctx.globalAlpha = 1;
     }
     
+    // Draw time slow aura (Phase 3)
+    if (this.hasTimeSlow) {
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#9933ff';
+      ctx.beginPath();
+      ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw double jump indicator (Phase 3)
+    if (this.hasDoubleJump) {
+      ctx.globalAlpha = this.doubleJumpAvailable ? 0.5 : 0.2;
+      ctx.strokeStyle = '#66ccff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(this.x + this.width / 2, this.y + this.height + 5, 8, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw ghost mode effect (Phase 3)
+    if (this.hasGhostMode) {
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+    }
+    
+    // Draw grappling hook indicator (Phase 3)
+    if (this.hasGrapplingHook && this.grapplingHookUses > 0) {
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = '#996633';
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`🪝${this.grapplingHookUses}`, this.x + this.width / 2, this.y - 15);
+      ctx.textAlign = 'left';
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw magnet aura (Phase 3)
+    if (this.hasMagnet) {
+      ctx.globalAlpha = 0.2;
+      ctx.strokeStyle = '#ff3366';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.magnetRange || 200, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+    
     // Draw player
     if (this.invulnerable) {
       ctx.globalAlpha = 0.5;
+    }
+    
+    // Additional ghost mode transparency
+    if (this.hasGhostMode) {
+      ctx.globalAlpha = Math.max(ctx.globalAlpha * 0.6, 0.3);
     }
     
     // 16-bit arcade character colors based on type

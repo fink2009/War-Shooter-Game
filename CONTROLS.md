@@ -35,10 +35,11 @@ Complete control reference for War Shooter.
 ### Phase 3 Controls
 | Action | Key | Description |
 |--------|-----|-------------|
-| Toggle Flashlight | F | Turn flashlight on/off (night only) |
-| Enter/Exit Vehicle | E | Mount or dismount vehicles |
-| Mount/Dismount Weapon | E | Use stationary mounted weapons |
+| Toggle Flashlight | L | Turn flashlight on/off (night only) |
+| Enter/Exit Vehicle | G | Mount or dismount vehicles |
+| Mount/Dismount Weapon | X | Use stationary mounted weapons |
 | Vehicle Fire | Left Click | Fire vehicle weapons when mounted |
+| Use Grappling Hook | T | Fire grappling hook (when power-up active) |
 
 ### System Controls
 | Action | Key | Description |
@@ -192,6 +193,7 @@ When dev tools are unlocked (Settings Page 4, Password: QUICKTEST):
 | Key | Action |
 |-----|--------|
 | K | Kill all enemies instantly |
+| P | Toggle invincibility (God mode) |
 
 ---
 

@@ -83,6 +83,16 @@ class GameEngine {
     this.cutsceneData = {}; // Loaded cutscene data files
     this.pendingCutscene = null; // Cutscene to play when boss spawns
     
+    // Phase 3: Flashlight system
+    const flashlightConfig = typeof GameConfig !== 'undefined' && GameConfig.FLASHLIGHT ? 
+      GameConfig.FLASHLIGHT : { range: 200, coneAngle: 45, battery: 30, rechargeRate: 0.5 };
+    this.flashlightOn = false;
+    this.flashlightBattery = flashlightConfig.battery;
+    this.flashlightMaxBattery = flashlightConfig.battery;
+    this.flashlightRange = flashlightConfig.range;
+    this.flashlightConeAngle = flashlightConfig.coneAngle * Math.PI / 180;
+    this.flashlightRechargeRate = flashlightConfig.rechargeRate;
+    
     // World settings
     this.worldWidth = 3000;
     this.worldHeight = canvas.height;
@@ -445,6 +455,16 @@ class GameEngine {
     // Create player with difficulty modifiers
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
     
+    // Apply skin system customization to player
+    if (this.skinSystem) {
+      this.skinSystem.applySkinToPlayer(this.player, character);
+    }
+    
+    // Start statistics tracking session
+    if (this.statisticsSystem) {
+      this.statisticsSystem.startSession();
+    }
+    
     // Apply difficulty modifiers to player
     if (this.difficulty === 'baby') {
       this.player.maxHealth = Math.floor(this.player.maxHealth * 5); // Very high health for baby mode
@@ -542,6 +562,15 @@ class GameEngine {
     // Phase 1: Spawn hazards
     this.hazardManager.spawnHazards(mode, this.currentLevel, this.wave, this.groundLevel, this.worldWidth);
     
+    // Phase 3: Spawn vehicles
+    this.spawnVehicles(mode, this.currentLevel);
+    
+    // Phase 3: Spawn mounted weapons
+    this.spawnMountedWeapons(mode, this.currentLevel);
+    
+    // Phase 3: Spawn interactive elements
+    this.spawnInteractiveElements(mode, this.currentLevel);
+    
     // For campaign mode, check if we should play prologue cutscene
     if (mode === 'campaign' && this.currentLevel === 1) {
       // Play prologue cutscene before Level 1
@@ -560,11 +589,38 @@ class GameEngine {
       return; // Exit early, cutscene will handle rest
     }
     
-    // Spawn initial enemies
+    // Spawn initial enemies based on game mode
     if (mode === 'survival') {
       this.spawnWave();
+      // Start dynamic event system for survival mode
+      this.dynamicEventSystem.start();
     } else if (mode === 'campaign') {
       this.spawnCampaignEnemies();
+      // Start story briefing for campaign levels
+      if (this.storyManager && this.currentLevel > 1) {
+        this.storyManager.startBriefing(this.currentLevel);
+      }
+    } else if (mode === 'timeattack') {
+      // Time Attack Mode: Start the timer and spawn campaign enemies
+      this.timeAttackMode.start(this.currentLevel);
+      this.spawnCampaignEnemies();
+    } else if (mode === 'bossrush') {
+      // Boss Rush Mode: Start boss rush and spawn first boss
+      this.bossRushMode.start(0, 0, false);
+      this.spawnBossRushBoss();
+    } else if (mode === 'horde') {
+      // Horde Mode: Start endless wave mode
+      this.hordeMode.start();
+      this.spawnHordeWave();
+      // Start dynamic event system for horde mode too
+      this.dynamicEventSystem.start();
+    } else if (mode === 'onehit') {
+      // One-Hit Mode: Apply one-hit rules and spawn campaign enemies
+      this.oneHitMode.start(1);
+      this.oneHitMode.applyToPlayer(this.player);
+      this.spawnCampaignEnemies();
+      // Apply one-hit mode to all enemies
+      this.enemies.forEach(enemy => this.oneHitMode.applyToEnemy(enemy));
     }
     
     // Add some pickups
@@ -583,12 +639,328 @@ class GameEngine {
   }
   
   /**
+   * Spawn boss for Boss Rush mode
+   */
+  spawnBossRushBoss() {
+    const bossId = this.bossRushMode.getCurrentBossId();
+    if (bossId === null) return;
+    
+    const bossX = this.player.x + 800;
+    const boss = new EnemyUnit(bossX, this.groundLevel - 70, 'boss');
+    
+    // Apply boss rush difficulty
+    this.bossRushMode.applyDifficultyToBoss(boss);
+    
+    // Set boss properties
+    boss.isBoss = true;
+    boss.bossId = bossId;
+    boss.bossName = this.bossRushMode.getBossName(bossId);
+    
+    // Apply standard boss enhancements
+    boss.maxHealth *= 9;
+    boss.health = boss.maxHealth;
+    boss.damage *= 3;
+    boss.speed *= 1.8;
+    boss.shootCooldown *= 0.4;
+    boss.aggroRange = 9999;
+    boss.attackRange = 1000;
+    
+    this.enemies.push(boss);
+    this.collisionSystem.add(boss);
+    this.enemiesRemaining = 1;
+    
+    // Start boss cutscene
+    this.startBossCutscene(boss);
+  }
+  
+  /**
+   * Spawn wave for Horde mode
+   */
+  spawnHordeWave() {
+    const waveConfig = this.hordeMode.startNextWave();
+    
+    waveConfig.enemies.forEach((enemyData, index) => {
+      const x = this.player.x + 400 + index * 150 + Math.random() * 100;
+      
+      let enemy;
+      if (enemyData.type === 'boss') {
+        enemy = new EnemyUnit(x, this.groundLevel - 70, 'boss');
+        enemy.isBoss = true;
+        enemy.bossId = enemyData.bossId;
+        enemy.bossName = this.getBossName(enemyData.bossId);
+      } else {
+        enemy = new EnemyUnit(x, this.groundLevel - 48, enemyData.type);
+      }
+      
+      // Apply horde mode scaling
+      enemy.maxHealth = Math.floor(enemy.maxHealth * enemyData.healthMultiplier);
+      enemy.health = enemy.maxHealth;
+      enemy.damage = Math.floor(enemy.damage * enemyData.damageMultiplier);
+      
+      // Apply elite status
+      if (enemyData.isElite) {
+        enemy.makeElite();
+      }
+      
+      // Apply mini-boss status
+      if (enemyData.isMiniBoss) {
+        enemy.makeMiniBoss();
+      }
+      
+      this.enemies.push(enemy);
+      this.collisionSystem.add(enemy);
+    });
+    
+    this.enemiesRemaining = this.enemies.length;
+    
+    // Apply horde mode modifiers
+    this.hordeMode.applyModifiers(this);
+  }
+  
+  /**
    * Add starter knife pickup near player spawn
    */
   addStarterKnife() {
     const starterKnife = new Pickup(200, this.groundLevel - 50, 'weapon_knife');
     this.pickups.push(starterKnife);
     this.collisionSystem.add(starterKnife);
+  }
+  
+  /**
+   * Spawn vehicles for a level
+   * @param {string} mode - Game mode
+   * @param {number} level - Current level
+   */
+  spawnVehicles(mode, level) {
+    // Preserve the player's current vehicle if they're in one
+    const playerVehicle = this.player && this.player.isInVehicle ? this.player.currentVehicle : null;
+    this.vehicles = [];
+    
+    // Re-add player's vehicle to the array if they're still using it
+    if (playerVehicle && !playerVehicle.isDestroyed) {
+      this.vehicles.push(playerVehicle);
+    }
+    
+    // Vehicles spawn in campaign mode starting from level 3
+    if (mode === 'campaign' && level >= 3) {
+      // Spawn a Jeep on some levels
+      if (level % 2 === 0) {
+        const jeep = new Jeep(500 + Math.random() * 400, this.groundLevel - 40);
+        this.vehicles.push(jeep);
+      }
+      
+      // Spawn a Tank on boss levels and late levels
+      if (level >= 6 || level % 3 === 0) {
+        const tank = new Tank(800 + Math.random() * 600, this.groundLevel - 50);
+        this.vehicles.push(tank);
+      }
+    }
+    
+    // Survival mode gets vehicles every 5 waves
+    if (mode === 'survival' && this.wave >= 5 && this.wave % 5 === 0) {
+      const jeep = new Jeep(this.player.x + 300, this.groundLevel - 40);
+      this.vehicles.push(jeep);
+    }
+  }
+  
+  /**
+   * Spawn mounted weapons for a level
+   * @param {string} mode - Game mode
+   * @param {number} level - Current level
+   */
+  spawnMountedWeapons(mode, level) {
+    // Preserve the player's current mounted weapon if they're mounted
+    const playerMountedWeapon = this.player && this.player.isMounted ? this.player.currentMountedWeapon : null;
+    this.mountedWeapons = [];
+    
+    // Re-add player's mounted weapon to the array if they're still using it
+    if (playerMountedWeapon && playerMountedWeapon.active) {
+      this.mountedWeapons.push(playerMountedWeapon);
+    }
+    
+    // Mounted weapons in campaign mode
+    if (mode === 'campaign') {
+      // HMG placement on certain levels
+      if (level >= 2) {
+        const hmg = new MountedWeapon(600 + Math.random() * 200, this.groundLevel - 50, 'HMG');
+        this.mountedWeapons.push(hmg);
+      }
+      
+      // Sniper position on sniper-themed levels
+      if (level === 5 || level === 8) {
+        const sniper = new MountedWeapon(900 + Math.random() * 300, this.groundLevel - 250, 'SNIPER');
+        this.mountedWeapons.push(sniper);
+      }
+      
+      // Rocket launcher on boss levels
+      if (level === 3 || level === 6 || level === 9 || level === 10) {
+        const rocket = new MountedWeapon(400 + Math.random() * 200, this.groundLevel - 50, 'ROCKET');
+        this.mountedWeapons.push(rocket);
+      }
+    }
+    
+    // Survival mode mounted weapons
+    if (mode === 'survival' && this.wave >= 3 && this.wave % 3 === 0) {
+      const hmg = new MountedWeapon(this.player.x + 200, this.groundLevel - 50, 'HMG');
+      this.mountedWeapons.push(hmg);
+    }
+  }
+  
+  /**
+   * Spawn interactive elements for a level
+   * @param {string} mode - Game mode
+   * @param {number} level - Current level
+   */
+  spawnInteractiveElements(mode, level) {
+    this.movingPlatforms = [];
+    this.switches = [];
+    this.doors = [];
+    this.jumpPads = [];
+    
+    if (mode === 'campaign') {
+      // Level-specific interactive elements
+      if (level >= 4) {
+        // Jump pads for vertical gameplay
+        const jumpPad1 = new JumpPad(350, this.groundLevel - 16, 300);
+        this.jumpPads.push(jumpPad1);
+        
+        if (level >= 6) {
+          const jumpPad2 = new JumpPad(750, this.groundLevel - 16, 350);
+          this.jumpPads.push(jumpPad2);
+        }
+      }
+      
+      // Moving platforms on levels with verticality
+      if (level >= 5) {
+        const movingPlatform = new MovingPlatform(
+          500, this.groundLevel - 150, 128, 24,
+          [
+            { x: 500, y: this.groundLevel - 150 },
+            { x: 800, y: this.groundLevel - 150 },
+            { x: 800, y: this.groundLevel - 250 },
+            { x: 500, y: this.groundLevel - 250 }
+          ],
+          2
+        );
+        this.movingPlatforms.push(movingPlatform);
+      }
+      
+      // Door and switch puzzle on later levels
+      if (level >= 7) {
+        const door = new Door(1200, this.groundLevel - 80, 20, 80);
+        const switchObj = new Switch(400, this.groundLevel - 32, door);
+        door.isOpen = false;
+        
+        this.doors.push(door);
+        this.switches.push(switchObj);
+      }
+    }
+  }
+  
+  /**
+   * Toggle flashlight on/off
+   */
+  toggleFlashlight() {
+    if (this.flashlightBattery > 0 || this.flashlightOn) {
+      this.flashlightOn = !this.flashlightOn;
+      this.audioManager.playSound('pickup_weapon', 0.3);
+    }
+  }
+  
+  /**
+   * Update flashlight battery
+   * @param {number} deltaTime - Time since last update
+   */
+  updateFlashlight(deltaTime) {
+    const dt = deltaTime / 1000; // Convert to seconds
+    
+    if (this.flashlightOn) {
+      this.flashlightBattery -= dt;
+      if (this.flashlightBattery <= 0) {
+        this.flashlightBattery = 0;
+        this.flashlightOn = false;
+      }
+    } else {
+      // Recharge when off
+      this.flashlightBattery = Math.min(
+        this.flashlightMaxBattery,
+        this.flashlightBattery + this.flashlightRechargeRate * dt
+      );
+    }
+  }
+  
+  /**
+   * Render flashlight effect
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  renderFlashlight(ctx) {
+    if (!this.flashlightOn || !this.player || !this.player.active) return;
+    
+    const playerCenterX = this.player.x + this.player.width / 2;
+    const playerCenterY = this.player.y + this.player.height / 2;
+    
+    // Get facing direction
+    const facingRight = this.player.facing === 1;
+    const angle = facingRight ? 0 : Math.PI;
+    
+    ctx.save();
+    
+    // Create flashlight cone
+    const gradient = ctx.createRadialGradient(
+      playerCenterX, playerCenterY, 0,
+      playerCenterX, playerCenterY, this.flashlightRange
+    );
+    gradient.addColorStop(0, 'rgba(255, 255, 200, 0.4)');
+    gradient.addColorStop(0.5, 'rgba(255, 255, 200, 0.2)');
+    gradient.addColorStop(1, 'rgba(255, 255, 200, 0)');
+    
+    ctx.beginPath();
+    ctx.moveTo(playerCenterX, playerCenterY);
+    ctx.arc(
+      playerCenterX, playerCenterY,
+      this.flashlightRange,
+      angle - this.flashlightConeAngle / 2,
+      angle + this.flashlightConeAngle / 2
+    );
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    ctx.restore();
+  }
+  
+  /**
+   * Render ghost replay in Time Attack mode
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  renderTimeAttackGhost(ctx) {
+    if (!this.timeAttackMode || !this.timeAttackMode.active) return;
+    
+    const ghostPos = this.timeAttackMode.getGhostPosition(this.timeAttackMode.elapsedTime);
+    if (!ghostPos || !this.player) return;
+    
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    
+    // Draw ghost player silhouette
+    const playerWidth = this.player.width;
+    const playerHeight = this.player.height;
+    
+    ctx.fillStyle = '#88aaff';
+    ctx.fillRect(ghostPos.x, ghostPos.y, playerWidth, playerHeight);
+    
+    // Draw ghost outline
+    ctx.strokeStyle = '#4488ff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(ghostPos.x, ghostPos.y, playerWidth, playerHeight);
+    
+    // Draw "GHOST" label
+    ctx.fillStyle = '#4488ff';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('BEST', ghostPos.x + playerWidth / 2, ghostPos.y - 5);
+    
+    ctx.restore();
   }
   
   /**
@@ -1991,6 +2363,21 @@ class GameEngine {
       } else if (this.inputManager.wasKeyPressed('7')) {
         this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'highscores';
+      } else if (this.inputManager.wasKeyPressed('8')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        // Start tutorial
+        if (this.tutorialManager) {
+          this.tutorialManager.start();
+        }
+      } else if (this.inputManager.wasKeyPressed('9')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'skins';
+      }
+    } else if (this.menuState === 'skins') {
+      // Handle skins menu
+      if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_back', 0.5);
+        this.menuState = 'main';
       }
     } else if (this.state === 'playing') {
       // Player controls
@@ -2039,6 +2426,10 @@ class GameEngine {
               });
             } else {
               this.shotsFired++;
+              // Track shot in statistics system
+              if (this.statisticsSystem) {
+                this.statisticsSystem.trackShotFired();
+              }
               this.projectiles.push(result);
               this.collisionSystem.add(result);
             }
@@ -2125,10 +2516,48 @@ class GameEngine {
           this.audioManager.playSound('reload', 0.4);
         }
         
-        // Jump
-        if ((this.inputManager.isKeyPressed('ArrowUp') || this.inputManager.isKeyPressed('w') || this.inputManager.isKeyPressed(' ')) && this.player.onGround) {
+        // Ground jump: allow holding the key (isKeyPressed)
+        if (this.player.onGround && (
+              this.inputManager.isKeyPressed('ArrowUp') ||
+              this.inputManager.isKeyPressed('w') ||
+              this.inputManager.isKeyPressed(' ')
+            )) {
           this.player.dy = this.player.jumpStrength;
           this.player.onGround = false;
+        }
+        // Double jump: only on fresh key press (wasKeyPressed)
+        else if (!this.player.onGround &&
+                 this.player.hasDoubleJump &&
+                 this.player.doubleJumpAvailable &&
+                 (this.inputManager.wasKeyPressed('ArrowUp') ||
+                  this.inputManager.wasKeyPressed('w') ||
+                  this.inputManager.wasKeyPressed(' '))) {
+          // Perform double jump
+          this.player.performDoubleJump();
+          this.audioManager.playSound('menu_select', 0.4);
+          // Create visual effect
+          this.particleSystem.createDoubleJumpEffect(
+            this.player.x + this.player.width / 2,
+            this.player.y + this.player.height
+          );
+        }
+        
+        // Grappling Hook (T key when power-up is active, uses different key to avoid conflict with God Mode)
+        if (this.inputManager.wasKeyPressed('t') && this.player.hasGrapplingHook && this.player.grapplingHookUses > 0) {
+          // Grapple towards mouse position or in facing direction
+          let targetX, targetY;
+          if (this.mouseAiming) {
+            const mousePos = this.inputManager.getMousePosition();
+            targetX = mousePos.x + this.camera.x;
+            targetY = mousePos.y + this.camera.y;
+          } else {
+            targetX = this.player.x + this.player.facing * this.player.grapplingHookRange;
+            targetY = this.player.y - 100; // Aim slightly upward
+          }
+          
+          if (this.player.useGrapplingHook(targetX, targetY)) {
+            this.audioManager.playSound('dash', 0.5); // Use dash sound for grapple
+          }
         }
         
         // Block/Parry (Hold V key - only with melee weapon)
@@ -2141,6 +2570,20 @@ class GameEngine {
         // Slide/Roll (changed from Shift to C key for better accessibility)
         if (this.inputManager.isKeyPressed('c') || this.inputManager.isKeyPressed('C') || this.inputManager.isKeyPressed('Control')) {
           this.player.roll(this.currentTime);
+        }
+        
+        // Crouch/Stealth (S key when not moving or Ctrl key)
+        if ((this.inputManager.isKeyPressed('s') || this.inputManager.isKeyPressed('S')) &&
+            !this.inputManager.isKeyPressed('a') && !this.inputManager.isKeyPressed('d') &&
+            !this.inputManager.isKeyPressed('ArrowLeft') && !this.inputManager.isKeyPressed('ArrowRight')) {
+          this.player.crouch();
+        } else {
+          this.player.stand();
+        }
+        
+        // Flashlight toggle (L key) - for night phases
+        if (this.inputManager.wasKeyPressed('l') || this.inputManager.wasKeyPressed('L')) {
+          this.toggleFlashlight();
         }
         
         // Special Ability (E key or Q key)
@@ -2180,6 +2623,89 @@ class GameEngine {
         if (oldWeaponIndex !== this.player.currentRangedWeaponIndex) {
           this.audioManager.playSound('weapon_switch', 0.3);
         }
+        
+        // Phase 3: Vehicle enter/exit (G key - changed from F to avoid conflict with melee)
+        if (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G')) {
+          // Check if player is in a vehicle
+          if (this.player.isInVehicle && this.player.currentVehicle) {
+            // Exit vehicle
+            this.player.currentVehicle.exit(this.player);
+            this.audioManager.playSound('menu_select', 0.4);
+          } else {
+            // Check for nearby vehicle to enter
+            for (const vehicle of this.vehicles) {
+              if (vehicle.active && !vehicle.isDestroyed && vehicle.canEnter()) {
+                if (vehicle.isInRange(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, 60)) {
+                  vehicle.enter(this.player);
+                  this.audioManager.playSound('menu_select', 0.4);
+                  this.particleSystem.createTextPopup(
+                    this.player.x + this.player.width / 2,
+                    this.player.y - 30,
+                    'ENTERED VEHICLE',
+                    '#00ff00'
+                  );
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        // Phase 3: Mounted weapon mount/dismount (X key - changed to avoid conflict with block)
+        if (this.inputManager.wasKeyPressed('x') || this.inputManager.wasKeyPressed('X')) {
+          // Check if player is mounted
+          if (this.player.isMounted && this.player.currentMountedWeapon) {
+            // Dismount
+            this.player.currentMountedWeapon.dismount(this.player);
+            this.audioManager.playSound('menu_select', 0.4);
+          } else if (!this.player.isInVehicle) {
+            // Check for nearby mounted weapon
+            for (const mw of this.mountedWeapons) {
+              if (mw.active && mw.canMount()) {
+                if (mw.isInRange(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, 60)) {
+                  mw.mount(this.player);
+                  this.audioManager.playSound('menu_select', 0.4);
+                  this.particleSystem.createTextPopup(
+                    this.player.x + this.player.width / 2,
+                    this.player.y - 30,
+                    'MOUNTED ' + mw.weaponType,
+                    '#00ff00'
+                  );
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        // Phase 3: Vehicle/Mounted weapon firing
+        if (this.player.isInVehicle && this.player.currentVehicle) {
+          if (this.inputManager.isMouseButtonPressed(0)) {
+            const mousePos = this.inputManager.getMousePosition();
+            const targetX = mousePos.x + this.camera.x;
+            const targetY = mousePos.y + this.camera.y;
+            const projectile = this.player.currentVehicle.fire(this.currentTime, targetX, targetY);
+            if (projectile) {
+              this.projectiles.push(projectile);
+              this.collisionSystem.add(projectile);
+            }
+          }
+        } else if (this.player.isMounted && this.player.currentMountedWeapon) {
+          // Aim mounted weapon
+          const mousePos = this.inputManager.getMousePosition();
+          const targetX = mousePos.x + this.camera.x;
+          const targetY = mousePos.y + this.camera.y;
+          this.player.currentMountedWeapon.aim(targetX, targetY);
+          
+          if (this.inputManager.isMouseButtonPressed(0)) {
+            const projectile = this.player.currentMountedWeapon.fire(this.currentTime);
+            if (projectile) {
+              projectile.owner = this.player.currentMountedWeapon;
+              this.projectiles.push(projectile);
+              this.collisionSystem.add(projectile);
+            }
+          }
+        }
       }
       
       // Toggle help overlay (H key)
@@ -2192,8 +2718,8 @@ class GameEngine {
         this.devToolInstantKillAll();
       }
       
-      // Dev Tool: Toggle Invincibility (G key for God mode)
-      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G'))) {
+      // Dev Tool: Toggle Invincibility (P key for God mode - changed from G to avoid conflict with vehicle entry)
+      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('p') || this.inputManager.wasKeyPressed('P'))) {
         this.devToolToggleInvincibility();
       }
       
@@ -2380,10 +2906,34 @@ class GameEngine {
       this.audioManager.stopMusic();
       this.audioManager.playMusic('gameover');
       
+      // Track death in statistics system
+      if (this.statisticsSystem) {
+        this.statisticsSystem.trackDeath();
+        this.statisticsSystem.endSession();
+      }
+      
+      // Submit score to leaderboard
+      if (this.leaderboardSystem) {
+        this.leaderboardSystem.submitScore(this.mode, 'byScore', {
+          name: this.player.displayName || 'Player',
+          score: this.score,
+          wave: this.wave,
+          level: this.currentLevel,
+          character: this.player.characterType,
+          difficulty: this.difficulty
+        });
+      }
+      
       this.state = 'gameover';
       this.menuState = 'gameover';
       this.ui.setLastScore(this.score);
       return;
+    }
+    
+    // Calculate time slow multiplier
+    let timeSlowMultiplier = 1.0;
+    if (this.player && this.player.hasTimeSlow) {
+      timeSlowMultiplier = 0.5; // Enemies move at 50% speed during time slow
     }
     
     // Update enemies
@@ -2424,8 +2974,14 @@ class GameEngine {
       }
     });
     
-    // Update projectiles
-    this.projectiles.forEach(p => p.update(deltaTime));
+    // Update enemy projectiles with time slow
+    this.projectiles.forEach(p => {
+      if (p.isEnemyProjectile && this.player && this.player.hasTimeSlow) {
+        p.update(deltaTime * timeSlowMultiplier);
+      } else {
+        p.update(deltaTime);
+      }
+    });
     
     // Update pickups
     this.pickups.forEach(p => p.update(deltaTime));
@@ -2460,6 +3016,14 @@ class GameEngine {
     // Phase 2: Update noise and formation systems
     this.noiseSystem.update(deltaTime, this.enemies);
     this.formationSystem.update(deltaTime);
+    
+    // Auto-assign formations to groups of enemies periodically (every 5 seconds)
+    if (this.player && this.player.active && this.enemies.length >= 3) {
+      if (!this.lastFormationCheck || this.currentTime - this.lastFormationCheck > 5000) {
+        this.formationSystem.autoAssignFormations(this.enemies, this.player);
+        this.lastFormationCheck = this.currentTime;
+      }
+    }
     
     // Phase 3: Update weather system
     if (this.weatherSystem) {
@@ -2498,6 +3062,9 @@ class GameEngine {
       });
     }
     
+    // Phase 3: Update flashlight battery
+    this.updateFlashlight(deltaTime);
+    
     // Phase 3: Update vehicles
     this.vehicles.forEach(vehicle => {
       if (vehicle.active) {
@@ -2513,6 +3080,21 @@ class GameEngine {
       }
     });
     
+    // Phase 3: Update dynamic event system
+    if (this.dynamicEventSystem && this.dynamicEventSystem.active) {
+      this.dynamicEventSystem.update(deltaTime, this);
+    }
+    
+    // Update tutorial system
+    if (this.tutorialManager && this.tutorialManager.isActive) {
+      this.tutorialManager.update(deltaTime, this.inputManager);
+    }
+    
+    // Update story manager dialogue system (campaign mode)
+    if (this.mode === 'campaign' && this.storyManager && this.storyManager.isShowingDialogue) {
+      this.storyManager.update(deltaTime, this.inputManager);
+    }
+    
     // Update particles
     this.particleSystem.update(deltaTime);
     
@@ -2523,6 +3105,38 @@ class GameEngine {
     
     // Check achievements
     this.achievementSystem.update(this);
+    
+    // Check skin unlocks based on statistics
+    if (this.skinSystem && this.statisticsSystem) {
+      const stats = this.statisticsSystem.getStatsSummary();
+      if (stats) {
+        const newUnlocks = this.skinSystem.checkUnlocks({
+          campaignCompleted: stats.progression.campaignCompleted,
+          stealthKills: stats.combat.stealthKills,
+          totalKills: stats.combat.totalKills,
+          highestHordeWave: stats.survival.highestWave,
+          timeAttackCompleted: this.timeAttackMode && this.timeAttackMode.completed,
+          bossRushCompleted: this.bossRushMode && this.bossRushMode.completed,
+          totalCoinsEarned: stats.progression.coinsEarned
+        });
+        // Show unlock notifications for any newly unlocked skins
+        if (newUnlocks && newUnlocks.length > 0) {
+          newUnlocks.forEach(skin => {
+            this.particleSystem.createTextPopup(
+              this.player.x + this.player.width / 2,
+              this.player.y - 80,
+              `SKIN UNLOCKED: ${skin.name}!`,
+              skin.colors.accent
+            );
+          });
+        }
+      }
+    }
+    
+    // Render particle trail for skin effects
+    if (this.skinSystem && this.player && this.player.active) {
+      this.skinSystem.renderParticleTrail(this.particleSystem, this.player, deltaTime);
+    }
     
     // Update camera
     this.camera.update();
@@ -2554,6 +3168,12 @@ class GameEngine {
         if (this.currencySystem) {
           const coinBonus = this.currencySystem.calculateWaveBonus(this.wave);
           this.currencySystem.addCoins(coinBonus);
+          
+          // Track coins earned in statistics
+          if (this.statisticsSystem) {
+            this.statisticsSystem.trackCoinsEarned(coinBonus);
+          }
+          
           this.particleSystem.createTextPopup(
             this.player.x + this.player.width / 2,
             this.player.y - 50,
@@ -2571,13 +3191,39 @@ class GameEngine {
         // Auto-save after wave completion
         this.autoSave(0);
         
+        // Track wave completion in statistics
+        if (this.statisticsSystem) {
+          this.statisticsSystem.trackWaveComplete(this.wave, this.kills);
+        }
+        
         this.wave++;
+        
+        // Phase 3: Trigger dynamic events on wave start
+        if (this.dynamicEventSystem) {
+          const event = this.dynamicEventSystem.onWaveStart(this.wave, this);
+          if (event) {
+            // Event was triggered - show notification
+            this.particleSystem.createTextPopup(
+              this.player.x + this.player.width / 2,
+              this.player.y - 70,
+              event.announcement,
+              event.type === 'positive' ? '#00ff00' : '#ff4444'
+            );
+          }
+        }
+        
         this.spawnWave();
         this.spawnPickups();
         this.spawnCovers(); // Respawn covers for new wave
         
         // Phase 1: Spawn new hazards for new wave
         this.hazardManager.spawnHazards(this.mode, this.currentLevel, this.wave, this.groundLevel, this.worldWidth);
+        
+        // Phase 3: Spawn vehicles periodically
+        this.spawnVehicles(this.mode, this.currentLevel);
+        
+        // Phase 3: Spawn mounted weapons periodically
+        this.spawnMountedWeapons(this.mode, this.currentLevel);
         
         // Phase 2: Spawn shop vendor every 5 waves
         if (shouldSpawnShop(this.wave)) {
@@ -2649,7 +3295,185 @@ class GameEngine {
           }
         }, 2000);
       }
+    } else if (this.mode === 'timeattack') {
+      // Update Time Attack mode timer
+      if (this.timeAttackMode.active) {
+        this.timeAttackMode.update(deltaTime, {
+          x: this.player.x,
+          y: this.player.y,
+          facing: this.player.facing
+        });
+      }
+      
+      // Check level completion
+      if (this.enemiesRemaining === 0 && this.timeAttackMode.active) {
+        const result = this.timeAttackMode.stop(true);
+        
+        // Show time attack result
+        this.particleSystem.createTextPopup(
+          this.player.x + this.player.width / 2,
+          this.player.y - 50,
+          result.medal ? `${result.medal.toUpperCase()} MEDAL!` : 'LEVEL COMPLETE!',
+          result.medal === 'gold' ? '#ffd700' : result.medal === 'silver' ? '#c0c0c0' : '#cd7f32'
+        );
+        
+        // Add score bonus
+        this.score += Math.floor(1000 - result.time * 10);
+        
+        // Progress to next level
+        if (this.currentLevel < this.maxLevel) {
+          this.currentLevel++;
+          this.setupTimeAttackLevel();
+        } else {
+          this.showVictoryScreen();
+        }
+      }
+    } else if (this.mode === 'bossrush') {
+      // Check boss defeated
+      if (this.enemiesRemaining === 0 && this.bossRushMode.active) {
+        const boss = this.enemies.find(e => e.isBoss);
+        const bossId = boss ? boss.bossId : this.bossRushMode.getCurrentBossId();
+        const result = this.bossRushMode.bossDefeated(bossId);
+        
+        if (result.completed) {
+          // All bosses defeated
+          this.score += Math.floor(10000 - result.totalTime * 10);
+          this.showVictoryScreen();
+        } else {
+          // Spawn next boss after delay
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            'BOSS DEFEATED!',
+            '#00ff00'
+          );
+          
+          // Heal player
+          this.player.heal(Math.floor(this.player.maxHealth * result.healthRefill));
+          
+          // Spawn power-up if awarded
+          if (result.powerUp) {
+            const pickup = new Pickup(this.player.x + 100, this.groundLevel - 30, result.powerUp);
+            this.pickups.push(pickup);
+            this.collisionSystem.add(pickup);
+          }
+          
+          // Spawn next boss after delay
+          setTimeout(() => {
+            if (this.state === 'playing' && this.bossRushMode.active) {
+              this.enemies = [];
+              this.spawnBossRushBoss();
+            }
+          }, 2000);
+        }
+      }
+    } else if (this.mode === 'horde') {
+      // Check wave completion
+      if (this.enemiesRemaining === 0 && this.hordeMode.active) {
+        const result = this.hordeMode.enemyKilled();
+        
+        if (result && result.waveComplete) {
+          // Wave complete
+          this.score += this.hordeMode.wave * 500;
+          
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            `WAVE ${result.wave} COMPLETE!`,
+            '#ff00ff'
+          );
+          
+          // Heal player between waves
+          this.player.heal(30);
+          
+          // Spawn next wave after delay
+          setTimeout(() => {
+            if (this.state === 'playing' && this.hordeMode.active) {
+              this.enemies = [];
+              this.spawnHordeWave();
+              this.spawnPickups();
+            }
+          }, 2000);
+        }
+      }
+    } else if (this.mode === 'onehit') {
+      // Check level completion
+      if (this.enemiesRemaining === 0 && this.oneHitMode.active) {
+        const result = this.oneHitMode.levelCompleted();
+        
+        this.score += 2000; // Bonus for surviving one-hit mode level
+        
+        if (result.hasNextLevel) {
+          // Progress to next level
+          this.currentLevel++;
+          
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            'LEVEL SURVIVED!',
+            '#00ff00'
+          );
+          
+          // Setup next level after delay
+          setTimeout(() => {
+            if (this.state === 'playing' && this.oneHitMode.active) {
+              this.enemies = [];
+              this.spawnCampaignEnemies();
+              this.spawnPickups();
+              // Apply one-hit mode to new enemies
+              this.enemies.forEach(enemy => this.oneHitMode.applyToEnemy(enemy));
+            }
+          }, 2000);
+        } else {
+          // All levels complete
+          this.showVictoryScreen();
+        }
+      }
     }
+  }
+  
+  /**
+   * Set up the next time attack level
+   */
+  setupTimeAttackLevel() {
+    // Clear old level entities
+    this.enemies = [];
+    this.projectiles = [];
+    this.pickups = [];
+    this.covers = [];
+    this.platforms = [];
+    this.slopes = [];
+    
+    // Clear collision system
+    if (this.collisionSystem && typeof this.collisionSystem.clear === 'function') {
+      this.collisionSystem.clear();
+    }
+    
+    // Reset player position
+    this.player.x = 100;
+    this.player.y = this.groundLevel - 50;
+    
+    // Spawn terrain
+    this.spawnCovers();
+    this.spawnLevelTerrain();
+    
+    // Spawn enemies
+    this.spawnCampaignEnemies();
+    this.spawnPickups();
+    
+    // Start time attack timer
+    this.timeAttackMode.start(this.currentLevel);
+    
+    // Heal player
+    this.player.heal(30);
+    
+    // Add spawn protection
+    this.player.invulnerable = true;
+    setTimeout(() => {
+      if (this.player && this.player.active) {
+        this.player.invulnerable = false;
+      }
+    }, 1500);
   }
   
   /**
@@ -3061,8 +3885,20 @@ class GameEngine {
             this.shotsHit++;
             this.totalDamageDealt += proj.damage;
             
+            // Track damage in statistics system
+            if (this.statisticsSystem) {
+              this.statisticsSystem.trackDamageDealt(proj.damage);
+              this.statisticsSystem.trackShotHit();
+            }
+            
             if (killed) {
               this.kills++;
+              
+              // Track kill in statistics system
+              if (this.statisticsSystem) {
+                const weapon = this.player.getCurrentWeapon();
+                this.statisticsSystem.trackKill(enemy, weapon, false);
+              }
               
               // Play kill sound
               this.audioManager.playSound('enemy_killed', 0.6);
@@ -3210,6 +4046,11 @@ class GameEngine {
             const actualDamage = this.player.isBlocking ? Math.floor(proj.damage * 0.25) : proj.damage;
             this.totalDamageTaken += actualDamage;
             this.damageTakenThisWave += actualDamage;
+            
+            // Track damage taken in statistics
+            if (this.statisticsSystem) {
+              this.statisticsSystem.trackDamageTaken(actualDamage);
+            }
             
             if (this.player.isBlocking) {
               // Blocked hit
@@ -3415,7 +4256,7 @@ class GameEngine {
       return;
     }
     
-    if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.state === 'levelcomplete' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls') {
+    if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.state === 'levelcomplete' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls' || this.menuState === 'skins') {
       // Draw game in background if paused or level complete
       if (this.state === 'paused' || this.state === 'levelcomplete') {
         this.renderGame();
@@ -3461,6 +4302,17 @@ class GameEngine {
         combo: this.combo
       });
       
+      // Draw challenge mode HUD elements
+      if (this.mode === 'timeattack' && this.timeAttackMode.active) {
+        this.timeAttackMode.render(this.ctx, this.canvas.width);
+      } else if (this.mode === 'bossrush' && this.bossRushMode.active) {
+        this.bossRushMode.render(this.ctx, this.canvas.width);
+      } else if (this.mode === 'horde' && this.hordeMode.active) {
+        this.hordeMode.render(this.ctx, this.canvas.width);
+      } else if (this.mode === 'onehit' && this.oneHitMode.active) {
+        this.oneHitMode.render(this.ctx, this.canvas.width);
+      }
+      
       // Draw achievement notifications (without camera transform)
       this.achievementSystem.render(this.ctx, 10, 60);
       
@@ -3487,6 +4339,21 @@ class GameEngine {
       // Phase 2: Draw coin counter in HUD
       if (this.currencySystem) {
         this.drawCoinCounter(this.ctx);
+      }
+      
+      // Phase 3: Draw dynamic event system HUD
+      if (this.dynamicEventSystem && this.dynamicEventSystem.active) {
+        this.dynamicEventSystem.render(this.ctx, this.canvas.width, this.canvas.height);
+      }
+      
+      // Draw tutorial overlay when active
+      if (this.tutorialManager && this.tutorialManager.isActive) {
+        this.tutorialManager.render(this.ctx);
+      }
+      
+      // Draw story dialogue in campaign mode
+      if (this.mode === 'campaign' && this.storyManager && this.storyManager.isShowingDialogue) {
+        this.storyManager.render(this.ctx);
       }
     }
   }
@@ -3587,6 +4454,11 @@ class GameEngine {
     // Draw player
     if (this.player && this.player.active) {
       this.player.render(this.ctx);
+    }
+    
+    // Phase 4: Draw ghost replay in Time Attack mode
+    if (this.mode === 'timeattack' && this.timeAttackMode && this.timeAttackMode.active) {
+      this.renderTimeAttackGhost(this.ctx);
     }
     
     // Draw enemies

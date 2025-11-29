@@ -266,6 +266,65 @@ class GameUI {
       powerupY -= 20;
     }
     
+    // Phase 3 Power-ups
+    if (player.hasTimeSlow && player.timeSlowEndTime) {
+      const timeLeft = Math.ceil((player.timeSlowEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#9933ff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`⏱️ TIME SLOW (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasDoubleJump && player.doubleJumpEndTime) {
+      const timeLeft = Math.ceil((player.doubleJumpEndTime - currentTime) / 1000);
+      const jumpStatus = player.doubleJumpAvailable ? 'READY' : 'USED';
+      ctx.fillStyle = '#66ccff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`🦘 DOUBLE JUMP [${jumpStatus}] (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasGrapplingHook && player.grapplingHookEndTime) {
+      const timeLeft = Math.ceil((player.grapplingHookEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#996633';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`🪝 GRAPPLE x${player.grapplingHookUses} (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasGhostMode && player.ghostModeEndTime) {
+      const timeLeft = Math.ceil((player.ghostModeEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`👻 GHOST MODE (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasMagnet && player.magnetEndTime) {
+      const timeLeft = Math.ceil((player.magnetEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#ff3366';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`🧲 MAGNET (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    
+    // Flashlight battery indicator (when flashlight is available)
+    if (window.game && window.game.flashlightMaxBattery > 0) {
+      const batteryPercent = window.game.flashlightBattery / window.game.flashlightMaxBattery;
+      const flashlightStatus = window.game.flashlightOn ? 'ON' : 'OFF';
+      const batteryColor = batteryPercent > 0.5 ? '#00ff00' : 
+                          batteryPercent > 0.25 ? '#ffff00' : '#ff4444';
+      ctx.fillStyle = batteryColor;
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(`🔦 FLASHLIGHT [L]: ${flashlightStatus} (${Math.floor(batteryPercent * 100)}%)`, 
+                  this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    
+    // Crouch indicator
+    if (player.isCrouching) {
+      ctx.fillStyle = '#888888';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(`🦵 CROUCHING - Stealth +50%`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    
     // Melee combo indicator
     if (player.meleeCombo > 0 && player.getCurrentMeleeWeapon()) {
       ctx.fillStyle = '#ffaa00';
@@ -575,7 +634,7 @@ class GameUI {
     
     if (menuState === 'main') {
       const MENU_START_Y = 180;
-      const MENU_LINE_HEIGHT = 38;
+      const MENU_LINE_HEIGHT = 34;
       const options = [
         'Press 1 - CAMPAIGN',
         'Press 2 - SURVIVAL',
@@ -583,13 +642,17 @@ class GameUI {
         'Press 4 - SETTINGS',
         'Press 5 - CONTROLS',
         'Press 6 - STATISTICS',
-        'Press 7 - HIGH SCORES'
+        'Press 7 - HIGH SCORES',
+        'Press 8 - TUTORIAL',
+        'Press 9 - SKINS'
       ];
       
       ctx.fillStyle = '#00ff00';
       options.forEach((option, i) => {
         ctx.fillText(option, this.width / 2, MENU_START_Y + i * MENU_LINE_HEIGHT);
       });
+    } else if (menuState === 'skins') {
+      this.drawSkinsMenu(ctx);
     } else if (menuState === 'challenge') {
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 32px monospace';
@@ -1166,6 +1229,86 @@ class GameUI {
         y += 30;
         ctx.fillText(`Most Kills in Wave: ${stats.efficiency.mostKillsInWave}`, leftX, y);
       }
+    }
+    
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#888';
+    ctx.font = '16px monospace';
+    ctx.fillText('Press ESC to go back', this.width / 2, this.height - 50);
+  }
+
+  /**
+   * Draw the skins customization menu
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  drawSkinsMenu(ctx) {
+    ctx.fillStyle = '#00ff00';
+    ctx.font = 'bold 32px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CHARACTER SKINS', this.width / 2, 80);
+    
+    const skinSystem = window.game ? window.game.skinSystem : null;
+    
+    if (!skinSystem) {
+      ctx.fillStyle = '#888';
+      ctx.font = '18px monospace';
+      ctx.fillText('Skin system not available', this.width / 2, 200);
+    } else {
+      const allSkins = skinSystem.getAllSkins();
+      const startY = 130;
+      const skinHeight = 60;
+      const columns = 2;
+      const columnWidth = 400;
+      
+      allSkins.forEach((skin, index) => {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const x = (this.width / 2 - columnWidth) + col * columnWidth;
+        const y = startY + row * skinHeight;
+        
+        // Skin box
+        ctx.fillStyle = skin.unlocked ? 'rgba(0, 100, 0, 0.3)' : 'rgba(50, 50, 50, 0.3)';
+        ctx.fillRect(x, y, columnWidth - 20, skinHeight - 10);
+        
+        // Skin name
+        ctx.fillStyle = skin.unlocked ? skin.colors.accent : '#666666';
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(skin.name.toUpperCase(), x + 10, y + 20);
+        
+        // Skin description
+        ctx.fillStyle = skin.unlocked ? '#ffffff' : '#888888';
+        ctx.font = '12px monospace';
+        ctx.fillText(skin.description, x + 10, y + 38);
+        
+        // Unlock status / requirement
+        if (!skin.unlocked && skin.requirement) {
+          ctx.fillStyle = '#ffaa00';
+          ctx.font = '11px monospace';
+          ctx.fillText(`🔒 ${skin.requirement.description}`, x + 10, y + 52);
+          
+          // Progress if available
+          if (skin.progress) {
+            const progressText = `${skin.progress.current}/${skin.progress.target}`;
+            ctx.fillStyle = '#888';
+            ctx.fillText(progressText, x + columnWidth - 80, y + 52);
+          }
+        } else if (skin.unlocked) {
+          ctx.fillStyle = '#00ff00';
+          ctx.font = '11px monospace';
+          ctx.fillText('✓ UNLOCKED', x + 10, y + 52);
+        }
+        
+        // Color preview
+        const previewX = x + columnWidth - 60;
+        const previewY = y + 10;
+        ctx.fillStyle = skin.colors.primary;
+        ctx.fillRect(previewX, previewY, 15, 30);
+        ctx.fillStyle = skin.colors.secondary;
+        ctx.fillRect(previewX + 15, previewY, 15, 30);
+        ctx.fillStyle = skin.colors.accent;
+        ctx.fillRect(previewX + 30, previewY, 10, 30);
+      });
     }
     
     ctx.textAlign = 'center';
