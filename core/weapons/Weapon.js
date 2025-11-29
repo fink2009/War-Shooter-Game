@@ -489,3 +489,265 @@ class MineLauncher extends Weapon {
     return projectile;
   }
 }
+
+// ==========================================
+// PHASE 6 WEAPONS
+// ==========================================
+
+/**
+ * SMG - High fire rate, low damage submachine gun
+ */
+class SMG extends Weapon {
+  constructor() {
+    super('SMG', 12, 80, 40, 1800, 16);
+    this.accuracy = 0.85;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction with slight inaccuracy
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    // Add spread based on accuracy
+    const spread = (1 - this.accuracy) * 0.2;
+    const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * spread;
+    
+    const vx = Math.cos(angle) * this.projectileSpeed;
+    const vy = Math.sin(angle) * this.projectileSpeed;
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#ffff00';
+    projectile.width = 4;
+    projectile.height = 2;
+    return projectile;
+  }
+}
+
+/**
+ * Crossbow - Silent, high damage, retrievable bolts
+ */
+class Crossbow extends Weapon {
+  constructor() {
+    super('Crossbow', 80, 2500, 1, 1500, 18);
+    this.isSilent = true;
+    this.retrievable = true;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#8B4513';
+    projectile.width = 20;
+    projectile.height = 3;
+    projectile.isBolt = true;
+    projectile.isSilent = true;
+    projectile.retrievable = true;
+    return projectile;
+  }
+}
+
+/**
+ * Chainsaw - Continuous melee damage with fuel system
+ */
+class Chainsaw extends MeleeWeapon {
+  constructor() {
+    super('Chainsaw', 30, 100, 64);
+    this.fuelCapacity = 100;
+    this.currentFuel = 100;
+    this.fuelConsumption = 10; // fuel per second
+    this.isActive = false;
+  }
+  
+  canFire(currentTime) {
+    return this.isActive && 
+           this.currentFuel > 0 && 
+           currentTime - this.lastFireTime >= this.fireRate;
+  }
+  
+  activate() {
+    if (this.currentFuel > 0) {
+      this.isActive = true;
+    }
+  }
+  
+  deactivate() {
+    this.isActive = false;
+  }
+  
+  update(currentTime, deltaTime) {
+    // Consume fuel while active
+    if (this.isActive && deltaTime) {
+      this.currentFuel -= this.fuelConsumption * (deltaTime / 1000);
+      if (this.currentFuel <= 0) {
+        this.currentFuel = 0;
+        this.deactivate();
+      }
+    }
+  }
+  
+  refuel() {
+    this.currentFuel = this.fuelCapacity;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.lastFireTime = currentTime;
+
+    // Calculate direction
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist > this.meleeRange) {
+      return null;
+    }
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#ff4444';
+    projectile.width = 24;
+    projectile.height = 8;
+    projectile.isChainsaw = true;
+    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
+    return projectile;
+  }
+  
+  getColor() {
+    return '#ff4444';
+  }
+  
+  getWidth() {
+    return 24;
+  }
+  
+  getHeight() {
+    return 8;
+  }
+}
+
+/**
+ * Freeze Ray - Slows and eventually freezes enemies
+ */
+class FreezeRay extends Weapon {
+  constructor() {
+    super('Freeze Ray', 8, 50, 30, 2500, 20);
+    this.slowAmount = 0.1;
+    this.freezeThreshold = 0.5;
+    this.isBeam = true;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#88ddff';
+    projectile.width = 16;
+    projectile.height = 4;
+    projectile.isFreezeRay = true;
+    projectile.slowAmount = this.slowAmount;
+    projectile.freezeThreshold = this.freezeThreshold;
+    return projectile;
+  }
+}
+
+/**
+ * Lightning Gun - Chain lightning between enemies
+ */
+class LightningGun extends Weapon {
+  constructor() {
+    super('Lightning Gun', 40, 400, 50, 2800, 25);
+    this.chainTargets = 3;
+    this.chainRange = 100;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#ffff00';
+    projectile.width = 3;
+    projectile.height = 3;
+    projectile.isLightning = true;
+    projectile.chainTargets = this.chainTargets;
+    projectile.chainRange = this.chainRange;
+    projectile.chainDamageDecay = 0.7; // Each chain does 70% of previous damage
+    return projectile;
+  }
+}

@@ -5,6 +5,171 @@ All notable changes to War Shooter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2024 (Phase 6 - Final Release)
+
+### Added
+
+- **Mobile Touch Controls** (`core/managers/TouchInputManager.js`)
+  - Virtual joystick with 150px radius base and 50px stick
+  - Action buttons: Fire, Jump, Dodge, Ability, Reload, Weapon Switch
+  - Dual-stick aiming mode (optional right joystick)
+  - Auto-aim assist with sticky targeting
+  - Gesture controls: pinch to zoom, long-press for interact
+  - Responsive UI that scales to screen size
+  - Adjustable button size and opacity (50-100%)
+  - Touch preferences saved to localStorage
+
+- **Photo Mode** (`core/systems/PhotoMode.js`)
+  - Press P to enter/exit photo mode
+  - Game freezes completely while active
+  - Free camera controls: WASD move, Q/E zoom, Z/X tilt
+  - 8 visual filters: None, Black & White, Sepia, High Contrast, Vintage, Neon, Pixel Art, Vignette
+  - Camera tools: FOV slider (60°-120°), grid overlay (rule of thirds)
+  - Depth of field with adjustable focus distance
+  - Screenshot capture with auto-filename (WarShooter_YYYY-MM-DD_HH-MM-SS.png)
+  - Resolution options: native, 1080p, 4K
+  - Toggle HUD, enemy health bars, and particle effects
+
+- **Daily Challenge System** (`core/systems/DailyChallengeSystem.js`)
+  - New challenge every 24 hours (UTC reset)
+  - Seed-based generation (same challenge for all players)
+  - 4 challenge types: Kill, Survival, Speedrun, Skill
+  - 20+ challenge templates with varied objectives
+  - 3 difficulty tiers with rewards: Bronze (500), Silver (1000), Gold (2000) coins
+  - Real-time progress tracking with tier markers
+  - Challenge history (last 7 days)
+  - UI widget showing current challenge and countdown
+
+- **Companion AI System** (`core/entities/CompanionAI.js`)
+  - 4 companion types:
+    - **Soldier**: 200 HP, rifle, can revive player (60s cooldown)
+    - **Medic**: 150 HP, pistol, heals player 20 HP every 10s
+    - **Heavy**: 300 HP, machine gun, draws enemy fire, retreats when low
+    - **Scout**: 100 HP, SMG, fast movement, marks enemies on minimap
+  - Follower pathfinding with stuck detection
+  - Combat AI with aggro range and attack patterns
+  - Command wheel: Follow/Stay/Attack
+  - XP and leveling system (+20 HP, +3 damage per level)
+  - CompanionManager for spawning and management
+
+- **Dual-Wielding System**
+  - Press Z to toggle dual-wield (pistols only)
+  - 2x fire rate with alternating shots
+  - -30% accuracy penalty per gun
+  - -50% reload speed (reload both guns)
+  - Cannot aim down sights or use melee while active
+
+- **Weapon Crafting System** (`core/systems/CraftingSystem.js`)
+  - 4 weapon part types: Barrel, Receiver, Stock, Magazine
+  - 5 rarity tiers: Common (+5%), Uncommon (+10%), Rare (+15%), Epic (+25%), Legendary (+40%)
+  - Parts drop from elites (15%), mini-bosses (30%), and bosses (80%)
+  - Crafting station UI with part selection and preview
+  - Name custom weapons (max 20 characters)
+  - Save up to 5 custom weapons
+  - 6-digit share codes for weapon designs
+  - 5 special effects for Legendary parts:
+    - Fire Rounds: Burn damage over time
+    - Explosive Rounds: Small AoE damage
+    - Piercing Rounds: Hit multiple enemies
+    - Vampire Rounds: Heal 10% of damage dealt
+    - Lightning Rounds: Chain to 2 nearby enemies
+
+- **5 New Weapons**
+  - **SMG**: 12 damage, 80ms fire rate, 40 rounds, 300px range
+  - **Crossbow**: 80 damage, 2.5s fire rate, 1 bolt, silent, retrievable
+  - **Chainsaw**: 30 damage, continuous melee, fuel system (10s)
+  - **Freeze Ray**: 8 damage, slows enemies 10% per hit, freezes at 50%
+  - **Lightning Gun**: 40 damage, chains to 3 targets, 70% decay per chain
+
+- **Configuration Updates**
+  - TOUCH_CONTROLS: joystick settings, button size, auto-aim
+  - PHOTO_MODE: zoom range, FOV limits, filter list
+  - DAILY_CHALLENGES: reset hour, reward tiers, challenge types
+  - COMPANIONS: stats for all 4 companion types
+  - DUAL_WIELD: fire rate multiplier, accuracy/reload penalties
+  - CRAFTING: part rarities, max custom weapons, special effects
+  - ACCESSIBILITY: colorblind modes, subtitle settings, UI scales
+  - WEAPONS_PHASE6: stats for all 5 new weapons
+
+### Changed
+- Updated index.html with all new script includes
+- README updated with Phase 6 features documentation
+- Version bumped to 2.0.0
+
+### Technical
+- Added `core/managers/TouchInputManager.js` for mobile support
+- Added `core/systems/PhotoMode.js` for screenshot functionality
+- Added `core/systems/DailyChallengeSystem.js` for daily missions
+- Added `core/systems/CraftingSystem.js` for weapon crafting
+- Added `core/entities/CompanionAI.js` for AI companions
+- Extended PlayerCharacter with dual-wield capabilities
+- Extended Weapon.js with 5 new weapon classes
+
+## [1.5.0] - 2024 (Phase 5 Content Expansion)
+
+### Added
+- **10 New Campaign Levels (11-20)**
+  - Level 11: Desert Outpost - Navigate the harsh desert environment
+  - Level 12: Sandworm Boss - Face the burrowing desert beast
+  - Level 13: Tundra Expedition - Survive the frozen wastes
+  - Level 14: Frost Titan Boss - Defeat the ice-armored giant
+  - Level 15: City Assault - Fight through urban warfare
+  - Level 16: Rooftop Escape - Escape the city rooftops
+  - Level 17: Lab Infiltration - Sneak through the research facility
+  - Level 18: Reactor Survival (Mech Commander Boss) - Survive the reactor meltdown
+  - Level 19: Forest Ambush - Navigate the fog-covered forest
+  - Level 20: Hell Knight Boss - The ultimate final boss battle
+
+- **6 New Biomes with Unique Visuals**
+  - **Desert**: Sand dunes, cacti, sandstorms, quicksand hazards
+  - **Snow**: Ice crystals, frozen trees, blizzards, thin ice
+  - **Urban**: Buildings, streets, vehicles, falling debris
+  - **Facility**: Labs, tech panels, machinery, electrical hazards
+  - **Forest**: Dense trees, undergrowth, fog, bear traps
+  - **Hell**: Lava pools, fire pillars, brimstone, red sky
+
+- **4 New Boss Fights**
+  - **Sandworm** (2000 HP): Burrows underground, emerges with slam attack, fires sand projectiles
+  - **Frost Titan** (2500 HP): Ice armor damage reduction, freeze beam, summons blizzards
+  - **Mech Commander** (3000+500 HP): Two-phase boss - mech with minigun/missiles, then pilot phase
+  - **Hell Knight** (4000 HP): Four-phase final boss with fire sword, meteors, lava pools, inferno mode
+
+- **Base Defense Mode**
+  - Protect your objective (1000 HP) from 20 waves of enemies
+  - Building system with 5 buildable types:
+    - Barricade: Block enemies and projectiles
+    - Auto Turret: Automatic enemy targeting
+    - Land Mine: Explosive trap
+    - Heal Station: Area healing for player
+    - Ammo Station: Replenishes ammunition
+  - Resource economy: Earn resources from kills, spend on buildings
+  - Boss waves every 5 waves
+  - Wave breaks for building between waves
+
+- **Secret Content Configuration**
+  - 3 secret levels (Vault, Arena, Dev Room)
+  - Branching paths in levels 16 and 18
+  - 20 collectible lore documents across all levels
+  - Unlock requirements for secret content
+
+- **BiomeSystem** (`core/systems/BiomeSystem.js`)
+  - Visual theme management for each biome
+  - Biome-specific decorative elements
+  - Color interpolation for smooth transitions
+  - Environmental hazard integration
+
+### Changed
+- Campaign now includes 20 levels (up from 10)
+- Boss Rush mode updated to include all 8 bosses
+- Updated weather system integration with biomes
+- Expanded enemy variety for higher levels
+
+### Technical
+- Added `core/entities/bosses/` directory with new boss classes
+- Added `core/modes/BaseDefenseMode.js` for base defense gameplay
+- Updated `GameEngine.js` with biome and boss integration
+- Extended configuration in `config.js` for all new content
+
 ## [1.4.0] - 2024 (Phase 4 Expansion)
 
 ### Added
@@ -347,9 +512,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Future Plans
 
-- [ ] Touch controls for mobile devices
-- [ ] More enemy variety
-- [ ] Additional weapon types
-- [ ] More campaign levels
-- [ ] Leaderboards
+- [x] Touch controls for mobile devices ✅ (v2.0.0)
+- [x] More enemy variety ✅ (v1.1.0+)
+- [x] Additional weapon types ✅ (v2.0.0)
+- [x] More campaign levels ✅ (v1.5.0)
+- [ ] Online leaderboards
 - [ ] Steam/itch.io release
+- [ ] Additional accessibility features
+- [ ] More companion types

@@ -59,6 +59,18 @@ class PlayerCharacter extends Entity {
     this.specialAbilityActive = false;
     this.lastSpecialUse = 0;
     
+    // Phase 6: Dual-wield system
+    this.isDualWielding = false;
+    this.dualWieldCooldown = 0;
+    this.dualWieldAlternate = false; // Alternates which gun fires
+    this.dualWieldConfig = typeof GameConfig !== 'undefined' && GameConfig.DUAL_WIELD ? 
+      GameConfig.DUAL_WIELD : {
+        fireRateMultiplier: 2,
+        accuracyPenalty: 0.3,
+        reloadSpeedPenalty: 0.5,
+        eligibleWeapons: ['pistol']
+      };
+    
     // Character-specific attributes
     this.applyCharacterTraits();
     
@@ -120,6 +132,65 @@ class PlayerCharacter extends Entity {
     if (index >= 0 && index < this.meleeWeapons.length) {
       this.currentMeleeWeaponIndex = index;
     }
+  }
+
+  /**
+   * Toggle dual-wield mode (Phase 6)
+   * Only works with eligible weapons (pistols by default)
+   * @returns {boolean} Whether dual-wield was successfully toggled
+   */
+  toggleDualWield() {
+    const weapon = this.getCurrentWeapon();
+    if (!weapon) return false;
+    
+    // Check if current weapon is eligible for dual-wielding
+    const weaponName = weapon.name.toLowerCase();
+    const eligible = this.dualWieldConfig.eligibleWeapons.some(w => 
+      weaponName.includes(w.toLowerCase())
+    );
+    
+    if (!eligible) {
+      console.log('Current weapon cannot be dual-wielded');
+      return false;
+    }
+    
+    this.isDualWielding = !this.isDualWielding;
+    this.dualWieldAlternate = false;
+    
+    console.log('Dual-wield:', this.isDualWielding ? 'enabled' : 'disabled');
+    return true;
+  }
+
+  /**
+   * Check if dual-wielding is active
+   * @returns {boolean}
+   */
+  isDualWieldActive() {
+    if (!this.isDualWielding) return false;
+    
+    const weapon = this.getCurrentWeapon();
+    if (!weapon) return false;
+    
+    const weaponName = weapon.name.toLowerCase();
+    return this.dualWieldConfig.eligibleWeapons.some(w => 
+      weaponName.includes(w.toLowerCase())
+    );
+  }
+
+  /**
+   * Get dual-wield stats modifier
+   * @returns {Object} Modified weapon stats
+   */
+  getDualWieldModifiers() {
+    if (!this.isDualWieldActive()) {
+      return { fireRateMultiplier: 1, accuracyPenalty: 0, reloadPenalty: 1 };
+    }
+    
+    return {
+      fireRateMultiplier: this.dualWieldConfig.fireRateMultiplier,
+      accuracyPenalty: this.dualWieldConfig.accuracyPenalty,
+      reloadPenalty: 1 + this.dualWieldConfig.reloadSpeedPenalty
+    };
   }
 
   addWeapon(weapon) {
