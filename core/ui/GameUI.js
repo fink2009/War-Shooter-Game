@@ -663,17 +663,18 @@ class GameUI {
         {key: '1', name: 'TIME ATTACK', desc: 'Complete levels as fast as possible for medals'},
         {key: '2', name: 'BOSS RUSH', desc: 'Fight all bosses back-to-back'},
         {key: '3', name: 'HORDE MODE', desc: 'Endless waves of increasing difficulty'},
-        {key: '4', name: 'ONE-HIT MODE', desc: 'Extreme difficulty - one shot kills all'}
+        {key: '4', name: 'ONE-HIT MODE', desc: 'Extreme difficulty - one shot kills all'},
+        {key: '5', name: 'BASE DEFENSE', desc: 'Protect your objective from 20 waves, build turrets and barricades'}
       ];
       
       ctx.fillStyle = '#00ff00';
       challenges.forEach((challenge, i) => {
         ctx.fillStyle = '#ffaa00';
         ctx.font = 'bold 18px monospace';
-        ctx.fillText(`${challenge.key} - ${challenge.name}`, this.width / 2, 180 + i * 70);
+        ctx.fillText(`${challenge.key} - ${challenge.name}`, this.width / 2, 160 + i * 55);
         ctx.fillStyle = '#888';
         ctx.font = '14px monospace';
-        ctx.fillText(challenge.desc, this.width / 2, 200 + i * 70);
+        ctx.fillText(challenge.desc, this.width / 2, 178 + i * 55);
       });
       
       ctx.fillStyle = '#888';

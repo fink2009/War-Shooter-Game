@@ -621,6 +621,12 @@ class GameEngine {
       this.spawnCampaignEnemies();
       // Apply one-hit mode to all enemies
       this.enemies.forEach(enemy => this.oneHitMode.applyToEnemy(enemy));
+    } else if (mode === 'basedefense') {
+      // Base Defense Mode: Protect your objective from 20 waves
+      this.baseDefenseMode.start();
+      this.spawnBaseDefenseWave();
+      // Start dynamic event system for base defense mode
+      this.dynamicEventSystem.start();
     }
     
     // Add some pickups
@@ -715,6 +721,65 @@ class GameEngine {
     
     // Apply horde mode modifiers
     this.hordeMode.applyModifiers(this);
+  }
+  
+  /**
+   * Spawn wave for Base Defense mode
+   */
+  spawnBaseDefenseWave() {
+    const waveConfig = this.baseDefenseMode.getWaveConfig();
+    const enemyTypes = ['infantry', 'scout', 'heavy', 'sniper', 'berserker'];
+    
+    // Calculate enemy count based on wave
+    const baseCount = waveConfig.enemyCountBase || 5;
+    const perWave = waveConfig.enemyCountPerWave || 2;
+    const wave = this.baseDefenseMode.wave;
+    const enemyCount = baseCount + (wave * perWave);
+    
+    // Spawn enemies from the right side
+    for (let i = 0; i < enemyCount; i++) {
+      const x = this.worldWidth - 100 - Math.random() * 300;
+      const typeIndex = Math.floor(Math.random() * Math.min(1 + Math.floor(wave / 2), enemyTypes.length));
+      const enemyType = enemyTypes[typeIndex];
+      
+      const enemy = new EnemyUnit(x, this.groundLevel - 48, enemyType);
+      
+      // Apply wave scaling
+      const healthScale = 1 + ((wave - 1) * (waveConfig.healthScaling || 0.05));
+      const damageScale = 1 + ((wave - 1) * (waveConfig.damageScaling || 0.03));
+      
+      enemy.maxHealth = Math.floor(enemy.maxHealth * healthScale);
+      enemy.health = enemy.maxHealth;
+      enemy.damage = Math.floor(enemy.damage * damageScale);
+      
+      // Add elite enemies in later waves
+      if (wave >= 5 && Math.random() < 0.15) {
+        enemy.makeElite();
+      }
+      
+      this.enemies.push(enemy);
+      this.collisionSystem.add(enemy);
+    }
+    
+    // Spawn boss on boss waves
+    const bossWaves = waveConfig.bossWaves || [5, 10, 15, 20];
+    if (bossWaves.includes(wave)) {
+      const bossX = this.worldWidth - 200;
+      const boss = new EnemyUnit(bossX, this.groundLevel - 70, 'boss');
+      boss.isBoss = true;
+      boss.bossId = bossWaves.indexOf(wave);
+      boss.bossName = this.getBossName(boss.bossId);
+      
+      // Scale boss health
+      boss.maxHealth = Math.floor(boss.maxHealth * 6);
+      boss.health = boss.maxHealth;
+      
+      this.enemies.push(boss);
+      this.collisionSystem.add(boss);
+    }
+    
+    this.enemiesRemaining = this.enemies.length;
+    this.baseDefenseMode.waveEnemyCount = this.enemies.length;
   }
   
   /**
@@ -2325,6 +2390,10 @@ class GameEngine {
         this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'character';
         this.mode = 'onehit';
+      } else if (this.inputManager.wasKeyPressed('5')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'character';
+        this.mode = 'basedefense';
       }
     } else if (this.menuState === 'statistics') {
       // Page navigation for statistics
@@ -2336,6 +2405,12 @@ class GameEngine {
         this.statisticsPage = Math.min(3, (this.statisticsPage || 0) + 1);
       } else if (this.inputManager.wasKeyPressed('Escape')) {
         this.audioManager.playSound('menu_navigate', 0.3);
+        this.menuState = 'main';
+      }
+    } else if (this.menuState === 'skins') {
+      // Handle skins menu
+      if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_back', 0.5);
         this.menuState = 'main';
       }
     } else if (this.state === 'menu') {
@@ -2372,12 +2447,6 @@ class GameEngine {
       } else if (this.inputManager.wasKeyPressed('9')) {
         this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'skins';
-      }
-    } else if (this.menuState === 'skins') {
-      // Handle skins menu
-      if (this.inputManager.wasKeyPressed('Escape')) {
-        this.audioManager.playSound('menu_back', 0.5);
-        this.menuState = 'main';
       }
     } else if (this.state === 'playing') {
       // Player controls
@@ -2624,8 +2693,8 @@ class GameEngine {
           this.audioManager.playSound('weapon_switch', 0.3);
         }
         
-        // Phase 3: Vehicle enter/exit (G key - changed from F to avoid conflict with melee)
-        if (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G')) {
+        // Phase 3: Vehicle enter/exit (Y key)
+        if (this.inputManager.wasKeyPressed('y') || this.inputManager.wasKeyPressed('Y')) {
           // Check if player is in a vehicle
           if (this.player.isInVehicle && this.player.currentVehicle) {
             // Exit vehicle
@@ -2718,8 +2787,8 @@ class GameEngine {
         this.devToolInstantKillAll();
       }
       
-      // Dev Tool: Toggle Invincibility (P key for God mode - changed from G to avoid conflict with vehicle entry)
-      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('p') || this.inputManager.wasKeyPressed('P'))) {
+      // Dev Tool: Toggle Invincibility (G key for God mode)
+      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G'))) {
         this.devToolToggleInvincibility();
       }
       
@@ -3427,6 +3496,56 @@ class GameEngine {
         } else {
           // All levels complete
           this.showVictoryScreen();
+        }
+      }
+    } else if (this.mode === 'basedefense') {
+      // Base Defense Mode: Check wave completion and objective status
+      if (this.baseDefenseMode.active) {
+        // Check if objective is destroyed
+        if (this.baseDefenseMode.objectiveHealth <= 0) {
+          this.baseDefenseMode.end('defeat');
+          this.showGameOverScreen();
+          return;
+        }
+        
+        // Check wave completion
+        if (this.enemiesRemaining === 0 && !this.baseDefenseMode.inWaveBreak) {
+          const wave = this.baseDefenseMode.wave;
+          
+          // Award score for wave completion
+          this.score += wave * 300;
+          this.baseDefenseMode.resources += this.baseDefenseMode.resourcesPerWave;
+          
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            `WAVE ${wave} COMPLETE!`,
+            '#00ff00'
+          );
+          
+          // Check if all waves completed
+          if (wave >= this.baseDefenseMode.maxWaves) {
+            this.baseDefenseMode.complete();
+            this.showVictoryScreen();
+            return;
+          }
+          
+          // Start wave break for building
+          this.baseDefenseMode.inWaveBreak = true;
+          this.baseDefenseMode.waveBreakTimer = 0;
+          
+          // Heal player between waves
+          this.player.heal(30);
+          
+          // Spawn next wave after delay
+          setTimeout(() => {
+            if (this.state === 'playing' && this.baseDefenseMode.active) {
+              this.baseDefenseMode.startNextWave();
+              this.enemies = [];
+              this.spawnBaseDefenseWave();
+              this.spawnPickups();
+            }
+          }, this.baseDefenseMode.waveBreakDuration);
         }
       }
     }

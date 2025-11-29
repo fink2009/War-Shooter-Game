@@ -36,7 +36,7 @@ Complete control reference for War Shooter.
 | Action | Key | Description |
 |--------|-----|-------------|
 | Toggle Flashlight | L | Turn flashlight on/off (night only) |
-| Enter/Exit Vehicle | G | Mount or dismount vehicles |
+| Enter/Exit Vehicle | Y | Mount or dismount vehicles |
 | Mount/Dismount Weapon | X | Use stationary mounted weapons |
 | Vehicle Fire | Left Click | Fire vehicle weapons when mounted |
 | Use Grappling Hook | T | Fire grappling hook (when power-up active) |
@@ -67,9 +67,23 @@ Complete control reference for War Shooter.
 |-----|--------|
 | 1 | Start Campaign Mode |
 | 2 | Start Survival Mode |
-| 3 | Open Settings |
-| 4 | View Controls |
-| 5 | View High Scores |
+| 3 | Open Challenge Modes |
+| 4 | Open Settings |
+| 5 | View Controls |
+| 6 | View Statistics |
+| 7 | View High Scores |
+| 8 | Start Tutorial |
+| 9 | Character Skins |
+
+### Challenge Modes Menu
+| Key | Action |
+|-----|--------|
+| 1 | Time Attack Mode |
+| 2 | Boss Rush Mode |
+| 3 | Horde Mode |
+| 4 | One-Hit Mode |
+| 5 | Base Defense Mode |
+| ESC | Return to main menu |
 
 ### Character Select
 | Key | Action |
@@ -193,7 +207,7 @@ When dev tools are unlocked (Settings Page 4, Password: QUICKTEST):
 | Key | Action |
 |-----|--------|
 | K | Kill all enemies instantly |
-| P | Toggle invincibility (God mode) |
+| G | Toggle invincibility (God mode) |
 
 ---
 
