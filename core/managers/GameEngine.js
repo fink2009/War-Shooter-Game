@@ -621,6 +621,12 @@ class GameEngine {
       this.spawnCampaignEnemies();
       // Apply one-hit mode to all enemies
       this.enemies.forEach(enemy => this.oneHitMode.applyToEnemy(enemy));
+    } else if (mode === 'basedefense') {
+      // Base Defense Mode: Protect your objective from 20 waves
+      this.baseDefenseMode.start();
+      this.spawnBaseDefenseWave();
+      // Start dynamic event system for base defense mode
+      this.dynamicEventSystem.start();
     }
     
     // Add some pickups
@@ -718,6 +724,65 @@ class GameEngine {
   }
   
   /**
+   * Spawn wave for Base Defense mode
+   */
+  spawnBaseDefenseWave() {
+    const waveConfig = this.baseDefenseMode.getWaveConfig();
+    const enemyTypes = ['infantry', 'scout', 'heavy', 'sniper', 'berserker'];
+    
+    // Calculate enemy count based on wave
+    const baseCount = waveConfig.enemyCountBase || 5;
+    const perWave = waveConfig.enemyCountPerWave || 2;
+    const wave = this.baseDefenseMode.wave;
+    const enemyCount = baseCount + (wave * perWave);
+    
+    // Spawn enemies from the right side
+    for (let i = 0; i < enemyCount; i++) {
+      const x = this.worldWidth - 100 - Math.random() * 300;
+      const typeIndex = Math.floor(Math.random() * Math.min(1 + Math.floor(wave / 2), enemyTypes.length));
+      const enemyType = enemyTypes[typeIndex];
+      
+      const enemy = new EnemyUnit(x, this.groundLevel - 48, enemyType);
+      
+      // Apply wave scaling
+      const healthScale = 1 + ((wave - 1) * (waveConfig.healthScaling || 0.05));
+      const damageScale = 1 + ((wave - 1) * (waveConfig.damageScaling || 0.03));
+      
+      enemy.maxHealth = Math.floor(enemy.maxHealth * healthScale);
+      enemy.health = enemy.maxHealth;
+      enemy.damage = Math.floor(enemy.damage * damageScale);
+      
+      // Add elite enemies in later waves
+      if (wave >= 5 && Math.random() < 0.15) {
+        enemy.makeElite();
+      }
+      
+      this.enemies.push(enemy);
+      this.collisionSystem.add(enemy);
+    }
+    
+    // Spawn boss on boss waves
+    const bossWaves = waveConfig.bossWaves || [5, 10, 15, 20];
+    if (bossWaves.includes(wave)) {
+      const bossX = this.worldWidth - 200;
+      const boss = new EnemyUnit(bossX, this.groundLevel - 70, 'boss');
+      boss.isBoss = true;
+      boss.bossId = bossWaves.indexOf(wave);
+      boss.bossName = this.getBossName(boss.bossId);
+      
+      // Scale boss health
+      boss.maxHealth = Math.floor(boss.maxHealth * 6);
+      boss.health = boss.maxHealth;
+      
+      this.enemies.push(boss);
+      this.collisionSystem.add(boss);
+    }
+    
+    this.enemiesRemaining = this.enemies.length;
+    this.baseDefenseMode.waveEnemyCount = this.enemies.length;
+  }
+  
+  /**
    * Add starter knife pickup near player spawn
    */
   addStarterKnife() {
@@ -741,18 +806,24 @@ class GameEngine {
       this.vehicles.push(playerVehicle);
     }
     
-    // Vehicles spawn in campaign mode starting from level 3
-    if (mode === 'campaign' && level >= 3) {
-      // Spawn a Jeep on some levels
-      if (level % 2 === 0) {
-        const jeep = new Jeep(500 + Math.random() * 400, this.groundLevel - 40);
+    // Vehicles spawn in campaign mode starting from level 2
+    if (mode === 'campaign') {
+      // Spawn a Jeep on most levels (levels 2+)
+      if (level >= 2) {
+        const jeep = new Jeep(400 + Math.random() * 300, this.groundLevel - 40);
         this.vehicles.push(jeep);
       }
       
-      // Spawn a Tank on boss levels and late levels
-      if (level >= 6 || level % 3 === 0) {
-        const tank = new Tank(800 + Math.random() * 600, this.groundLevel - 50);
+      // Spawn a Tank on boss levels and late levels (level 4+)
+      if (level >= 4) {
+        const tank = new Tank(700 + Math.random() * 500, this.groundLevel - 50);
         this.vehicles.push(tank);
+      }
+      
+      // Spawn an extra Jeep on higher levels (level 7+)
+      if (level >= 7) {
+        const jeep2 = new Jeep(1200 + Math.random() * 400, this.groundLevel - 40);
+        this.vehicles.push(jeep2);
       }
     }
     
@@ -780,21 +851,27 @@ class GameEngine {
     
     // Mounted weapons in campaign mode
     if (mode === 'campaign') {
-      // HMG placement on certain levels
-      if (level >= 2) {
-        const hmg = new MountedWeapon(600 + Math.random() * 200, this.groundLevel - 50, 'HMG');
+      // HMG placement on all levels starting from level 1
+      if (level >= 1) {
+        const hmg = new MountedWeapon(500 + Math.random() * 200, this.groundLevel - 50, 'HMG');
         this.mountedWeapons.push(hmg);
       }
       
-      // Sniper position on sniper-themed levels
-      if (level === 5 || level === 8) {
-        const sniper = new MountedWeapon(900 + Math.random() * 300, this.groundLevel - 250, 'SNIPER');
+      // Extra HMG on levels 4+
+      if (level >= 4) {
+        const hmg2 = new MountedWeapon(1100 + Math.random() * 200, this.groundLevel - 50, 'HMG');
+        this.mountedWeapons.push(hmg2);
+      }
+      
+      // Sniper position on multiple levels (level 3+)
+      if (level >= 3) {
+        const sniper = new MountedWeapon(800 + Math.random() * 300, this.groundLevel - 200, 'SNIPER');
         this.mountedWeapons.push(sniper);
       }
       
-      // Rocket launcher on boss levels
-      if (level === 3 || level === 6 || level === 9 || level === 10) {
-        const rocket = new MountedWeapon(400 + Math.random() * 200, this.groundLevel - 50, 'ROCKET');
+      // Rocket launcher on boss levels and higher levels (level 3+)
+      if (level >= 3) {
+        const rocket = new MountedWeapon(350 + Math.random() * 150, this.groundLevel - 50, 'ROCKET');
         this.mountedWeapons.push(rocket);
       }
     }
@@ -1225,22 +1302,25 @@ class GameEngine {
         ],
         isBossLevel: true
       },
-      // Level 4: Heavy Assault - Many heavy units
+      // Level 4: Heavy Assault - Many heavy units with berserkers
       {
         name: 'Heavy Assault',
         enemies: [
           { type: 'heavy', count: 3, spacing: 400 },
           { type: 'infantry', count: 5, spacing: 250 },
-          { type: 'sniper', count: 2, spacing: 600 }
+          { type: 'sniper', count: 2, spacing: 600 },
+          { type: 'berserker', count: 2, spacing: 450 },
+          { type: 'medic', count: 1, spacing: 500 }
         ]
       },
-      // Level 5: Sniper Alley - Long range combat
+      // Level 5: Sniper Alley - Long range combat with drones
       {
         name: 'Sniper Alley',
         enemies: [
           { type: 'sniper', count: 4, spacing: 500 },
           { type: 'scout', count: 4, spacing: 300 },
-          { type: 'heavy', count: 2, spacing: 600 }
+          { type: 'heavy', count: 2, spacing: 600 },
+          { type: 'drone', count: 3, spacing: 400 }
         ]
       },
       // Level 6: Boss Arena - Elite Commander
@@ -1251,24 +1331,30 @@ class GameEngine {
         ],
         isBossLevel: true
       },
-      // Level 7: Urban Warfare - City ruins with multi-tier combat
+      // Level 7: Urban Warfare - City ruins with riot shields and bombers
       {
         name: 'Urban Warfare',
         enemies: [
           { type: 'infantry', count: 5, spacing: 280 },
           { type: 'heavy', count: 3, spacing: 450 },
           { type: 'sniper', count: 4, spacing: 550 },
-          { type: 'scout', count: 4, spacing: 320 }
+          { type: 'scout', count: 4, spacing: 320 },
+          { type: 'riot', count: 2, spacing: 400 },
+          { type: 'bomber', count: 2, spacing: 500 },
+          { type: 'medic', count: 1, spacing: 600 }
         ]
       },
-      // Level 8: Industrial Complex - Factory with moving platforms feel
+      // Level 8: Industrial Complex - Factory with engineers and flamethrowers
       {
         name: 'Industrial Complex',
         enemies: [
           { type: 'infantry', count: 6, spacing: 300 },
           { type: 'heavy', count: 4, spacing: 420 },
           { type: 'sniper', count: 3, spacing: 600 },
-          { type: 'scout', count: 5, spacing: 340 }
+          { type: 'scout', count: 5, spacing: 340 },
+          { type: 'engineer', count: 2, spacing: 450 },
+          { type: 'flamethrower', count: 2, spacing: 380 },
+          { type: 'drone', count: 2, spacing: 500 }
         ]
       },
       // Level 9: Elite Commander Boss - Toughest boss before final
@@ -2325,6 +2411,10 @@ class GameEngine {
         this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'character';
         this.mode = 'onehit';
+      } else if (this.inputManager.wasKeyPressed('5')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'character';
+        this.mode = 'basedefense';
       }
     } else if (this.menuState === 'statistics') {
       // Page navigation for statistics
@@ -2336,6 +2426,12 @@ class GameEngine {
         this.statisticsPage = Math.min(3, (this.statisticsPage || 0) + 1);
       } else if (this.inputManager.wasKeyPressed('Escape')) {
         this.audioManager.playSound('menu_navigate', 0.3);
+        this.menuState = 'main';
+      }
+    } else if (this.menuState === 'skins') {
+      // Handle skins menu
+      if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_back', 0.5);
         this.menuState = 'main';
       }
     } else if (this.state === 'menu') {
@@ -2372,12 +2468,6 @@ class GameEngine {
       } else if (this.inputManager.wasKeyPressed('9')) {
         this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'skins';
-      }
-    } else if (this.menuState === 'skins') {
-      // Handle skins menu
-      if (this.inputManager.wasKeyPressed('Escape')) {
-        this.audioManager.playSound('menu_back', 0.5);
-        this.menuState = 'main';
       }
     } else if (this.state === 'playing') {
       // Player controls
@@ -2624,8 +2714,8 @@ class GameEngine {
           this.audioManager.playSound('weapon_switch', 0.3);
         }
         
-        // Phase 3: Vehicle enter/exit (G key - changed from F to avoid conflict with melee)
-        if (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G')) {
+        // Phase 3: Vehicle enter/exit (Y key)
+        if (this.inputManager.wasKeyPressed('y') || this.inputManager.wasKeyPressed('Y')) {
           // Check if player is in a vehicle
           if (this.player.isInVehicle && this.player.currentVehicle) {
             // Exit vehicle
@@ -2718,8 +2808,8 @@ class GameEngine {
         this.devToolInstantKillAll();
       }
       
-      // Dev Tool: Toggle Invincibility (P key for God mode - changed from G to avoid conflict with vehicle entry)
-      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('p') || this.inputManager.wasKeyPressed('P'))) {
+      // Dev Tool: Toggle Invincibility (G key for God mode)
+      if (this.devToolUnlocked && (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G'))) {
         this.devToolToggleInvincibility();
       }
       
@@ -3429,6 +3519,56 @@ class GameEngine {
           this.showVictoryScreen();
         }
       }
+    } else if (this.mode === 'basedefense') {
+      // Base Defense Mode: Check wave completion and objective status
+      if (this.baseDefenseMode.active) {
+        // Check if objective is destroyed
+        if (this.baseDefenseMode.objectiveHealth <= 0) {
+          this.baseDefenseMode.end('defeat');
+          this.showGameOverScreen();
+          return;
+        }
+        
+        // Check wave completion
+        if (this.enemiesRemaining === 0 && !this.baseDefenseMode.inWaveBreak) {
+          const wave = this.baseDefenseMode.wave;
+          
+          // Award score for wave completion
+          this.score += wave * 300;
+          this.baseDefenseMode.resources += this.baseDefenseMode.resourcesPerWave;
+          
+          this.particleSystem.createTextPopup(
+            this.player.x + this.player.width / 2,
+            this.player.y - 50,
+            `WAVE ${wave} COMPLETE!`,
+            '#00ff00'
+          );
+          
+          // Check if all waves completed
+          if (wave >= this.baseDefenseMode.maxWaves) {
+            this.baseDefenseMode.complete();
+            this.showVictoryScreen();
+            return;
+          }
+          
+          // Start wave break for building
+          this.baseDefenseMode.inWaveBreak = true;
+          this.baseDefenseMode.waveBreakTimer = 0;
+          
+          // Heal player between waves
+          this.player.heal(30);
+          
+          // Spawn next wave after delay
+          setTimeout(() => {
+            if (this.state === 'playing' && this.baseDefenseMode.active) {
+              this.baseDefenseMode.startNextWave();
+              this.enemies = [];
+              this.spawnBaseDefenseWave();
+              this.spawnPickups();
+            }
+          }, this.baseDefenseMode.waveBreakDuration);
+        }
+      }
     }
   }
   
@@ -3586,6 +3726,11 @@ class GameEngine {
     this.menuState = 'victory';
     this.ui.setLastScore(this.score);
     this.pendingLevelTransition = false;
+    
+    // Track campaign completion for skin unlocks
+    if (this.mode === 'campaign' && this.statisticsSystem) {
+      this.statisticsSystem.trackCampaignComplete();
+    }
     
     // Auto-save final progress
     this.autoSave(0);
