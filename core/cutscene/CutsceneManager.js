@@ -145,8 +145,13 @@ class CutsceneManager {
     this.onSkip = null;
     
     // Callback (may start a new cutscene)
+    // Wrap in try-catch to prevent game freeze if callback throws an error
     if (callback) {
-      callback();
+      try {
+        callback();
+      } catch (error) {
+        console.error('CutsceneManager: Error in skip callback:', error);
+      }
     }
   }
 
@@ -393,8 +398,13 @@ class CutsceneManager {
     this.onSkip = null;
     
     // Callback (may start a new cutscene)
+    // Wrap in try-catch to prevent game freeze if callback throws an error
     if (callback) {
-      callback();
+      try {
+        callback();
+      } catch (error) {
+        console.error('CutsceneManager: Error in completion callback:', error);
+      }
     }
   }
 

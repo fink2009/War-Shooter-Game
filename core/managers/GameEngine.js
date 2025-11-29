@@ -3685,6 +3685,19 @@ class GameEngine {
     this.spawnCovers();
     this.spawnLevelTerrain();
     
+    // Clear and spawn hazards for the new level
+    this.hazardManager.clear();
+    this.hazardManager.spawnHazards(this.mode, this.currentLevel, this.wave, this.groundLevel, this.worldWidth);
+    
+    // Spawn vehicles for the new level
+    this.spawnVehicles(this.mode, this.currentLevel);
+    
+    // Spawn mounted weapons for the new level
+    this.spawnMountedWeapons(this.mode, this.currentLevel);
+    
+    // Spawn interactive elements for the new level
+    this.spawnInteractiveElements(this.mode, this.currentLevel);
+    
     // Play level intro cutscene
     this.playLevelIntroCutscene(this.currentLevel, () => {
       // After cutscene, spawn enemies and start gameplay
