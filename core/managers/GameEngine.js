@@ -3737,9 +3737,10 @@ class GameEngine {
     this.spawnInteractiveElements(this.mode, this.currentLevel);
     
     // Phase 2: Spawn shop vendor in campaign mode every 5 levels (on non-boss levels)
-    const levelConfig = GameConfig.CAMPAIGN_LEVELS[this.currentLevel - 1];
-    if (this.currentLevel > 1 && this.currentLevel % 5 === 1 && levelConfig && !levelConfig.isBoss) {
-      // Shop spawns at the start of levels 6, 11, 16 (after every 5 levels)
+    const shopLevelIndex = Math.min(this.currentLevel - 1, GameConfig.CAMPAIGN_LEVELS.length - 1);
+    const shopLevelConfig = shopLevelIndex >= 0 ? GameConfig.CAMPAIGN_LEVELS[shopLevelIndex] : null;
+    if (this.currentLevel > 1 && this.currentLevel % 5 === 1 && shopLevelConfig && !shopLevelConfig.isBoss) {
+      // Shop spawns at the start of levels 6, 11, 16 (after completing every 5 levels)
       const shopSpawnOffset = { x: 150, y: 60 };
       this.shopVendor = new ShopVendor(
         this.player.x + shopSpawnOffset.x, 
