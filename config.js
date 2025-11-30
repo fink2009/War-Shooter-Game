@@ -1311,7 +1311,7 @@ const GameConfig = {
       fuelCapacity: 80,
       fuelConsumption: 3 // per second
     },
-    enterExitKey: 'e',
+    enterExitKey: 'y',
     explosionRadius: 150,
     explosionDamage: 100
   },
@@ -1345,7 +1345,7 @@ const GameConfig = {
       ammoCapacity: 10,
       explosionRadius: 100
     },
-    mountKey: 'e',
+    mountKey: 'x',
     vulnerableAngle: 120 // degrees of vulnerability from behind
   },
 
