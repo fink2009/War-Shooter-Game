@@ -64,6 +64,9 @@ class GameEngine {
     this.baseDefenseMode = new BaseDefenseMode();
     this.levelThemeSystem = new LevelThemeSystem();
     
+    // Phase 6: Companion AI System
+    this.companionManager = new CompanionManager();
+    
     // Phase 2: UI Menus
     this.upgradeMenu = new UpgradeMenu(canvas);
     this.shopMenu = new ShopMenu(canvas);
@@ -203,6 +206,9 @@ class GameEngine {
       this.upgradeMenu.init(this.upgradeSystem, this.currencySystem);
       this.shopMenu.init(this.currencySystem);
       this.attachmentMenu.init(this.attachmentSystem, this.currencySystem);
+      
+      // Phase 6: Initialize companion manager
+      this.companionManager.init(this);
       
       // Give starting coins to new players
       this.currencySystem.giveStartingCoins(100);
@@ -512,6 +518,12 @@ class GameEngine {
     this.shopVendor = null;
     this.noiseSystem.clear();
     this.formationSystem.clear();
+    
+    // Phase 6: Spawn companion for campaign mode
+    if (mode === 'campaign' && this.companionManager) {
+      // Spawn a soldier companion by default for campaign mode
+      this.companionManager.spawnCompanion('SOLDIER', this.player, this.groundLevel);
+    }
     
     // Phase 3: Initialize weather and time systems
     this.weatherSystem.init('CLEAR');
@@ -2844,6 +2856,27 @@ class GameEngine {
         }
       }
       
+      // Phase 6: Companion command wheel (G key)
+      if (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G')) {
+        if (this.companionManager && this.companionManager.activeCompanion) {
+          this.companionManager.toggleCommandMenu();
+        }
+      }
+      
+      // Phase 6: Companion commands when command menu is visible
+      if (this.companionManager && this.companionManager.commandMenuVisible) {
+        if (this.inputManager.wasKeyPressed('1')) {
+          this.companionManager.issueCommand('follow');
+          this.companionManager.commandMenuVisible = false;
+        } else if (this.inputManager.wasKeyPressed('2')) {
+          this.companionManager.issueCommand('stay');
+          this.companionManager.commandMenuVisible = false;
+        } else if (this.inputManager.wasKeyPressed('3')) {
+          this.companionManager.issueCommand('attack');
+          this.companionManager.commandMenuVisible = false;
+        }
+      }
+      
       // Handle inventory when open
       if (this.showInventory) {
         // Switch inventory pages with ] or Page Down (changed from Tab to avoid browser issues)
@@ -3113,6 +3146,11 @@ class GameEngine {
         this.formationSystem.autoAssignFormations(this.enemies, this.player);
         this.lastFormationCheck = this.currentTime;
       }
+    }
+    
+    // Phase 6: Update companion manager
+    if (this.companionManager) {
+      this.companionManager.update(deltaTime, this.enemies, this.groundLevel);
     }
     
     // Phase 3: Update weather system
@@ -3697,6 +3735,25 @@ class GameEngine {
     
     // Spawn interactive elements for the new level
     this.spawnInteractiveElements(this.mode, this.currentLevel);
+    
+    // Phase 2: Spawn shop vendor in campaign mode every 5 levels (on non-boss levels)
+    const levelConfig = GameConfig.CAMPAIGN_LEVELS[this.currentLevel - 1];
+    if (this.currentLevel > 1 && this.currentLevel % 5 === 1 && levelConfig && !levelConfig.isBoss) {
+      // Shop spawns at the start of levels 6, 11, 16 (after every 5 levels)
+      const shopSpawnOffset = { x: 150, y: 60 };
+      this.shopVendor = new ShopVendor(
+        this.player.x + shopSpawnOffset.x, 
+        this.groundLevel - shopSpawnOffset.y
+      );
+      this.particleSystem.createTextPopup(
+        this.shopVendor.x + this.shopVendor.width / 2,
+        this.shopVendor.y - 40,
+        'SHOP AVAILABLE!',
+        '#00ff00'
+      );
+    } else {
+      this.shopVendor = null;
+    }
     
     // Play level intro cutscene
     this.playLevelIntroCutscene(this.currentLevel, () => {
@@ -4612,6 +4669,11 @@ class GameEngine {
     // Draw player
     if (this.player && this.player.active) {
       this.player.render(this.ctx);
+    }
+    
+    // Phase 6: Draw companion
+    if (this.companionManager) {
+      this.companionManager.render(this.ctx);
     }
     
     // Phase 4: Draw ghost replay in Time Attack mode
