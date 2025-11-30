@@ -41,6 +41,14 @@ Complete control reference for War Shooter.
 | Vehicle Fire | Left Click | Fire vehicle weapons when mounted |
 | Use Grappling Hook | T | Fire grappling hook (when power-up active) |
 
+### Phase 6 Controls
+| Action | Key | Description |
+|--------|-----|-------------|
+| Companion Commands | B | Open companion command wheel (Campaign mode) |
+| Follow Command | 1 (when wheel open) | Order companion to follow you |
+| Stay Command | 2 (when wheel open) | Order companion to hold position |
+| Attack Command | 3 (when wheel open) | Order companion to attack target |
+
 ### System Controls
 | Action | Key | Description |
 |--------|-----|-------------|
