@@ -2856,8 +2856,8 @@ class GameEngine {
         }
       }
       
-      // Phase 6: Companion command wheel (G key)
-      if (this.inputManager.wasKeyPressed('g') || this.inputManager.wasKeyPressed('G')) {
+      // Phase 6: Companion command wheel (B key for Buddy/companion commands)
+      if (this.inputManager.wasKeyPressed('b') || this.inputManager.wasKeyPressed('B')) {
         if (this.companionManager && this.companionManager.activeCompanion) {
           this.companionManager.toggleCommandMenu();
         }
@@ -3739,8 +3739,10 @@ class GameEngine {
     // Phase 2: Spawn shop vendor in campaign mode every 5 levels (on non-boss levels)
     const shopLevelIndex = Math.min(this.currentLevel - 1, GameConfig.CAMPAIGN_LEVELS.length - 1);
     const shopLevelConfig = shopLevelIndex >= 0 ? GameConfig.CAMPAIGN_LEVELS[shopLevelIndex] : null;
-    if (this.currentLevel > 1 && this.currentLevel % 5 === 1 && shopLevelConfig && !shopLevelConfig.isBoss) {
-      // Shop spawns at the start of levels 6, 11, 16 (after completing every 5 levels)
+    // Shop spawns at levels 6, 11, 16 (first level after completing each 5-level set, on non-boss levels)
+    // Logic: (level - 1) % 5 === 0 means levels 1, 6, 11, 16; level > 5 excludes level 1
+    const isShopLevel = this.currentLevel > 5 && (this.currentLevel - 1) % 5 === 0;
+    if (isShopLevel && shopLevelConfig && !shopLevelConfig.isBoss) {
       const shopSpawnOffset = { x: 150, y: 60 };
       this.shopVendor = new ShopVendor(
         this.player.x + shopSpawnOffset.x, 
@@ -3753,6 +3755,10 @@ class GameEngine {
         '#00ff00'
       );
     } else {
+      // Clear any previous shop vendor
+      if (this.shopVendor) {
+        this.shopVendor.active = false;
+      }
       this.shopVendor = null;
     }
     
