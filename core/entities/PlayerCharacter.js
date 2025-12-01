@@ -523,29 +523,62 @@ class PlayerCharacter extends Entity {
       this.meleeComboMultiplier = 1.0;
     }
     
-    // Handle rolling
+    // Handle rolling with enhanced feel
     if (this.isRolling) {
-      if (currentTime - this.rollTime > this.rollDuration) {
+      const rollProgress = (currentTime - this.rollTime) / this.rollDuration;
+      
+      if (rollProgress >= 1) {
         this.isRolling = false;
         this.invulnerable = false;
-        this.dx *= 0.5;
+        // Smooth roll end with deceleration
+        this.dx *= 0.3;
+        
+        // Create roll end dust effect
+        if (window.game && window.game.particleSystem) {
+          window.game.particleSystem.createLandingDust(
+            this.x + this.width / 2, 
+            this.y + this.height, 
+            8
+          );
+        }
+      } else {
+        // Smooth roll velocity curve (fast start, slow end)
+        const rollCurve = 1 - Math.pow(rollProgress, 0.5);
+        this.dx = this.facing * 15 * rollCurve;
+        
+        // Create roll trail particles
+        if (window.game && window.game.particleSystem && Math.random() < 0.3) {
+          window.game.particleSystem.createRollTrail(
+            this.x + this.width / 2,
+            this.y + this.height / 2,
+            this.facing
+          );
+        }
       }
     }
     
-    // Movement (disabled while rolling)
+    // Enhanced movement with acceleration/deceleration curves
     if (!this.isRolling) {
-      this.dx = 0;
+      const targetDx = this.calculateTargetVelocity(inputManager);
       
-      if (inputManager.isKeyPressed('ArrowLeft') || inputManager.isKeyPressed('a')) {
-        this.dx = -this.speed;
-        this.facing = -1;
+      // Apply smooth acceleration/deceleration
+      const accelRate = this.onGround ? 0.25 : 0.12; // Faster on ground, slower in air
+      const decelRate = this.onGround ? 0.15 : 0.05;
+      
+      if (targetDx !== 0) {
+        // Accelerating
+        this.dx += (targetDx - this.dx) * accelRate;
+        this.facing = targetDx > 0 ? 1 : -1;
         this.state = 'running';
-      } else if (inputManager.isKeyPressed('ArrowRight') || inputManager.isKeyPressed('d')) {
-        this.dx = this.speed;
-        this.facing = 1;
-        this.state = 'running';
-      } else if (this.onGround) {
-        this.state = 'idle';
+      } else {
+        // Decelerating
+        this.dx *= (1 - decelRate);
+        if (Math.abs(this.dx) < 0.1) {
+          this.dx = 0;
+          if (this.onGround) {
+            this.state = 'idle';
+          }
+        }
       }
       
       // Crouching (CTRL, S, or Down arrow)
@@ -565,14 +598,38 @@ class PlayerCharacter extends Entity {
       this.x = Math.max(0, Math.min(worldWidth - this.width, this.x));
     }
     
-    // Apply gravity
-    this.dy += this.gravity * dt;
+    // Enhanced air control
+    const airControlMultiplier = 0.85; // Slight reduction in air control
+    if (!this.onGround && !this.isRolling) {
+      // Apply reduced air friction for floatier jumps
+      this.dx *= 0.99;
+    }
+    
+    // Apply gravity with improved jump arc
+    const gravityScale = this.dy > 0 ? 1.2 : 1.0; // Fall faster than rise
+    this.dy += this.gravity * gravityScale * dt;
+    
+    // Clamp fall speed for better control
+    const maxFallSpeed = 15;
+    if (this.dy > maxFallSpeed) {
+      this.dy = maxFallSpeed;
+    }
+    
+    // Store previous Y for landing detection
+    const prevY = this.y;
     this.y += this.dy * dt;
     
-    // Ground collision
+    // Ground collision with landing feedback
     if (this.y + this.height >= groundLevel) {
+      const landingVelocity = this.dy;
       this.y = groundLevel - this.height;
       this.dy = 0;
+      
+      // Landing feedback
+      if (!this.onGround && landingVelocity > 5) {
+        this.onLanding(landingVelocity);
+      }
+      
       this.onGround = true;
       if (this.state === 'jumping') {
         this.state = 'idle';
@@ -607,6 +664,48 @@ class PlayerCharacter extends Entity {
         }
       });
     }
+  }
+
+  /**
+   * Calculate target velocity based on input
+   * @param {InputManager} inputManager - Input manager
+   * @returns {number} Target X velocity
+   */
+  calculateTargetVelocity(inputManager) {
+    let targetDx = 0;
+    
+    if (inputManager.isKeyPressed('ArrowLeft') || inputManager.isKeyPressed('a')) {
+      targetDx = -this.speed;
+    } else if (inputManager.isKeyPressed('ArrowRight') || inputManager.isKeyPressed('d')) {
+      targetDx = this.speed;
+    }
+    
+    return targetDx;
+  }
+
+  /**
+   * Handle landing feedback
+   * @param {number} velocity - Landing velocity
+   */
+  onLanding(velocity) {
+    // Screen shake based on landing intensity
+    if (window.game && window.game.camera && velocity > 8) {
+      const shakeIntensity = Math.min((velocity - 8) * 0.3, 4);
+      window.game.camera.shake(shakeIntensity, 100, 'vertical');
+    }
+    
+    // Landing dust particles
+    if (window.game && window.game.particleSystem) {
+      window.game.particleSystem.createLandingDust(
+        this.x + this.width / 2,
+        this.y + this.height,
+        velocity
+      );
+    }
+    
+    // Brief landing squash (visual only, handled in render if animation system exists)
+    this.landingSquash = 0.8;
+    this.landingSquashTime = performance.now();
   }
   
   /**
