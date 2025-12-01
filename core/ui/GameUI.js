@@ -947,7 +947,7 @@ class GameUI {
       ctx.fillStyle = '#00ff00';
       ctx.fillText('CONTROLS', this.width / 2, 100);
       
-      ctx.font = '18px monospace';
+      ctx.font = '16px monospace';
       ctx.textAlign = 'left';
       
       // Split controls into two columns to fit on screen
@@ -964,53 +964,62 @@ class GameUI {
         '  V - Block/Parry (Melee)',
         '  R - Reload',
         '  E/Q - Special Ability',
-        '  1/2/3/4 - Switch Weapons'
+        '  1/2/3/4 - Switch Weapons',
+        '',
+        'VEHICLES & MOUNTED WEAPONS:',
+        '  Y - Enter/Exit Vehicle',
+        '  X - Mount/Dismount Mounted Weapon'
       ];
       
       const rightControls = [
         'INVENTORY:',
         '  I - Open Inventory',
         '  ] or PageDown - Switch Pages (Ranged/Melee)',
+        '  U - Upgrades Menu',
         '',
         'GAME:',
         '  ESC - Pause/Menu',
         '  M - Return to Main Menu',
-        '  H - Toggle Help'
+        '  H - Toggle Help',
+        '  L - Toggle Flashlight',
+        '',
+        'SHOP & INTERACTION:',
+        '  E - Interact with Shop/Switches'
       ];
       
       // Left column
       const leftX = 100;
-      let leftY = 150;
+      let leftY = 140;
       
       leftControls.forEach((line, i) => {
         if (line === '') {
-          leftY += 10;
+          leftY += 8;
         } else if (line.endsWith(':')) {
           ctx.fillStyle = '#ffff00';
           ctx.fillText(line, leftX, leftY);
-          leftY += 30;
+          leftY += 25;
         } else {
           ctx.fillStyle = '#00ff00';
           ctx.fillText(line, leftX, leftY);
-          leftY += 25;
+          leftY += 22;
         }
       });
       
       // Right column
       const rightX = 650;
-      let rightY = 150;
+      let rightY = 140;
       
       rightControls.forEach((line, i) => {
         if (line === '') {
-          rightY += 10;
+          rightY += 8;
         } else if (line.endsWith(':')) {
           ctx.fillStyle = '#ffff00';
           ctx.fillText(line, rightX, rightY);
-          rightY += 30;
+          rightY += 25;
         } else {
           ctx.fillStyle = '#00ff00';
           ctx.fillText(line, rightX, rightY);
-          rightY += 25;
+          rightY += 22;
         }
       });
       

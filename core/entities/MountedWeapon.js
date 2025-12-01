@@ -84,7 +84,7 @@ class MountedWeapon extends Entity {
         ammoCapacity: 10,
         explosionRadius: 100
       },
-      mountKey: 'e',
+      mountKey: 'x',
       vulnerableAngle: 120
     };
   }

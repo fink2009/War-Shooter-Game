@@ -59,7 +59,7 @@ class Vehicle extends Entity {
     return {
       TANK: { health: 500, speed: 100, armorReduction: 0.75, fuelCapacity: 100 },
       JEEP: { health: 200, speed: 300, armorReduction: 0.25, fuelCapacity: 80, seats: 2 },
-      enterExitKey: 'e',
+      enterExitKey: 'y',
       explosionRadius: 150,
       explosionDamage: 100
     };
@@ -347,6 +347,11 @@ class Vehicle extends Entity {
     // Draw fuel indicator
     this.renderFuelBar(ctx);
     
+    // Draw interaction prompt when no driver
+    if (!this.driver) {
+      this.renderInteractionPrompt(ctx);
+    }
+    
     ctx.restore();
   }
 
@@ -412,6 +417,24 @@ class Vehicle extends Entity {
     // Fuel fill
     ctx.fillStyle = '#00aaff';
     ctx.fillRect(this.x, barY, barWidth * fuelPercent, barHeight);
+  }
+
+  /**
+   * Render interaction prompt when vehicle can be entered
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+  renderInteractionPrompt(ctx) {
+    const vehicleConfig = typeof GameConfig !== 'undefined' && GameConfig.VEHICLES ?
+      GameConfig.VEHICLES : this.getDefaultConfig();
+    const key = vehicleConfig.enterExitKey || 'y';
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(this.x + this.width / 2 - 40, this.y - 40, 80, 18);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`[${key.toUpperCase()}] Enter`, this.x + this.width / 2, this.y - 27);
   }
 
   /**

@@ -2485,7 +2485,8 @@ class GameEngine {
       // Player controls
       if (this.player && this.player.active) {
         // Shooting (ranged weapons - left click)
-        if (this.inputManager.isMouseButtonPressed(0)) {
+        // Only allow regular weapon shooting if NOT mounted on a mounted weapon or in a vehicle
+        if (this.inputManager.isMouseButtonPressed(0) && !this.player.isMounted && !this.player.isInVehicle) {
           let targetX, targetY;
           
           if (this.mouseAiming) {
@@ -2539,7 +2540,8 @@ class GameEngine {
         }
         
         // Melee Attack (melee weapons - right click or F key)
-        if (this.inputManager.isMouseButtonPressed(2) || this.inputManager.isKeyPressed('f') || this.inputManager.isKeyPressed('F')) {
+        // Only allow melee attacks if NOT mounted on a mounted weapon or in a vehicle
+        if ((this.inputManager.isMouseButtonPressed(2) || this.inputManager.isKeyPressed('f') || this.inputManager.isKeyPressed('F')) && !this.player.isMounted && !this.player.isInVehicle) {
           // Only attack if a melee weapon is equipped
           const meleeWeapon = this.player.getCurrentMeleeWeapon();
           
