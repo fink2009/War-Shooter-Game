@@ -1,13 +1,113 @@
-// Game UI and HUD
+// Game UI and HUD with enhanced polish
 class GameUI {
   constructor(canvas) {
     this.canvas = canvas;
     this.width = canvas.width;
     this.height = canvas.height;
+    
+    // Smooth health bar animation
+    this.displayedHealth = 100;
+    this.displayedHealthTarget = 100;
+    this.healthAnimationSpeed = 0.08;
+    
+    // Combo display enhancement
+    this.comboDisplayScale = 1.0;
+    this.comboFlash = 0;
+    this.lastCombo = 0;
+    
+    // Damage number popups
+    this.damageNumbers = [];
+    
+    // Ammo reload visual
+    this.reloadProgress = 0;
+    this.lastScore = 0;
+    this.scoreFlash = 0;
+  }
+
+  /**
+   * Update animated UI elements
+   * @param {number} deltaTime - Time since last update
+   */
+  update(deltaTime) {
+    const dt = deltaTime / 16;
+    
+    // Smooth health bar animation
+    if (this.displayedHealth !== this.displayedHealthTarget) {
+      const diff = this.displayedHealthTarget - this.displayedHealth;
+      this.displayedHealth += diff * this.healthAnimationSpeed;
+      
+      // Snap when close
+      if (Math.abs(diff) < 0.5) {
+        this.displayedHealth = this.displayedHealthTarget;
+      }
+    }
+    
+    // Decay combo flash
+    if (this.comboFlash > 0) {
+      this.comboFlash = Math.max(0, this.comboFlash - deltaTime / 300);
+    }
+    
+    // Decay score flash
+    if (this.scoreFlash > 0) {
+      this.scoreFlash = Math.max(0, this.scoreFlash - deltaTime / 200);
+    }
+    
+    // Update damage numbers
+    this.damageNumbers = this.damageNumbers.filter(dn => {
+      dn.y -= 1 * dt;
+      dn.lifetime -= deltaTime;
+      dn.alpha = Math.max(0, dn.lifetime / dn.maxLifetime);
+      return dn.lifetime > 0;
+    });
+  }
+
+  /**
+   * Set the last score value for tracking changes
+   * @param {number} score - Current score
+   */
+  setLastScore(score) {
+    if (score > this.lastScore) {
+      this.scoreFlash = 1;
+    }
+    this.lastScore = score;
+  }
+
+  /**
+   * Add a damage number popup
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   * @param {number} damage - Damage value
+   * @param {string} color - Text color
+   */
+  addDamageNumber(x, y, damage, color = '#ff4444') {
+    this.damageNumbers.push({
+      x: x + (Math.random() - 0.5) * 20,
+      y: y,
+      damage: damage,
+      color: color,
+      lifetime: 800,
+      maxLifetime: 800,
+      alpha: 1
+    });
   }
 
   drawHUD(ctx, player, gameState) {
     ctx.save();
+    
+    // Update health target
+    this.displayedHealthTarget = player.health;
+    
+    // Check for combo changes
+    if (gameState.combo > this.lastCombo) {
+      this.comboFlash = 1;
+      this.comboDisplayScale = 1.3;
+    }
+    this.lastCombo = gameState.combo;
+    
+    // Decay combo scale
+    if (this.comboDisplayScale > 1) {
+      this.comboDisplayScale = Math.max(1, this.comboDisplayScale - 0.02);
+    }
     
     // Apply HUD opacity setting
     const hudOpacity = window.game ? window.game.hudOpacity : 0.9;
@@ -42,10 +142,19 @@ class GameUI {
     const healthBarWidth = 200;
     const healthBarHeight = 20;
     
+    // Background bar
     ctx.fillStyle = '#660000';
     ctx.fillRect(10, 25, healthBarWidth, healthBarHeight);
     
-    // Health color based on percentage
+    // Damage trail (shows recent damage taken as a fading bar)
+    const displayedPercent = this.displayedHealth / player.maxHealth;
+    if (displayedPercent > healthPercent) {
+      ctx.fillStyle = '#ff4444';
+      ctx.fillRect(10 + healthBarWidth * healthPercent, 25, 
+        healthBarWidth * (displayedPercent - healthPercent), healthBarHeight);
+    }
+    
+    // Main health bar with color based on percentage
     if (healthPercent > 0.6) {
       ctx.fillStyle = '#00ff00';
     } else if (healthPercent > 0.3) {
@@ -55,6 +164,17 @@ class GameUI {
     }
     ctx.fillRect(10, 25, healthBarWidth * healthPercent, healthBarHeight);
     
+    // Health bar highlight (16-bit style shine)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillRect(10, 25, healthBarWidth * healthPercent, 6);
+    
+    // Health bar segments (more detailed 16-bit look)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    for (let i = 20; i < healthBarWidth; i += 20) {
+      ctx.fillRect(10 + i, 25, 2, healthBarHeight);
+    }
+    
+    // Border with glow when healing
     ctx.strokeStyle = '#00ff00';
     ctx.lineWidth = 2;
     ctx.strokeRect(10, 25, healthBarWidth, healthBarHeight);
@@ -62,22 +182,54 @@ class GameUI {
     ctx.fillStyle = '#00ff00';
     ctx.fillText(`${Math.ceil(player.health)}/${player.maxHealth}`, 220, 40);
     
-    // Weapon info
+    // Weapon info with icon-style display
     const weapon = player.getCurrentWeapon();
     ctx.fillStyle = '#00ff00';
     ctx.fillText('WEAPON', 10, this.height - 35);
     ctx.fillStyle = '#ffff00';
     ctx.fillText(weapon.name.toUpperCase(), 10, this.height - 15);
     
-    // Ammo
+    // Enhanced Ammo display with reload progress bar
     ctx.fillStyle = '#00ff00';
     ctx.fillText('AMMO', this.width - 150, this.height - 35);
+    
     if (weapon.isReloading) {
+      // Calculate reload progress
+      const reloadProgress = weapon.reloadProgress || 0;
+      
+      // Reload progress bar
+      const barX = this.width - 150;
+      const barY = this.height - 28;
+      const barWidth = 80;
+      const barHeight = 8;
+      
+      ctx.fillStyle = '#330000';
+      ctx.fillRect(barX, barY, barWidth, barHeight);
+      
+      ctx.fillStyle = '#ff6600';
+      ctx.fillRect(barX, barY, barWidth * reloadProgress, barHeight);
+      
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(barX, barY, barWidth, barHeight);
+      
+      // Pulsing reload text
+      const pulse = Math.sin(Date.now() / 150) * 0.3 + 0.7;
+      ctx.globalAlpha = pulse;
       ctx.fillStyle = '#ff0000';
-      ctx.fillText('RELOADING...', this.width - 150, this.height - 15);
+      ctx.fillText('RELOADING...', this.width - 150, this.height - 8);
+      ctx.globalAlpha = 1;
     } else if (weapon.isMelee) {
       ctx.fillStyle = '#00ffff';
       ctx.fillText('MELEE', this.width - 150, this.height - 15);
+      
+      // Melee combo indicator
+      if (player.meleeCombo > 0) {
+        ctx.fillStyle = '#ffaa00';
+        ctx.font = '12px monospace';
+        ctx.fillText(`Combo: ${player.meleeCombo}/${player.maxMeleeCombo}`, this.width - 150, this.height - 2);
+        ctx.font = 'bold 16px monospace';
+      }
     } else {
       // Color code ammo: red if empty, orange if low, yellow if normal
       const ammoPercent = weapon.currentAmmo / weapon.ammoCapacity;
@@ -102,32 +254,74 @@ class GameUI {
       }
     }
     
-    // Score and level info
-    ctx.fillStyle = '#00ff00';
+    // Score and level info - with flash effect
+    if (this.scoreFlash > 0) {
+      ctx.fillStyle = `rgb(${Math.floor(255 * this.scoreFlash)}, 255, ${Math.floor(255 * (1 - this.scoreFlash))})`;
+    } else {
+      ctx.fillStyle = '#00ff00';
+    }
     ctx.fillText(`SCORE: ${gameState.score}`, this.width - 150, 20);
     ctx.fillStyle = '#ffff00';
     ctx.fillText(`KILLS: ${gameState.kills}`, this.width - 150, 40);
     
     // Mode and level/wave - removed duplicate, kept only in section below
     
-    // Combo display
+    // Enhanced Combo display
     if (gameState.combo > 1) {
-      ctx.fillStyle = '#ff6600';
-      ctx.font = 'bold 24px monospace';
       const comboX = this.width / 2 - 50;
       const comboY = 80;
       
-      // Pulsing effect
-      const pulseScale = 1 + Math.sin(Date.now() / 100) * 0.1;
+      // Scale with flash effect for new combos
+      const pulseScale = this.comboDisplayScale * (1 + Math.sin(Date.now() / 100) * 0.05);
+      
       ctx.save();
       ctx.translate(comboX + 50, comboY);
       ctx.scale(pulseScale, pulseScale);
       ctx.translate(-(comboX + 50), -comboY);
       
+      // Combo color based on level (gets more intense with higher combos)
+      let comboColor;
+      if (gameState.combo >= 10) {
+        comboColor = '#ff00ff'; // Purple for 10+
+      } else if (gameState.combo >= 7) {
+        comboColor = '#ff0000'; // Red for 7+
+      } else if (gameState.combo >= 5) {
+        comboColor = '#ff4400'; // Orange-red for 5+
+      } else if (gameState.combo >= 3) {
+        comboColor = '#ff6600'; // Orange for 3+
+      } else {
+        comboColor = '#ffaa00'; // Yellow-orange for 2
+      }
+      
+      // Glow effect for high combos
+      if (gameState.combo >= 5) {
+        ctx.shadowColor = comboColor;
+        ctx.shadowBlur = 10 + gameState.combo;
+      }
+      
+      // Shadow text
+      ctx.font = 'bold 24px monospace';
       ctx.fillStyle = '#000000';
       ctx.fillText(`${gameState.combo}x COMBO!`, comboX + 2, comboY + 2);
-      ctx.fillStyle = '#ff6600';
+      
+      // Main text with flash
+      if (this.comboFlash > 0) {
+        ctx.fillStyle = `rgb(255, ${Math.floor(255 * (1 - this.comboFlash))}, ${Math.floor(255 * (1 - this.comboFlash))})`;
+      } else {
+        ctx.fillStyle = comboColor;
+      }
       ctx.fillText(`${gameState.combo}x COMBO!`, comboX, comboY);
+      
+      // Bonus text for high combos
+      if (gameState.combo >= 5) {
+        ctx.font = '14px monospace';
+        ctx.fillStyle = '#ffffff';
+        const bonusText = gameState.combo >= 10 ? 'UNSTOPPABLE!' : 
+                         gameState.combo >= 7 ? 'INCREDIBLE!' : 'ON FIRE!';
+        ctx.fillText(bonusText, comboX + 15, comboY + 18);
+      }
+      
+      ctx.shadowBlur = 0;
       
       ctx.restore();
       ctx.font = 'bold 16px monospace';

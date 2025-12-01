@@ -3001,7 +3001,7 @@ class GameEngine {
       this.updateLevelTransition(deltaTime);
       // Still update camera to follow player during transition
       if (this.player && this.player.active) {
-        this.camera.update();
+        this.camera.update(deltaTime);
       }
       return;
     }
@@ -3127,6 +3127,16 @@ class GameEngine {
     this.doors.forEach(d => d.update(deltaTime));
     this.jumpPads.forEach(j => j.update(deltaTime));
     
+    // Update platforms (for moving, crumbling, bounce types)
+    this.platforms.forEach(p => {
+      if (p.update) p.update(deltaTime);
+    });
+    
+    // Update cover objects
+    this.covers.forEach(c => {
+      if (c.update) c.update(deltaTime);
+    });
+    
     // Phase 2: Update coin pickups
     this.coinPickups.forEach(coin => {
       coin.update(deltaTime, this.player, this.currencySystem);
@@ -3228,6 +3238,11 @@ class GameEngine {
     // Update particles
     this.particleSystem.update(deltaTime);
     
+    // Update UI elements (for smooth animations)
+    if (this.ui && this.ui.update) {
+      this.ui.update(deltaTime);
+    }
+    
     // Update combo timer
     if (this.combo > 0 && this.currentTime - this.comboTimer > this.comboTimeout) {
       this.combo = 0;
@@ -3268,8 +3283,8 @@ class GameEngine {
       this.skinSystem.renderParticleTrail(this.particleSystem, this.player, deltaTime);
     }
     
-    // Update camera
-    this.camera.update();
+    // Update camera with deltaTime for smooth effects
+    this.camera.update(deltaTime);
     
     // Handle collisions
     this.handleCollisions();
@@ -3957,10 +3972,21 @@ class GameEngine {
               playerBounds.bottom >= platformBounds.top - 5 &&
               playerBounds.right > platformBounds.left + 5 &&
               playerBounds.left < platformBounds.right - 5) {
-            // Land on platform
-            this.player.y = platformBounds.top - this.player.height;
-            this.player.dy = 0;
-            this.player.onGround = true;
+            
+            // Handle bounce platform
+            if (platform.isBounce && platform.applyBounce) {
+              platform.applyBounce(this.player);
+            } else {
+              // Normal landing
+              this.player.y = platformBounds.top - this.player.height;
+              this.player.dy = 0;
+              this.player.onGround = true;
+              
+              // Trigger crumbling platform
+              if (platform.isCrumbling && platform.triggerCrumble) {
+                platform.triggerCrumble();
+              }
+            }
           }
           
           // For solid platforms, also block horizontal and upward movement
