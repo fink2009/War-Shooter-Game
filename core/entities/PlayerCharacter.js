@@ -703,7 +703,9 @@ class PlayerCharacter extends Entity {
       );
     }
     
-    // Brief landing squash (visual only, handled in render if animation system exists)
+    // Brief landing squash animation properties
+    // These can be used by the render method or AnimationSystem for visual feedback
+    // Currently stored for future sprite-based animation implementation
     this.landingSquash = 0.8;
     this.landingSquashTime = performance.now();
   }

@@ -16,6 +16,17 @@ class Cover extends Entity {
     this.hitFlash = 0;
     this.shakeOffset = 0;
     
+    // Pre-generate texture coordinates for concrete/machinery (to avoid flickering)
+    this.textureSpots = [];
+    for (let i = 0; i < 8; i++) {
+      this.textureSpots.push({
+        rx: Math.random(),  // Store as percentage
+        ry: Math.random(),
+        w: 2 + Math.random() * 3,
+        h: 2 + Math.random() * 3
+      });
+    }
+    
     // Cover type-specific settings
     this.applyTypeSettings();
   }
@@ -418,12 +429,12 @@ class Cover extends Entity {
     ctx.fillStyle = concreteBase;
     ctx.fillRect(this.x, this.y, this.width, this.height);
     
-    // Concrete texture
+    // Concrete texture (using pre-generated positions)
     ctx.fillStyle = concreteDark;
-    for (let i = 0; i < 8; i++) {
-      const rx = this.x + Math.random() * this.width;
-      const ry = this.y + Math.random() * this.height;
-      ctx.fillRect(rx, ry, 2 + Math.random() * 3, 2 + Math.random() * 3);
+    for (const spot of this.textureSpots) {
+      const rx = this.x + spot.rx * this.width;
+      const ry = this.y + spot.ry * this.height;
+      ctx.fillRect(rx, ry, spot.w, spot.h);
     }
     
     // Rebar exposed

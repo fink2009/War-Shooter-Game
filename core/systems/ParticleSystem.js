@@ -85,6 +85,10 @@ class Particle {
 }
 
 class ParticleSystem {
+  // Effect thresholds and constants
+  static MIN_COMBO_EFFECT_THRESHOLD = 3;
+  static MAX_COMBO_PARTICLES = 30;
+  
   constructor() {
     this.particles = [];
     this.textPopups = [];
@@ -525,12 +529,12 @@ class ParticleSystem {
    * @param {number} comboLevel - Current combo level
    */
   createComboEffect(x, y, comboLevel) {
-    if (comboLevel < 3) return; // Only for 3+ combos
+    if (comboLevel < ParticleSystem.MIN_COMBO_EFFECT_THRESHOLD) return;
     
     const quality = window.game ? window.game.particleQuality : 'high';
     if (quality === 'low') return;
     
-    let count = Math.min(comboLevel * 3, 30);
+    let count = Math.min(comboLevel * 3, ParticleSystem.MAX_COMBO_PARTICLES);
     if (quality === 'medium') count = Math.floor(count * 0.6);
     
     // Rainbow colors for high combos

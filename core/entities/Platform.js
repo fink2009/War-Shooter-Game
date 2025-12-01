@@ -90,14 +90,24 @@ class Platform extends Entity {
       if (this.moveAxis === 'horizontal') {
         this.x += this.moveSpeed * this.moveDirection * dt;
         
-        if (this.x > this.startX + this.moveRange || this.x < this.startX - this.moveRange) {
-          this.moveDirection *= -1;
+        // Clamp position and reverse direction at bounds
+        if (this.x > this.startX + this.moveRange) {
+          this.x = this.startX + this.moveRange;
+          this.moveDirection = -1;
+        } else if (this.x < this.startX - this.moveRange) {
+          this.x = this.startX - this.moveRange;
+          this.moveDirection = 1;
         }
       } else {
         this.y += this.moveSpeed * this.moveDirection * dt;
         
-        if (this.y > this.startY + this.moveRange || this.y < this.startY - this.moveRange) {
-          this.moveDirection *= -1;
+        // Clamp position and reverse direction at bounds
+        if (this.y > this.startY + this.moveRange) {
+          this.y = this.startY + this.moveRange;
+          this.moveDirection = -1;
+        } else if (this.y < this.startY - this.moveRange) {
+          this.y = this.startY - this.moveRange;
+          this.moveDirection = 1;
         }
       }
     }

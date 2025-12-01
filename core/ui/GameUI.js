@@ -54,7 +54,7 @@ class GameUI {
     
     // Update damage numbers
     this.damageNumbers = this.damageNumbers.filter(dn => {
-      dn.y -= 1 * dt;
+      dn.y -= dt;
       dn.lifetime -= deltaTime;
       dn.alpha = Math.max(0, dn.lifetime / dn.maxLifetime);
       return dn.lifetime > 0;
