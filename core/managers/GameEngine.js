@@ -3683,13 +3683,25 @@ class GameEngine {
    * Set up the next level (called after walking transition)
    */
   setupNextLevel() {
-    // Clear old level entities
+    // Clear old level entities - reset all entity arrays
     this.enemies = [];
     this.projectiles = [];
     this.pickups = [];
     this.covers = [];
     this.platforms = [];
     this.slopes = [];
+    this.coinPickups = [];
+    
+    // Clear all game systems to prevent entity accumulation
+    this.collisionSystem.clear();
+    this.particleSystem.clear();
+    this.noiseSystem.clear();
+    this.formationSystem.clear();
+    
+    // Clear weather system particles
+    if (this.weatherSystem) {
+      this.weatherSystem.clear();
+    }
     
     // Reset player position
     this.player.x = 100;
